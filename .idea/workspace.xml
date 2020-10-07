@@ -1,7 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="7dd86005-f897-43f1-873c-4c0ff72538be" name="Default Changelist" comment="" />
+    <list default="true" id="7dd86005-f897-43f1-873c-4c0ff72538be" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/Deepmap/ImageChanger.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/Deepmap/ImageChanger.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/Deepmap/Malen$1.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/Deepmap/Malen$1.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/Deepmap/Malen$2.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/Deepmap/Malen$2.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/Deepmap/Malen$3.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/Deepmap/Malen$3.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/Deepmap/Malen.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/Deepmap/Malen.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/Deepmap/Methods.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/Deepmap/Methods.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/Deepmap/NCC.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/Deepmap/NCC.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/Deepmap/SAD.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/Deepmap/SAD.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/Deepmap/SSD.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/Deepmap/SSD.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/Main.java" afterDir="false" />
+    </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -15,9 +28,13 @@
       </list>
     </option>
   </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
   <component name="ProjectId" id="1WndNscKA6PLb7zfku8mA5VCPlq" />
   <component name="PropertiesComponent">
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/../Laba1Ver1.1/src" />
+    <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
   </component>
   <component name="RunDashboard">
     <option name="ruleStates">
@@ -57,5 +74,16 @@
       <updated>1579789255897</updated>
     </task>
     <servers />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
   </component>
 </project>

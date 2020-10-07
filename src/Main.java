@@ -1,7 +1,3 @@
-//видос, откуда взялся canvas
-//https://www.youtube.com/watch?v=WXVQz0ARz28
-
-
 import org.w3c.dom.css.RGBColor;
 
 import java.awt.*;
@@ -15,7 +11,7 @@ import javax.imageio.ImageIO;
 import javax.swing.*;
 
 import static java.awt.BorderLayout.*;
-//version with circle restriction
+
 class ImageChanger{
     //Уменьшает изображение в натуральное количество раз
     public BufferedImage SizeDecreaser(BufferedImage source, int decreasingcoefficient){
@@ -196,14 +192,14 @@ class ImageChanger{
 }
 class Methods{
     //Суть методов установления соотвествия довольно похожа, различаются в основном математические формулы и их смысл (в следствие чего и разные предельные функции)
-    public boolean DoMagic(int[][] scanim1, int[][] scanim2, int scanscreensize, double average){
+    public boolean DoMagic(int[][] scanim1, int[][] scanim2, int scanscreensize, double average, Double besttotal){
         return true;
     }
 }
 class NCC extends Methods{
 
     @Override
-    public boolean DoMagic(int[][] scanim1, int[][] scanim2, int scanscreensize, double average){
+    public boolean DoMagic(int[][] scanim1, int[][] scanim2, int scanscreensize, double average, Double besttotal){
         double averageim1=0;
         double averageim2=0;
         for(int i=0;i<scanscreensize;i++){
@@ -226,38 +222,48 @@ class NCC extends Methods{
         double total;
         total=numerator/denominator;
         //предел как всегда подбирался вручную
-        if(total>0.75) //чем больше total, тем более схожи части изображений, но не стоит ставить слишком высокий, иначе просто не найдет совпадений
+        if(total>besttotal) {//чем больше total, тем более схожи части изображений, но не стоит ставить слишком высокий, иначе просто не найдет совпадений
+            besttotal=total;
+            System.out.println("New besttotal "+besttotal);
             return true;
+        }
         else
             return false;
     }
 }
 class SAD extends Methods{
     @Override
-    public boolean DoMagic(int[][] scanim1, int[][] scanim2, int scanscreensize, double average){
+    public boolean DoMagic(int[][] scanim1, int[][] scanim2, int scanscreensize, double average, Double besttotal){
         double total=0;
         for(int i = 0; i< scanscreensize; i++) {
             for (int j = 0; j < scanscreensize; j++) {
                 total += Math.abs(scanim1[i][j] - scanim2[i][j]);
             }
         }
-        if(total<average*0.2*Math.pow(scanscreensize,2)) //Максимально логичная функция, хотя все равно работает далеко не идеально
+        if(total<besttotal/*average*0.2*Math.pow(scanscreensize,2)*/) {
+            //Максимально логичная функция, хотя все равно работает далеко не идеально
+            besttotal=total;
+            System.out.println("New besttotal "+besttotal);
             return true;
+        }
         else
             return false;
     }
 }
 class SSD extends Methods{
     @Override
-    public boolean DoMagic(int[][] scanim1, int[][] scanim2, int scanscreensize, double average){
+    public boolean DoMagic(int[][] scanim1, int[][] scanim2, int scanscreensize, double average, Double besttotal){
         double total=0;
         for(int i = 0; i < scanscreensize; i++){
             for(int j = 0; j<scanscreensize; j++){
                 total+=Math.pow(scanim1[i][j]-scanim2[i][j],2);
             }
         }
-        if(total<Math.pow(average*Math.pow(0.2*scanscreensize,2),2)) //В данном случае также
+        if(total<besttotal/*Math.pow(average*Math.pow(0.2*scanscreensize,2),2)*/) {//В данном случае также
+            besttotal=total;
+            System.out.println("New besttotal "+besttotal);
             return true;
+        }
         else
             return false;
     }
@@ -267,8 +273,8 @@ class SSD extends Methods{
 class Malen extends JFrame {
     //В данном разделе, как уже понятно из класса-предка будет нудное создание интерфейса
     //Который, к слову, получился совсем не так, как задумывался
-    File LI =new File("D:\\Imiges\\left.jpg");
-    File RI = new File("D:\\Imiges\\right.jpg");
+    File LI /*=new File("D:\\Imiges\\left.jpg")*/;
+    File RI /*= new File("D:\\Imiges\\right.jpg")*/;
     BufferedImage image1 = null;
     BufferedImage image2 = null;
     BufferedImage gradientstripe;
@@ -306,11 +312,11 @@ class Malen extends JFrame {
     JButton GoMakeSomeMagic = new JButton("GoMakeSOMEMAGIC");
     JButton SelectLeftImage = new JButton("Load Left Image");
     JButton SelectRightImage = new JButton("Load Right Image");
-    ButtonGroup  methods = new ButtonGroup();
+    ButtonGroup methods = new ButtonGroup();
     ButtonGroup filtration = new ButtonGroup();
     JFileChooser loadleftimage = new JFileChooser();
     JFileChooser loadrightimage = new JFileChooser();
-    JTextField UserSize = new JTextField("4", 4);
+    JTextField UserSize = new JTextField("", 4);
     Box zero = Box.createHorizontalBox();
     Box first = Box.createHorizontalBox();
     Box second = Box.createHorizontalBox();
@@ -492,23 +498,10 @@ class Malen extends JFrame {
         //Вот тут главная претензия: какого черта центр это совсем не центр, что касается и остальных сторон света
         frame.getContentPane();
         panel.setLayout(new GridLayout(2,2,10,10));
-        if(LI==null&&RI==null) {
-            LeftImageLabel.setIcon(null/*new ImageIcon(ichange.SizeDecreaser(image1,2))*/);
-            panel.add(LeftImageLabel);
-            RightImageLabel.setIcon(null/*new ImageIcon(ichange.SizeDecreaser(image2,2))*/);
-            panel.add(RightImageLabel);
-        }else{
-            image1 = ImageIO.read(LI);
-            width = image1.getWidth();
-            height = image1.getHeight();
-            LeftImageLabel.setIcon(new ImageIcon(ichange.SizeDecreaser(image1,2)));
-            panel.add(LeftImageLabel);
-            image2 = ImageIO.read(RI);
-            width = image2.getWidth();
-            height = image2.getHeight();
-            RightImageLabel.setIcon(new ImageIcon(ichange.SizeDecreaser(image2,2)));
-            panel.add(RightImageLabel);
-        }
+        LeftImageLabel.setIcon(null/*new ImageIcon(ichange.SizeDecreaser(image1,2))*/);
+        panel.add(LeftImageLabel);
+        RightImageLabel.setIcon(null/*new ImageIcon(ichange.SizeDecreaser(image2,2))*/);
+        panel.add(RightImageLabel);
         /* TopImageLabel.setIcon(null*//*new ImageIcon(ichange.SizeDecreaser(image1,2))*//*);
         panel.add(TopImageLabel);*/
         panel.add(firstvert);
@@ -625,7 +618,7 @@ class Malen extends JFrame {
     }
 
 
-    public boolean Functions(int choose_the_function, int row1, int col1, int row2, int col2) {
+    public boolean Functions(int choose_the_function, int row1, int col1, int row2, int col2, Double besttotal) {
         Methods method;
         //чтобы не таскать дальше эти большие фотки, создаем копии только нужных областей
         int[][] tempmatrix1 = new int[scanscreensize][scanscreensize];
@@ -640,15 +633,15 @@ class Malen extends JFrame {
             //Пирсона (NСС)
             case 1:
                 method = new NCC();
-                return method.DoMagic(tempmatrix1, tempmatrix2, scanscreensize, average4ssdandsad);
+                return method.DoMagic(tempmatrix1, tempmatrix2, scanscreensize, average4ssdandsad, besttotal);
             //SAD
             case 2:
                 method = new SAD();
-                return method.DoMagic(tempmatrix1, tempmatrix2, scanscreensize, average4ssdandsad);
+                return method.DoMagic(tempmatrix1, tempmatrix2, scanscreensize, average4ssdandsad, besttotal);
             //SSD
             case 3:
                 method = new SSD();
-                return method.DoMagic(tempmatrix1, tempmatrix2, scanscreensize, average4ssdandsad);
+                return method.DoMagic(tempmatrix1, tempmatrix2, scanscreensize, average4ssdandsad, besttotal);
         }
         return false;
     }
@@ -657,24 +650,32 @@ class Malen extends JFrame {
         if (width % scanscreensize == 0 && height % scanscreensize == 0) {
             matrix3 = new double[width / scanscreensize][height / scanscreensize]; //матрица смещений
             //процесс нахождение точно значения пикселя первой матрицы во второй
-            boolean isFound;
-            double hypot;
+            Double besttotal = (double) 0;
+            int coincidentx=0;
+            int coinncidenty=0;
             for (int row_image1 = 0; row_image1 < width - scanscreensize + 1; row_image1 += scanscreensize) {
                 for (int col_image1 = 0; col_image1 < height - scanscreensize + 1; col_image1 += scanscreensize) {
-                    isFound = false;
-                    for (int row_image2 = 0; row_image2 < width-scanscreensize + 1; row_image2++) {
-                        for (int col_image2 = 0; col_image2 < height - scanscreensize + 1; col_image2++) {
-                            hypot = Math.hypot(row_image1-row_image2,col_image1-col_image2);
-                            //На самом деле ограничение области поиска (гипотенуза) должно быть намного уже, но программа просто напросто отказывается адекватно работать
-                            if (hypot<100&&Functions(userchoise, row_image1, col_image1, row_image2, col_image2)) {
-                                isFound = true;
-                                matrix3[row_image1 / scanscreensize][col_image1 / scanscreensize] = hypot;
-                                break;
-                            }
-                        }
-                        if (isFound)
+                    switch (userchoise){
+                        case 1:
+                            besttotal = 0.75;
+                            break;
+                        case 2:
+                            besttotal = average4ssdandsad*0.2*Math.pow(scanscreensize,2);
+                            break;
+                        case 3:
+                            besttotal = Math.pow(average4ssdandsad*Math.pow(0.2*scanscreensize,2),2);
                             break;
                     }
+                    for (int row_image2 = 0; row_image2 < width-scanscreensize + 1; row_image2++) {
+                        for (int col_image2 = 0; col_image2 < height - scanscreensize + 1; col_image2++) {
+                            //На самом деле ограничение области поиска (гипотенуза) должно быть намного уже, но программа просто напросто отказывается адекватно работать
+                            if (Functions(userchoise, row_image1, col_image1, row_image2, col_image2, besttotal)) {
+                                coincidentx=row_image2;
+                                coinncidenty=col_image2;
+                            }
+                        }
+                    }
+                    matrix3[row_image1/scanscreensize][col_image1/scanscreensize] = Math.hypot(coincidentx-row_image1,coinncidenty-col_image1);
                 }
             }
         }
