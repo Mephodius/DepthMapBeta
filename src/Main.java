@@ -1,4 +1,4 @@
-import org.w3c.dom.css.RGBColor;
+import com.sun.source.tree.WhileLoopTree;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -6,60 +6,59 @@ import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.util.Scanner;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 
-import static java.awt.BorderLayout.*;
-
-class ImageChanger{
+class ImageChanger {
     //Уменьшает изображение в натуральное количество раз
-    public BufferedImage SizeDecreaser(BufferedImage source, int decreasingcoefficient){
+    public BufferedImage SizeDecreaser(BufferedImage source, int decreasingcoefficient) {
 
-        if(source.getWidth()/decreasingcoefficient==(int)(source.getWidth()/decreasingcoefficient)&&source.getHeight()/decreasingcoefficient==(int)(source.getHeight()/decreasingcoefficient)) {
-            BufferedImage result = new BufferedImage(source.getWidth()/decreasingcoefficient,source.getHeight()/decreasingcoefficient, BufferedImage.TYPE_INT_RGB);
+        if (source.getWidth() / decreasingcoefficient == (int) (source.getWidth() / decreasingcoefficient) && source.getHeight() / decreasingcoefficient == (int) (source.getHeight() / decreasingcoefficient)) {
+            BufferedImage result = new BufferedImage(source.getWidth() / decreasingcoefficient, source.getHeight() / decreasingcoefficient, BufferedImage.TYPE_INT_RGB);
             int tempblue;
             int tempred;
             int tempgreen;
-            for (int i = 0; i < source.getWidth()/ decreasingcoefficient; i++) {
+            for (int i = 0; i < source.getWidth() / decreasingcoefficient; i++) {
                 for (int j = 0; j < source.getHeight() / decreasingcoefficient; j++) {
-                    tempblue=0;
-                    tempred=0;
-                    tempgreen=0;
-                    for(int k=0; k<decreasingcoefficient;k++){
-                        for(int h=0; h<decreasingcoefficient;h++){
-                            Color color = new Color(source.getRGB(i*decreasingcoefficient+k,j*decreasingcoefficient+h));
-                            tempblue+=color.getBlue();
-                            tempred+=color.getRed();
-                            tempgreen+=color.getGreen();
+                    tempblue = 0;
+                    tempred = 0;
+                    tempgreen = 0;
+                    for (int k = 0; k < decreasingcoefficient; k++) {
+                        for (int h = 0; h < decreasingcoefficient; h++) {
+                            Color color = new Color(source.getRGB(i * decreasingcoefficient + k, j * decreasingcoefficient + h));
+                            tempblue += color.getBlue();
+                            tempred += color.getRed();
+                            tempgreen += color.getGreen();
                         }
                     }
-                    tempblue/=Math.pow(decreasingcoefficient,2);
-                    tempred/=Math.pow(decreasingcoefficient,2);
-                    tempgreen/=Math.pow(decreasingcoefficient,2);
-                    Color tempcolor = new Color(tempred,tempgreen,tempblue);
+                    tempblue /= Math.pow(decreasingcoefficient, 2);
+                    tempred /= Math.pow(decreasingcoefficient, 2);
+                    tempgreen /= Math.pow(decreasingcoefficient, 2);
+                    Color tempcolor = new Color(tempred, tempgreen, tempblue);
                     //System.out.println(tempred+" "+tempgreen+" "+tempblue+" "+tempcolor);
-                    result.setRGB(i,j,tempcolor.getRGB());
+                    result.setRGB(i, j, tempcolor.getRGB());
                 }
             }
             return result;
         }
         return null;
     }
+
     //Увеличивает изображение в натуральное количество раз
-    public BufferedImage SizeIncreaser(BufferedImage source, int increasingcoefficient){
-        BufferedImage result = new BufferedImage(source.getWidth()*increasingcoefficient,source.getHeight()*increasingcoefficient, BufferedImage.TYPE_INT_RGB);
-        for(int i=0;i<source.getWidth()*increasingcoefficient;i++){
-            for(int j=0; j<source.getHeight()*increasingcoefficient;j++){
-                Color tempcolor = new Color(source.getRGB(i/increasingcoefficient,j/increasingcoefficient));
-                result.setRGB(i,j,tempcolor.getRGB());
+    public BufferedImage SizeIncreaser(BufferedImage source, int increasingcoefficient) {
+        BufferedImage result = new BufferedImage(source.getWidth() * increasingcoefficient, source.getHeight() * increasingcoefficient, BufferedImage.TYPE_INT_RGB);
+        for (int i = 0; i < source.getWidth() * increasingcoefficient; i++) {
+            for (int j = 0; j < source.getHeight() * increasingcoefficient; j++) {
+                Color tempcolor = new Color(source.getRGB(i / increasingcoefficient, j / increasingcoefficient));
+                result.setRGB(i, j, tempcolor.getRGB());
             }
         }
         return result;
     }
+
     //Изменяет размер изображения, при этом не обязательно в натуральное количество раз
-    public BufferedImage SizeChanger(BufferedImage source, double changingcoefficient){
-        if(source.getWidth()/changingcoefficient==(int)(source.getWidth()/changingcoefficient)&&source.getHeight()/changingcoefficient==(int)(source.getHeight()/changingcoefficient)) {
+    public BufferedImage SizeChanger(BufferedImage source, double changingcoefficient) {
+        if (source.getWidth() / changingcoefficient == (int) (source.getWidth() / changingcoefficient) && source.getHeight() / changingcoefficient == (int) (source.getHeight() / changingcoefficient)) {
             int denominator = 1;
             do {
                 changingcoefficient *= 10;
@@ -83,12 +82,13 @@ class ImageChanger{
         }
         return source;
     }
-    public BufferedImage SizeChanger(BufferedImage source,int increasingcoefficient, int decreasingcoefficient){
-        if(source.getWidth()*increasingcoefficient/decreasingcoefficient==(int)(source.getWidth()*increasingcoefficient/decreasingcoefficient)&&source.getHeight()*increasingcoefficient/decreasingcoefficient==(int)(source.getHeight()*increasingcoefficient/decreasingcoefficient)) {
+
+    public BufferedImage SizeChanger(BufferedImage source, int increasingcoefficient, int decreasingcoefficient) {
+        if (source.getWidth() * increasingcoefficient / decreasingcoefficient == (int) (source.getWidth() * increasingcoefficient / decreasingcoefficient) && source.getHeight() * increasingcoefficient / decreasingcoefficient == (int) (source.getHeight() * increasingcoefficient / decreasingcoefficient)) {
             // System.out.println("NUMERATOR "+numerator+" DENOMINATOR "+denominator);
             BufferedImage temp = new BufferedImage(source.getWidth() * increasingcoefficient, source.getHeight() * increasingcoefficient, BufferedImage.TYPE_INT_RGB);
             temp = SizeIncreaser(source, increasingcoefficient);
-            BufferedImage result = new BufferedImage((int) (source.getWidth()*increasingcoefficient/decreasingcoefficient), (int) (source.getHeight()*increasingcoefficient/decreasingcoefficient), BufferedImage.TYPE_INT_RGB);
+            BufferedImage result = new BufferedImage((int) (source.getWidth() * increasingcoefficient / decreasingcoefficient), (int) (source.getHeight() * increasingcoefficient / decreasingcoefficient), BufferedImage.TYPE_INT_RGB);
             result = SizeDecreaser(temp, decreasingcoefficient);
             return result;
         }
@@ -110,34 +110,35 @@ class ImageChanger{
             }
         }
     }
-    public BufferedImage Filtration(int[][] source, int height, int width, double average, int typeofmask){
-        int size=3;
+
+    public BufferedImage Filtration(int[][] source, int height, int width, double average, int typeofmask) {
+        int size = 3;
         //Маски стандартные, легко гуглятся
-        int [][] mask;
+        int[][] mask;
         double Gx, Gy, Grad;
         int[][] tempmatrix = new int[width][height];
-        double limit=0;
-        switch(typeofmask){
+        double limit = 0;
+        switch (typeofmask) {
             case 1: //Roberts
-                mask = new int[][]{{1, 0}, {0,-1}};
-                size=2;
-                limit = average*0.15; // Пределы подрибались исключительно вручную
+                mask = new int[][]{{1, 0}, {0, -1}};
+                size = 2;
+                limit = average * 0.15; // Пределы подрибались исключительно вручную
                 break;
             case 2: //Previtt
-                mask = new int[][]{{-1,-1,-1}, {0, 0, 0}, {1, 1, 1}};
-                limit = average*0.42; // Для большей точности, конечно, лучше, чтобы функцию подбирала машина (можно сделать с помощью машинного обучения и т.п)
+                mask = new int[][]{{-1, -1, -1}, {0, 0, 0}, {1, 1, 1}};
+                limit = average * 0.42; // Для большей точности, конечно, лучше, чтобы функцию подбирала машина (можно сделать с помощью машинного обучения и т.п)
                 break;
             case 3: //Sobel
-                mask = new int[][]{{-1,-2,-1}, {0, 0, 0}, {1, 2, 1}};
-                limit = average*0.42; // Это скорее любительская lite-версия
+                mask = new int[][]{{-1, -2, -1}, {0, 0, 0}, {1, 2, 1}};
+                limit = average * 0.42; // Это скорее любительская lite-версия
                 break;
             default:
-                mask = new int[][]{{1,1,1},{1,1,1},{1,1,1}};
+                mask = new int[][]{{0, 0, 0}, {0, 1, 0}, {0, 0, 0}};
                 break;
         }
 
-        for(int i =0; i< width-2; i++){
-            for(int j=0; j< height-2; j++) {
+        for (int i = 0; i < width - 2; i++) {
+            for (int j = 0; j < height - 2; j++) {
                 Gx = 0;
                 Gy = 0;
                 for (int k = 0; k < size; k++) {
@@ -146,35 +147,35 @@ class ImageChanger{
                         Gy += source[i + k][j + h] * mask[size - 1 - k][size - 1 - h];
                     }
                 }
-                Grad = Math.hypot(Gx,Gy);
-                tempmatrix[i+1][j+1] = (int) Grad;
+                Grad = Math.hypot(Gx, Gy);
+                tempmatrix[i + 1][j + 1] = (int) Grad;
                 if (Grad > limit) {
-                    tempmatrix[i+1][j+1] = 255; //белый цвет для краевых точек
+                    tempmatrix[i + 1][j + 1] = 255; //белый цвет для краевых точек
                 } else {
-                    tempmatrix[i+1][j+1] = 0; //черный для внутренних
+                    tempmatrix[i + 1][j + 1] = 0; //черный для внутренних
                 }
             }
         }
-        BufferedImage result = new BufferedImage(width,height, BufferedImage.TYPE_INT_RGB);
-        for(int i =1; i< width-1; i++){
-            for(int j=1; j< height-1; j++) {
-                Color pixelcolor = new Color(tempmatrix[i][j],tempmatrix[i][j],tempmatrix[i][j]);
-                result.setRGB(i,j, pixelcolor.getRGB());
+        BufferedImage result = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+        for (int i = 1; i < width - 1; i++) {
+            for (int j = 1; j < height - 1; j++) {
+                Color pixelcolor = new Color(tempmatrix[i][j], tempmatrix[i][j], tempmatrix[i][j]);
+                result.setRGB(i, j, pixelcolor.getRGB());
             }
         }
         //раскраска оставшихся пикселей
-        for(int i=0;i<width;i++){
-            Color pixelcolor = new Color(0,0,0);
-            result.setRGB(i,0, pixelcolor.getRGB());
-            if(size!=2)
-                result.setRGB(i, height-1,pixelcolor.getRGB());
+        for (int i = 0; i < width; i++) {
+            Color pixelcolor = new Color(0, 0, 0);
+            result.setRGB(i, 0, pixelcolor.getRGB());
+            if (size != 2)
+                result.setRGB(i, height - 1, pixelcolor.getRGB());
         }
 
-        for(int j=1;j<height-1;j++){
-            Color pixelcolor = new Color(0,0,0);
+        for (int j = 1; j < height - 1; j++) {
+            Color pixelcolor = new Color(0, 0, 0);
             result.setRGB(0, j, pixelcolor.getRGB());
-            if(size!=2)
-                result.setRGB(width-1, j, pixelcolor.getRGB());
+            if (size != 2)
+                result.setRGB(width - 1, j, pixelcolor.getRGB());
         }
 
            /*
@@ -190,100 +191,125 @@ class ImageChanger{
         return result;
     }
 }
-class Methods{
+
+class CompareMethod {
+    protected Double bestTotal;
     //Суть методов установления соотвествия довольно похожа, различаются в основном математические формулы и их смысл (в следствие чего и разные предельные функции)
-    public boolean DoMagic(int[][] scanim1, int[][] scanim2, int scanscreensize, double average, Double besttotal){
+    public boolean DoMagic(int[][][] scanim1, int[][][] scanim2, int scanscreensize, double[] average) {
         return true;
     }
+    public void setStartTotal(Double startTotal){
+        this.bestTotal = startTotal;
+    }
 }
-class NCC extends Methods{
+
+class NCC extends CompareMethod {
 
     @Override
-    public boolean DoMagic(int[][] scanim1, int[][] scanim2, int scanscreensize, double average, Double besttotal){
-        double averageim1=0;
-        double averageim2=0;
-        for(int i=0;i<scanscreensize;i++){
-            for(int j=0; j<scanscreensize; j++){
-                averageim1+=scanim1[i][j];
-                averageim2+=scanim2[i][j];
+    public boolean DoMagic(int[][][] scanim1, int[][][] scanim2, int scanscreensize, double[] average) {
+        double[] averageim1 = {0, 0, 0};
+        double[] averageim2 = {0, 0, 0};
+        double numerator;
+        double denominator;
+        double temp;
+        double[] total = {0, 0, 0};
+        for (int k = 0; k < 3; k++) {
+            for (int i = 0; i < scanscreensize; i++) {
+                for (int j = 0; j < scanscreensize; j++) {
+                    averageim1[k] += scanim1[i][j][k];
+                    averageim2[k] += scanim2[i][j][k];
+                }
             }
-        }
-        averageim1/=Math.pow(scanscreensize,2);
-        averageim2/=Math.pow(scanscreensize,2);
-        double numerator=0;
-        double denominator=0;
-        for(int i=0;i<scanscreensize;i++) {
-            for (int j = 0; j < scanscreensize; j++) {
-                numerator+=(scanim1[i][j]-averageim1)*(scanim2[i][j]-averageim2);
-                denominator+=Math.pow((scanim1[i][j]-averageim1)*(scanim2[i][j]-averageim2),2);
+            averageim1[k] /= Math.pow(scanscreensize, 2);
+            averageim2[k] /= Math.pow(scanscreensize, 2);
+            numerator = 0;
+            denominator = 0;
+            temp = 0;
+            for (int i = 0; i < scanscreensize; i++) {
+                for (int j = 0; j < scanscreensize; j++) {
+                    numerator += (scanim1[i][j][k] - averageim1[k]) * (scanim2[i][j][k] - averageim2[k]);
+                    denominator += Math.pow((scanim1[i][j][k] - averageim1[k]), 2);
+                    temp += Math.pow((scanim2[i][j][k] - averageim2[k]), 2);
+                }
             }
+            denominator = Math.sqrt(denominator) * Math.sqrt(temp);
+
+            total[k] = numerator / denominator;
         }
-        denominator=Math.sqrt(denominator);
-        double total;
-        total=numerator/denominator;
+        double total_avg = (total[0] + total[1] + total[2])/3;
         //предел как всегда подбирался вручную
-        if(total>besttotal) {//чем больше total, тем более схожи части изображений, но не стоит ставить слишком высокий, иначе просто не найдет совпадений
-            besttotal=total;
-            System.out.println("New besttotal "+besttotal);
+        if (total_avg > bestTotal) {//чем больше total, тем более схожи части изображений, но не стоит ставить слишком высокий, иначе просто не найдет совпадений
+            bestTotal = total_avg;
+            //System.out.println("New besttotal " + besttotal);
             return true;
-        }
-        else
+        } else
             return false;
     }
 }
-class SAD extends Methods{
+
+class SAD extends CompareMethod {
     @Override
-    public boolean DoMagic(int[][] scanim1, int[][] scanim2, int scanscreensize, double average, Double besttotal){
-        double total=0;
-        for(int i = 0; i< scanscreensize; i++) {
+    public boolean DoMagic(int[][][] scanim1, int[][][] scanim2, int scanscreensize, double[] average) {
+        double[] total = {0, 0, 0};
+        for (int i = 0; i < scanscreensize; i++) {
             for (int j = 0; j < scanscreensize; j++) {
-                total += Math.abs(scanim1[i][j] - scanim2[i][j]);
+                for (int k = 0; k < 3; k++) {
+                    total[k] += Math.abs(scanim1[i][j][k] - scanim2[i][j][k]);
+                }
             }
         }
-        if(total<besttotal/*average*0.2*Math.pow(scanscreensize,2)*/) {
-            //Максимально логичная функция, хотя все равно работает далеко не идеально
-            besttotal=total;
-            System.out.println("New besttotal "+besttotal);
+        double total_avg = (total[0] + total[1] + total[2])/3;
+        if (total_avg < bestTotal/*Math.pow(average*Math.pow(0.2*scanscreensize,2),2)*/) {//В данном случае также
+            bestTotal = total_avg;
+            //System.out.println("New besttotal " + besttotal);
             return true;
-        }
-        else
+        } else
             return false;
     }
 }
-class SSD extends Methods{
+
+class SSD extends CompareMethod {
     @Override
-    public boolean DoMagic(int[][] scanim1, int[][] scanim2, int scanscreensize, double average, Double besttotal){
-        double total=0;
-        for(int i = 0; i < scanscreensize; i++){
-            for(int j = 0; j<scanscreensize; j++){
-                total+=Math.pow(scanim1[i][j]-scanim2[i][j],2);
+    public boolean DoMagic(int[][][] scanim1, int[][][] scanim2, int scanscreensize, double[] average) {
+        double[] total = {0, 0, 0};
+        for (int i = 0; i < scanscreensize; i++) {
+            for (int j = 0; j < scanscreensize; j++) {
+                for (int k = 0; k < 3; k++) {
+                    total[k] += Math.pow(scanim1[i][j][k] - scanim2[i][j][k], 2);
+                }
             }
         }
-        if(total<besttotal/*Math.pow(average*Math.pow(0.2*scanscreensize,2),2)*/) {//В данном случае также
-            besttotal=total;
-            System.out.println("New besttotal "+besttotal);
+        double total_avg = (total[0] + total[1] + total[2])/3;
+        if (total_avg < bestTotal/*Math.pow(average*Math.pow(0.2*scanscreensize,2),2)*/) {//В данном случае также
+            bestTotal = total_avg;
+            //System.out.println("New besttotal " + besttotal);
             return true;
-        }
-        else
+        } else
             return false;
     }
 }
 
 
-class Malen extends JFrame {
+class MainFrame extends JFrame {
     //В данном разделе, как уже понятно из класса-предка будет нудное создание интерфейса
     //Который, к слову, получился совсем не так, как задумывался
-    File LI /*=new File("D:\\Imiges\\left.jpg")*/;
-    File RI /*= new File("D:\\Imiges\\right.jpg")*/;
+    int guiImageWidth = 250;
+    int guiImageHeight = 200;
+    File LI = null;
+    //new File("D:\\Images\\left.jpg");
+    File RI = null;
+    // new File("D:\\Images\\right.jpg");
     BufferedImage image1 = null;
     BufferedImage image2 = null;
     BufferedImage gradientstripe;
+    BufferedImage buff;
+    BufferedImage DeepMap;
     int scanscreensize;
-    int matrix1[][];//first image
-    int matrix2[][];//second image
+    int matrix1[][][];//first image
+    int matrix2[][][];//second image
     public double matrix3[][];//disperyty`s matrix
     int width, height; //ширина и высота фотки
-    public double average4ssdandsad;//средняя "яркость" на элемент матриц, похже используется в паре методов
+    public double[] average4ssdandsad = new double[3];//средняя "яркость" на элемент матриц, похже используется в паре методов
     JFrame frame = new JFrame();
     JPanel panel = new JPanel();
     JLabel NCC = new JLabel("NCC");
@@ -291,12 +317,11 @@ class Malen extends JFrame {
     JLabel SSD = new JLabel("SSD");
     JLabel BW = new JLabel("BW");
     JLabel SOBEL = new JLabel("SOBEL");
-    JLabel ROBERTS = new JLabel("ROBERTS");
     JLabel PREVITT = new JLabel("PREVITT");
     JLabel NONE = new JLabel("NONE");
     JLabel ScanScreen = new JLabel("Write the size of a scanning screen");
     JLabel Selections = new JLabel("");
-    JLabel TopImageLabel = new JLabel("Main image");
+    //JLabel TopImageLabel = new JLabel("Main image");
     JLabel LeftImageLabel = new JLabel("Left image");
     JLabel RightImageLabel = new JLabel("Right image");
     JLabel BottomImageLabel = new JLabel("Deep map");
@@ -304,12 +329,13 @@ class Malen extends JFrame {
     JRadioButton ncc = new JRadioButton("", false);
     JRadioButton sad = new JRadioButton("", false);
     JRadioButton ssd = new JRadioButton("", false);
-    JCheckBox bw = new JCheckBox("", false);
+    JCheckBox bw = new JCheckBox("BW", false);
     JRadioButton Sobel = new JRadioButton("", false);
-    JRadioButton Roberts = new JRadioButton("", false);
     JRadioButton Previtt = new JRadioButton("", false);
     JRadioButton none = new JRadioButton("", true);
-    JButton GoMakeSomeMagic = new JButton("GoMakeSOMEMAGIC");
+    JButton GoMakeSomeMagic = new JButton("Go");
+    JButton Buff = new JButton("Buff");
+    JButton GetMetrics = new JButton("GetStat");
     JButton SelectLeftImage = new JButton("Load Left Image");
     JButton SelectRightImage = new JButton("Load Right Image");
     ButtonGroup methods = new ButtonGroup();
@@ -318,6 +344,7 @@ class Malen extends JFrame {
     JFileChooser loadrightimage = new JFileChooser();
     JTextField UserSize = new JTextField("", 4);
     Box zero = Box.createHorizontalBox();
+    Box zero_first = Box.createHorizontalBox();
     Box first = Box.createHorizontalBox();
     Box second = Box.createHorizontalBox();
     Box third = Box.createHorizontalBox();
@@ -327,19 +354,32 @@ class Malen extends JFrame {
     Box sixth = Box.createHorizontalBox();
     Box firstvert = Box.createVerticalBox();
     Box deepmap = Box.createHorizontalBox();
+    JCheckBox ApplyForDepthMap = new JCheckBox("Apply to depth map");
+    JCheckBox AdaptiveSize = new JCheckBox("AS");
+    JTextField Filtersize = new JTextField("3", 5);
+    JPanel filtersize_panel = new JPanel();
+    JLabel text = new JLabel("size");
+    JButton ApplyFunction = new JButton("Apply Function");
+    JComboBox Function = new JComboBox(new String[]{"wmedian","amedian","prewitt","sobel","median", "avg", "min", "max", "gamma", "clarity", "equalize"});
+    ImageProcessor improc = new ImageProcessor();
+    int[] size_adjustment = {0, 0};
+    int filtersize = 9;
 
     public static void main(String[] args) throws IOException {
-        Malen fr = new Malen();
+        MainFrame fr = new MainFrame();
 
     }
 
-    public Malen() throws IOException {
+    public MainFrame() throws IOException {
 
 //http://software-testing.ru/forum/index.php?/topic/19084-sravnenie-dvuh-izobrazhenii/
 //http://sbp-program.ru/java/sbp-bufferedimage.htm
+        loadleftimage.setCurrentDirectory(new File("D:\\Images\\"));
+        loadrightimage.setCurrentDirectory(new File("D:\\Images\\"));
+
         frame.setLayout(new BorderLayout());
-        frame.setSize(800, 500); //размер фрейма
-        frame.setTitle("Deep map by Kirill Kolesnikov, inspired and supported by Oleg Kovalev");
+        frame.setSize(650, 500); //размер фрейма
+        frame.setTitle("Depth map by Kirill Kolesnikov, inspired and supported by Oleg Kovalev");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setLocationRelativeTo(null);
         frame.setResizable(false);
@@ -349,7 +389,6 @@ class Malen extends JFrame {
         methods.add(sad);
         methods.add(ssd);
         filtration.add(Sobel);
-        filtration.add(Roberts);
         filtration.add(Previtt);
         filtration.add(none);
         zero.add(Box.createHorizontalGlue());
@@ -362,106 +401,273 @@ class Malen extends JFrame {
         first.add(Box.createHorizontalGlue());
         first.add(ncc);
         first.add(Box.createHorizontalGlue());
-        first.add(SOBEL);
-        first.add(Box.createHorizontalGlue());
-        first.add(Sobel);
+        first.add(ApplyFunction);
         first.add(Box.createHorizontalGlue());
         second.add(Box.createHorizontalGlue());
         second.add(SAD);
         second.add(Box.createHorizontalGlue());
         second.add(sad);
         second.add(Box.createHorizontalGlue());
-        second.add(ROBERTS);
-        second.add(Box.createHorizontalGlue());
-        second.add(Roberts);
+        second.add(Function);
         second.add(Box.createHorizontalGlue());
         third.add(Box.createHorizontalGlue());
         third.add(SSD);
         third.add(Box.createHorizontalGlue());
         third.add(ssd);
         third.add(Box.createHorizontalGlue());
-        third.add(PREVITT);
+        third.add(ApplyForDepthMap);
         third.add(Box.createHorizontalGlue());
-        third.add(Previtt);
-        third.add(Box.createHorizontalGlue());
-        third2.add(Box.createHorizontalGlue());
-        third2.add(BW);
         third2.add(Box.createHorizontalGlue());
         third2.add(bw);
         third2.add(Box.createHorizontalGlue());
-        third2.add(NONE);
+        third2.add(AdaptiveSize);
         third2.add(Box.createHorizontalGlue());
-        third2.add(none);
+        third2.add(text);
+        third2.add(Box.createHorizontalGlue());
+        filtersize_panel.add(Filtersize);
+        filtersize_panel.setPreferredSize(new Dimension(30, 30));
+        third2.add(filtersize_panel);
         third2.add(Box.createHorizontalGlue());
         fourth.add(Box.createHorizontalGlue());
         fourth.add(ScanScreen);
         fourth.add(Box.createHorizontalGlue());
         sixth.add(Box.createHorizontalGlue());
         sixth.add(GoMakeSomeMagic);
+        sixth.add(Box.createHorizontalGlue());
+        sixth.add(Buff);
+        sixth.add(Box.createHorizontalGlue());
+        sixth.add(GetMetrics);
         sixth.add(Box.createHorizontalGlue());//чуть позже вернемся к графическому интерфейсу, для начала нужно раздобыть немного информации
-        ImageChanger ichange = new ImageChanger();
-        SelectLeftImage.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent actionEvent) {
-                try {
+        Buff.setEnabled(false);
+        GetMetrics.setEnabled(false);
+        SelectLeftImage.addActionListener(actionEvent -> {
+            try {
+                if (LI == null || RI == null) {
                     int leftret = loadleftimage.showDialog(null, "Загрузите левое изображение формата jpg");
                     if (leftret == JFileChooser.APPROVE_OPTION) {
                         LI = loadleftimage.getSelectedFile();
                     }
-                    image1 = ImageIO.read(LI);
-                    width = image1.getWidth();
-                    height = image1.getHeight();
-                    String SIZES = "";
-                    for (Integer i = 1; i < height / 2; i++) {
-                        if (height % i == 0 && width % i == 0) {
-                            System.out.print(i + " ");
-                            if (i == 1)
-                                SIZES += i.toString();
-                            else
-                                SIZES += "/" + i.toString();
-                        }
+                }
+                image1 = ImageIO.read(LI);
+                image1 = improc.SizeChangerLinear(image1, 384, 288);
+                LI = null;
+                width = image1.getWidth();
+                height = image1.getHeight();
+                String SIZES = "";
+                for (Integer i = 1; i < Math.min(height,width) / 2; i++) {
+                    if (height % i == 0 && width % i == 0) {
+                        System.out.print(i + " ");
+                        if (i == 1)
+                            SIZES += i.toString();
+                        else
+                            SIZES += "/" + i.toString();
                     }
-                    Selections.setText(SIZES);
-                    frame.getContentPane();
-                    //TopImageLabel.setIcon(new ImageIcon(ichange.SizeChanger(image1,2,3)));
-                    //panel.add(TopImageLabel, NORTH);
-                    LeftImageLabel.setIcon(new ImageIcon(ichange.SizeChanger(image1,2 ,3)));
-                    //panel.add(LeftImageLabel, WEST);
-                    frame.setVisible(true);
-                }catch(Exception e){}
+                }
+                Selections.setText(SIZES);
+                frame.getContentPane();
+                //TopImageLabel.setIcon(new ImageIcon(ichange.SizeChanger(image1,2,3)));
+                //panel.add(TopImageLabel, NORTH);
+                LeftImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(image1, guiImageWidth, guiImageHeight)));
+                //panel.add(LeftImageLabel, WEST);
+                frame.setVisible(true);
+            } catch (Exception e) {
             }
         });
-        SelectRightImage.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent actionEvent) {
-                try {
+        SelectRightImage.addActionListener(actionEvent -> {
+            try {
+                if (LI == null || RI == null) {
                     int rightret = loadrightimage.showDialog(null, "Загрузите правое изображение формата jpg");
                     if (rightret == JFileChooser.APPROVE_OPTION) {
                         RI = loadrightimage.getSelectedFile();
                     }
-                    image2 = ImageIO.read(RI);
-                    width = image2.getWidth();
-                    height = image2.getHeight();
-                    String SIZES = "";
-                    for (Integer i = 1; i < height / 2; i++) {
-                        if (height % i == 0 && width % i == 0) {
-                            System.out.print(i + " ");
-                            if (i == 1)
-                                SIZES += i.toString();
-                            else
-                                SIZES += "/" + i.toString();
-                        }
+                }
+                image2 = ImageIO.read(RI);
+                image2 = improc.SizeChangerLinear(image2, 384, 288);
+                RI = null;
+                width = image2.getWidth();
+                height = image2.getHeight();
+                String SIZES = "";
+                for (Integer i = 1; i < Math.min(height,width) / 2; i++) {
+                    if (height % i == 0 && width % i == 0) {
+                        System.out.print(i + " ");
+                        if (i == 1)
+                            SIZES += i.toString();
+                        else
+                            SIZES += "/" + i.toString();
                     }
-                    frame.getContentPane();
-                    Selections.setText(SIZES);
-                    RightImageLabel.setIcon(new ImageIcon(ichange.SizeChanger(image2,2,3)));
-                    //panel.add(RightImageLabel);
-                    frame.setVisible(true);
-                }catch(Exception e){}
+                }
+                frame.getContentPane();
+                Selections.setText(SIZES);
+                RightImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(image2, guiImageWidth, guiImageHeight)));
+                //panel.add(RightImageLabel);
+                frame.setVisible(true);
+            } catch (Exception e) {
             }
         });
 
+        ApplyFunction.addActionListener(new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if(image1 != null && image2 != null){
+                    String str = Function.getSelectedItem().toString();
+                    improc.setSize((int)Double.parseDouble(Filtersize.getText()));
+                    if (!ApplyForDepthMap.isSelected()) {
+                        switch (str) {
+                            case "gamma":
+                                improc.setSize(0);
+                                improc.loadFull(image1);
+                                image1 = ImageCopy(improc.applyFunction(2, Double.parseDouble(Filtersize.getText())));
+                                improc.loadFull(image2);
+                                image2 = ImageCopy(improc.applyFunction(2, Double.parseDouble(Filtersize.getText())));
+                                LeftImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(image1, guiImageWidth, guiImageHeight)));
+                                RightImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(image2, guiImageWidth, guiImageHeight)));
+                                break;
+                            case "min":
+                                improc.loadFull(image1);
+                                image1 = ImageCopy(improc.OrderStatFiltration("min"));
+                                improc.loadFull(image2);
+                                image2 = ImageCopy(improc.OrderStatFiltration("min"));
+                                LeftImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(image1, guiImageWidth, guiImageHeight)));
+                                RightImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(image2, guiImageWidth, guiImageHeight)));
+                                break;
+                            case "max":
+                                improc.loadFull(image1);
+                                image1 = ImageCopy(improc.OrderStatFiltration("max"));
+                                improc.loadFull(image2);
+                                image2 = ImageCopy(improc.OrderStatFiltration("max"));
+                                LeftImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(image1, guiImageWidth, guiImageHeight)));
+                                RightImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(image2, guiImageWidth, guiImageHeight)));
+                                break;
+                            case "median":
+                                improc.loadFull(image1);
+                                image1 = ImageCopy(improc.OrderStatFiltration("median"));
+                                improc.loadFull(image2);
+                                image2 = ImageCopy(improc.OrderStatFiltration("median"));
+                                LeftImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(image1, guiImageWidth, guiImageHeight)));
+                                RightImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(image2, guiImageWidth, guiImageHeight)));
+                                break;
+                            case "avg":
+                                improc.loadFull(image1);
+                                image1 = ImageCopy(improc.OrderStatFiltration("avg"));
+                                improc.loadFull(image2);
+                                image2 = ImageCopy(improc.OrderStatFiltration("avg"));
+                                LeftImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(image1, guiImageWidth, guiImageHeight)));
+                                RightImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(image2, guiImageWidth, guiImageHeight)));
+                                break;
+                            case "sobel":
+                                improc.loadFull(image1);
+                                image1 = ImageCopy(improc.Sobel());
+                                improc.loadFull(image2);
+                                image2 = ImageCopy(improc.Sobel());
+                                LeftImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(image1, guiImageWidth, guiImageHeight)));
+                                RightImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(image2, guiImageWidth, guiImageHeight)));
+                                break;
+                            case "prewitt":
+                                improc.loadFull(image1);
+                                image1 = ImageCopy(improc.Prewitt());
+                                improc.loadFull(image2);
+                                image2 = ImageCopy(improc.Prewitt());
+                                LeftImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(image1, guiImageWidth, guiImageHeight)));
+                                RightImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(image2, guiImageWidth, guiImageHeight)));
+                                break;
+                            case "clarity":
+                                improc.loadFull(image1);
+                                image1 = ImageCopy(improc.Clarity());
+                                improc.loadFull(image2);
+                                image2 = ImageCopy(improc.Clarity());
+                                LeftImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(image1, guiImageWidth, guiImageHeight)));
+                                RightImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(image2, guiImageWidth, guiImageHeight)));
+                                break;
+                            case "equalize":
+                                improc.loadFull(image1);
+                                image1 = improc.ImageContrastIncrease();
+                                improc.loadFull(image2);
+                                image2 = improc.ImageContrastIncrease();
+                                LeftImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(image1, guiImageWidth, guiImageHeight)));
+                                RightImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(image2, guiImageWidth, guiImageHeight)));
+                                break;
+                            case "amedian":
+                                improc.loadFull(image1);
+                                image1 = ImageCopy(improc.AdaptiveMedianFiltration());
+                                improc.loadFull(image2);
+                                image2 = ImageCopy(improc.AdaptiveMedianFiltration());
+                                LeftImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(image1, guiImageWidth, guiImageHeight)));
+                                RightImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(image2, guiImageWidth, guiImageHeight)));
+                                break;
+                            case "wmedian":
+                                improc.loadFull(image1);
+                                image1 = ImageCopy(improc.WeightedMedian());
+                                improc.loadFull(image2);
+                                image2 = ImageCopy(improc.WeightedMedian());
+                                LeftImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(image1, guiImageWidth, guiImageHeight)));
+                                RightImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(image2, guiImageWidth, guiImageHeight)));
+                                break;
+                        }
 
+                    }
+                    else{
+                        switch (str) {
+                            case "gamma":
+                                improc.setSize(0);
+                                improc.loadFull(DeepMap);
+                                DeepMap = ImageCopy(improc.applyFunction(2, Double.parseDouble(Filtersize.getText())));
+                                BottomImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(improc.SizeChanger(DeepMap, Math.round(((double)scanscreensize*guiImageWidth/width))), guiImageWidth, guiImageHeight)));
+                                break;
+                            case "min":
+                                improc.loadFull(DeepMap);
+                                DeepMap = ImageCopy(improc.OrderStatFiltration("min"));
+                                BottomImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(improc.SizeChanger(DeepMap, Math.round(((double)scanscreensize*guiImageWidth/width))), guiImageWidth, guiImageHeight)));
+                                break;
+                            case "max":
+                                improc.loadFull(DeepMap);
+                                DeepMap = ImageCopy(improc.OrderStatFiltration("max"));
+                                BottomImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(improc.SizeChanger(DeepMap, Math.round(((double)scanscreensize*guiImageWidth/width))), guiImageWidth, guiImageHeight)));
+                                break;
+                            case "median":
+                                improc.loadFull(DeepMap);
+                                DeepMap = ImageCopy(improc.OrderStatFiltration("median"));
+                                BottomImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(improc.SizeChanger(DeepMap, Math.round(((double)scanscreensize*guiImageWidth/width))), guiImageWidth, guiImageHeight)));
+                                break;
+                            case "avg":
+                                improc.loadFull(DeepMap);
+                                DeepMap = ImageCopy(improc.OrderStatFiltration("avg"));
+                                BottomImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(improc.SizeChanger(DeepMap, Math.round(((double)scanscreensize*guiImageWidth/width))), guiImageWidth, guiImageHeight)));
+                                break;
+                            case "sobel":
+                                improc.loadFull(DeepMap);
+                                DeepMap = ImageCopy(improc.Sobel());
+                                BottomImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(improc.SizeChanger(DeepMap, Math.round(((double)scanscreensize*guiImageWidth/width))), guiImageWidth, guiImageHeight)));
+                                break;
+                            case "prewitt":
+                                improc.loadFull(DeepMap);
+                                DeepMap = ImageCopy(improc.Prewitt());
+                                BottomImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(improc.SizeChanger(DeepMap, Math.round(((double)scanscreensize*guiImageWidth/width))), guiImageWidth, guiImageHeight)));
+                                break;
+                            case "clarity":
+                                improc.loadFull(DeepMap);
+                                DeepMap = ImageCopy(improc.Clarity());
+                                BottomImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(improc.SizeChanger(DeepMap, Math.round(((double)scanscreensize*guiImageWidth/width))), guiImageWidth, guiImageHeight)));
+                                break;
+                            case "equalize":
+                                improc.loadFull(DeepMap);
+                                DeepMap = improc.ImageContrastIncrease();
+                                BottomImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(improc.SizeChanger(DeepMap, Math.round(((double)scanscreensize*guiImageWidth/width))), guiImageWidth, guiImageHeight)));
+                                break;
+                            case "amedian":
+                                improc.loadFull(DeepMap);
+                                DeepMap = ImageCopy(improc.AdaptiveMedianFiltration());
+                                BottomImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(improc.SizeChanger(DeepMap, Math.round(((double)scanscreensize*guiImageWidth/width))), guiImageWidth, guiImageHeight)));
+                                break;
+                            case "wmedian":
+                                improc.loadFull(DeepMap);
+                                DeepMap = ImageCopy(improc.WeightedMedian());
+                                BottomImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(improc.SizeChanger(DeepMap, Math.round(((double)scanscreensize*guiImageWidth/width))), guiImageWidth, guiImageHeight)));
+                                break;
+                        }
+                    }
+                }
+            }
+        });
 
       /*  width = image1.getWidth() >= image2.getWidth() ? image2.getWidth() : image1.getWidth();
         height = image1.getHeight() >= image2.getHeight() ? image2.getHeight() : image1.getHeight();*/
@@ -476,6 +682,8 @@ class Malen extends JFrame {
         firstvert.add(Box.createVerticalGlue());
         firstvert.add(zero);
         firstvert.add(Box.createVerticalGlue());
+        //firstvert.add(zero_first);
+        //firstvert.add(Box.createVerticalGlue());
         firstvert.add(first);
         firstvert.add(Box.createVerticalGlue());
         firstvert.add(second);
@@ -493,115 +701,180 @@ class Malen extends JFrame {
         deepmap.add(Box.createHorizontalGlue());
         deepmap.add(BottomImageLabel);
         deepmap.add(Box.createHorizontalGlue());
-        deepmap.add(GradientOfColors);
+        //deepmap.add(GradientOfColors);
         deepmap.add(Box.createHorizontalGlue());
         //Вот тут главная претензия: какого черта центр это совсем не центр, что касается и остальных сторон света
         frame.getContentPane();
-        panel.setLayout(new GridLayout(2,2,10,10));
-        LeftImageLabel.setIcon(null/*new ImageIcon(ichange.SizeDecreaser(image1,2))*/);
+        panel.setLayout(new GridLayout(2, 2, 10, 10));
+        //image1 = ImageIO.read(LI);
+        LeftImageLabel.setIcon(null /*new ImageIcon(ichange.SizeDecreaser(image1,2))*/);
         panel.add(LeftImageLabel);
-        RightImageLabel.setIcon(null/*new ImageIcon(ichange.SizeDecreaser(image2,2))*/);
+        //image2 = ImageIO.read(RI);
+        RightImageLabel.setIcon(null /*new ImageIcon(ichange.SizeDecreaser(image2,2))*/);
         panel.add(RightImageLabel);
         /* TopImageLabel.setIcon(null*//*new ImageIcon(ichange.SizeDecreaser(image1,2))*//*);
         panel.add(TopImageLabel);*/
         panel.add(firstvert);
         BottomImageLabel.setIcon(null);
         panel.add(deepmap);
-        //panel.add(GradientOfColors);
+        // panel.add(GradientOfColors);
         frame.add(panel);
-        frame.pack();
+        //frame.pack();
         frame.setVisible(true);
-        GoMakeSomeMagic.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent actionEvent) {
 
-                matrix1 = new int[width][height]; //матрица для первого снимка
-                matrix2 = new int[width][height]; //матрица для второго снимка
-                //преобразование изображения в чб, конфликтует с некоторыми цветами
-                if (bw.isSelected()) {
-                    ichange.BW(image1);
-                    ichange.BW(image2);
-                    // TopImageLabel.setIcon(new ImageIcon(image1));
-                    // panel.add(TopImageLabel, NORTH);
-                    LeftImageLabel.setIcon(new ImageIcon(image1));
-                    RightImageLabel.setIcon(new ImageIcon(image2));
-                }
-                //Средняя яркость будет позже использоваться в некоторых методах
-                for (int i = 0; i < width; i++) {
-                    for (int j = 0; j < height; j++) {
-                        matrix1[i][j] = Math.abs(image1.getRGB(i, j)); //преобразование пикселя снимка в число. Оно отрицательное. Хрен знает почему. Потому модуль
-                        matrix2[i][j] = Math.abs(image2.getRGB(i, j));
-                        average4ssdandsad += matrix1[i][j] + matrix2[i][j];
-                    }
-                }
-                average4ssdandsad /= width * height * 2;
-                BufferedImage FiltratedImage1;
-                BufferedImage FiltratedImage2;
-                //фильтрация
-                if (Roberts.isSelected()) {
-                    FiltratedImage1 = ichange.Filtration(matrix1, height, width, average4ssdandsad, 1);
-                    FiltratedImage2 = ichange.Filtration(matrix2, height, width, average4ssdandsad, 1);
-                } else {
-                    if (Previtt.isSelected()) {
-                        FiltratedImage1 = ichange.Filtration(matrix1, height, width, average4ssdandsad, 2);
-                        FiltratedImage2 = ichange.Filtration(matrix2, height, width, average4ssdandsad, 2);
-                    } else {
-                        if (Sobel.isSelected()) {
-                            FiltratedImage1 = ichange.Filtration(matrix1, height, width, average4ssdandsad, 3);
-                            FiltratedImage2 = ichange.Filtration(matrix2, height, width, average4ssdandsad, 3);
-                        } else {
-                            FiltratedImage1 = image1;
-                            FiltratedImage2 = image2;
-                        }
-                    }
-                }
-                RightImageLabel.setIcon(new ImageIcon(ichange.SizeChanger(FiltratedImage2,2,3)));
-                // panel.add(firstvert, CENTER);
-                LeftImageLabel.setIcon(new ImageIcon(ichange.SizeChanger(FiltratedImage1,2,3)));
-                // panel.add(RightImageLabel, WEST);
-                // panel.add(RightImageLabel, EAST);
-                int max = 0;
-                average4ssdandsad = 0;
-                for (int i = 0; i < width; i++) {
-                    for (int j = 0; j < height; j++) {
-                        matrix1[i][j] = Math.abs(FiltratedImage1.getRGB(i, j));
-                        matrix2[i][j] = Math.abs(FiltratedImage2.getRGB(i, j));
-                        average4ssdandsad += matrix1[i][j] + matrix2[i][j];
-                    }
-                }
-                average4ssdandsad /= width * height * 2;
-                scanscreensize = Integer.valueOf(UserSize.getText());
-                int userchoise = 0;
-                if (ncc.isSelected())
-                    userchoise = 1;
-                else if (sad.isSelected())
-                    userchoise = 2;
-                else if (ssd.isSelected())
-                    userchoise = 3;
-                BufferedImage DeepMap;
-                //Пожалуй, самая трудоемкая функция в данной программе, сложность - порядка O(n^4), но т.к число n - далеко не такое маленькое, зачастую приходится подождать
-                DeepMap = CalculateDeepMap(width, height, scanscreensize, userchoise);
-
-                //тест на круг, можно удалить
-                /* BufferedImage Test = new BufferedImage(width,height,BufferedImage.TYPE_INT_RGB);
-                for(int i=0; i<width; i++){
-                    for(int j=0; j<height;j++){
-                        if(Math.hypot(width/2-i, height/2-j)<100)
-                            Test.setRGB(i,j,new Color(255,0,0).getRGB());
-                        else
-                            Test.setRGB(i,j, new Color(255,255,255).getRGB());
-
-                    }
-                }*/
-                BottomImageLabel.setIcon(new ImageIcon(ichange.SizeChanger(DeepMap,2,3)));
-                GradientOfColors.setIcon(new ImageIcon(ichange.SizeChanger(gradientstripe,2,3)));
-                frame.pack();
-                //panel.add(BottomImageLabel, SOUTH);
-                //panel.add(GradientOfColors, SOUTH);
-                //frame.add(panel);
-                frame.setVisible(true);
-            }
+        Buff.addActionListener(actionEvent -> buff = ImageCopy(DeepMap));
+        GetMetrics.addActionListener(actionEvent -> {
+            double[] metrics = improc.getMetrics(buff, DeepMap);
+            JOptionPane.showMessageDialog(this,"Metrics \n Correlation: "+metrics[0]+" \n St. abs. deviation: "+ metrics[1]+"\n St. squared. deviation: "+metrics[2]);
         });
+        GoMakeSomeMagic.addActionListener(actionEvent -> {
+
+            matrix1 = new int[width][height][3]; //матрица для первого снимка
+            matrix2 = new int[width][height][3]; //матрица для второго снимка
+            //преобразование изображения в чб, конфликтует с некоторыми цветами
+            if (bw.isSelected()) {
+                improc.loadFull(image1);
+                image1 = ImageCopy(improc.BW());
+                improc.loadFull(image2);
+                image2 = ImageCopy(improc.BW());
+                // TopImageLabel.setIcon(new ImageIcon(image1));
+                // panel.add(TopImageLabel, NORTH);
+                LeftImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(image1, guiImageWidth, guiImageHeight)));
+                RightImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(image2, guiImageWidth, guiImageHeight)));
+            }
+            //Средняя "яркость" будет позже использоваться в некоторых методах
+            for (int i = 0; i < width; i++) {
+                for (int j = 0; j < height; j++) {
+                    // matrix1[i][j] = Math.abs(image1.getRGB(i, j));
+                    matrix1[i][j][0] = Math.abs(new Color(image1.getRGB(i, j)).getRed());
+                    matrix1[i][j][1] = Math.abs(new Color(image1.getRGB(i, j)).getGreen());
+                    matrix1[i][j][2] = Math.abs(new Color(image1.getRGB(i, j)).getBlue());
+                    //System.out.print(matrix1[i][j] + " ");
+                    // matrix2[i][j] = Math.abs(image2.getRGB(i, j));
+                    matrix2[i][j][0] = Math.abs(new Color(image2.getRGB(i, j)).getRed());
+                    matrix2[i][j][1] = Math.abs(new Color(image2.getRGB(i, j)).getGreen());
+                    matrix2[i][j][2] = Math.abs(new Color(image2.getRGB(i, j)).getBlue());
+                    for (int k = 0; k < 3; k++){
+                        average4ssdandsad[k] += matrix1[i][j][k] + matrix2[i][j][k];
+                    }
+                }
+                //System.out.println();
+            }
+            //System.out.print("@@@@@@@@@" + matrix1[0][0][0]);
+            for(int k = 0; k < 3; k++) {
+                average4ssdandsad[k] /= width * height * 2;
+            }
+
+//            filtersize = Integer.parseInt(Filtersize.getText());
+//
+//            BufferedImage FiltratedImage1;
+//            BufferedImage FiltratedImage2;
+//            //фильтрация
+//            if (Previtt.isSelected()) {
+//                improc.setSize(filtersize);
+//                improc.loadFull(image1);
+//                FiltratedImage1 = ImageCopy(improc.Prewitt());
+//                improc.loadFull(image2);
+//                FiltratedImage2 = ImageCopy(improc.Prewitt());
+//                //FiltratedImage1 = ichange.Filtration(matrix1, height, width, average4ssdandsad, 2);
+//                //FiltratedImage2 = ichange.Filtration(matrix2, height, width, average4ssdandsad, 2);
+//            } else {
+//                if (Sobel.isSelected()) {
+//                    improc.setSize(filtersize);
+//                    improc.loadFull(image1);
+//                    FiltratedImage1 = ImageCopy(improc.Sobel());
+//                    improc.loadFull(image2);
+//                    FiltratedImage2 = ImageCopy(improc.Sobel());
+//                    //FiltratedImage1 = ichange.Filtration(matrix1, height, width, average4ssdandsad, 3);
+//                    //FiltratedImage2 = ichange.Filtration(matrix2, height, width, average4ssdandsad, 3);
+//                } else {
+//                    FiltratedImage1 = image1;
+//                    FiltratedImage2 = image2;
+//                }
+//            }
+//            RightImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(FiltratedImage1, guiImageWidth, guiImageHeight)));
+//            // panel.add(firstvert, CENTER);
+//            LeftImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(FiltratedImage2, guiImageWidth, guiImageHeight)));
+//            // panel.add(RightImageLabel, WEST);
+//            // panel.add(RightImageLabel, EAST);
+
+            for (int k = 0; k < 3; k++) {
+                average4ssdandsad[k] = 0;
+            }
+            for (int i = 0; i < width; i++) {
+                for (int j = 0; j < height; j++) {
+                    // matrix1[i][j] = Math.abs(image1.getRGB(i, j));
+                    matrix1[i][j][0] = Math.abs(new Color(image1.getRGB(i, j)).getRed());
+                    matrix1[i][j][1] = Math.abs(new Color(image1.getRGB(i, j)).getGreen());
+                    matrix1[i][j][2] = Math.abs(new Color(image1.getRGB(i, j)).getBlue());
+                    //System.out.print(matrix1[i][j] + " ");
+                    // matrix2[i][j] = Math.abs(image2.getRGB(i, j));
+                    matrix2[i][j][0] = Math.abs(new Color(image2.getRGB(i, j)).getRed());
+                    matrix2[i][j][1] = Math.abs(new Color(image2.getRGB(i, j)).getGreen());
+                    matrix2[i][j][2] = Math.abs(new Color(image2.getRGB(i, j)).getBlue());
+                    for (int k = 0; k < 3; k++){
+                        average4ssdandsad[k] += matrix1[i][j][k] + matrix2[i][j][k];
+                    }
+                }
+            }
+            for(int k = 0; k < 3; k++) {
+                average4ssdandsad[k] /= width * height * 2;
+            }
+            scanscreensize = Integer.valueOf(UserSize.getText());
+            int userchoise = 0;
+            if (ncc.isSelected())
+                userchoise = 1;
+            else if (sad.isSelected())
+                userchoise = 2;
+            else if (ssd.isSelected())
+                userchoise = 3;
+            //Пожалуй, самая трудоемкая функция в данной программе, сложность - порядка O(n^3), но т.к число n - далеко не такое маленькое, зачастую приходится подождать
+            DeepMap = CalculateDeepMap(width, height, scanscreensize, userchoise);
+
+            // Сохранение
+
+            try {
+                int counter4savedimage = 0;
+                if (DeepMap == null) {
+                    throw new IOException();
+                }
+                File outputfile;
+                do {
+                    counter4savedimage++;
+                    outputfile = new File("DepthMap" + counter4savedimage + ".png");
+                } while (outputfile.exists());
+                ImageIO.write(DeepMap, "png", outputfile);
+                //JOptionPane.showMessageDialog(MainFrame.this, "Saved");
+            } catch (IOException ex) {
+                JOptionPane.showMessageDialog(MainFrame.this, "Something went wrong, try again");
+            }
+
+            //тест на круг, можно удалить
+            /* BufferedImage Test = new BufferedImage(width,height,BufferedImage.TYPE_INT_RGB);
+            for(int i=0; i<width; i++){
+                for(int j=0; j<height;j++){
+                    if(Math.hypot(width/2-i, height/2-j)<100)
+                        Test.setRGB(i,j,new Color(255,0,0).getRGB());
+                    else
+                        Test.setRGB(i,j, new Color(255,255,255).getRGB());
+
+                }
+            }*/
+            System.out.println("!!!!!!!!!!!!! "+((double)scanscreensize*guiImageWidth/width) +" "+ DeepMap.getWidth() +" "+ DeepMap.getWidth()*scanscreensize*guiImageWidth/width);
+            System.out.println("!!!!!!!!!!!!! "+(double)scanscreensize*guiImageHeight/height +" "+ DeepMap.getHeight() +" "+ DeepMap.getHeight()*scanscreensize*guiImageHeight/height);
+            System.out.println(improc.SizeChanger(DeepMap, ((double)scanscreensize*guiImageWidth/width + (double)scanscreensize*guiImageHeight/height)/2).getWidth()+" "+improc.SizeChanger(DeepMap, ((double)scanscreensize*guiImageWidth/width + (double)scanscreensize*guiImageHeight/height)/2).getHeight());
+            BottomImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(improc.SizeChanger(DeepMap, Math.round(((double)scanscreensize*guiImageWidth/width))), guiImageWidth, guiImageHeight)));
+            //GradientOfColors.setIcon(new ImageIcon(improc.SizeChangerLinear(gradientstripe, guiImageWidth, guiImageHeight)));
+            Buff.setEnabled(true);
+            GetMetrics.setEnabled(true);
+            //frame.pack();
+            //panel.add(BottomImageLabel, SOUTH);
+            //panel.add(GradientOfColors, SOUTH);
+            //frame.add(panel);
+            frame.setVisible(true);
+
+        });
+
         //получение из матрицы смещений матрицу для карты глубины
 //    double f=0.025; //фокусное расстояние в метрах
 //  double base=0.3; //база съёмки - расстояние между фотиками
@@ -618,64 +891,111 @@ class Malen extends JFrame {
     }
 
 
-    public boolean Functions(int choose_the_function, int row1, int col1, int row2, int col2, Double besttotal) {
-        Methods method;
-        //чтобы не таскать дальше эти большие фотки, создаем копии только нужных областей
-        int[][] tempmatrix1 = new int[scanscreensize][scanscreensize];
-        int[][] tempmatrix2 = new int[scanscreensize][scanscreensize];
-        for (int i = 0; i < scanscreensize; i++) {
-            for (int j = 0; j < scanscreensize; j++) {
-                tempmatrix1[i][j] = matrix1[row1 + i][col1 + j];
-                tempmatrix2[i][j] = matrix2[row2 + i][col2 + j];
+    public BufferedImage ImageCopy(BufferedImage img) {
+        BufferedImage temp = new BufferedImage(img.getWidth(), img.getHeight(), BufferedImage.TYPE_INT_RGB);
+        for (int i = 0; i < img.getWidth(); i++) {
+            for (int j = 0; j < img.getHeight(); j++) {
+                temp.setRGB(i, j, img.getRGB(i, j));
             }
         }
-        switch (choose_the_function) {
-            //Пирсона (NСС)
-            case 1:
-                method = new NCC();
-                return method.DoMagic(tempmatrix1, tempmatrix2, scanscreensize, average4ssdandsad, besttotal);
-            //SAD
-            case 2:
-                method = new SAD();
-                return method.DoMagic(tempmatrix1, tempmatrix2, scanscreensize, average4ssdandsad, besttotal);
-            //SSD
-            case 3:
-                method = new SSD();
-                return method.DoMagic(tempmatrix1, tempmatrix2, scanscreensize, average4ssdandsad, besttotal);
+        return temp;
+    }
+
+    public boolean Functions(CompareMethod method, int row1, int col1, int row2, int col2, int tempsizeadd) {
+        //чтобы не таскать дальше эти большие фотки, создаем копии только нужных областей
+        int[][][] tempmatrix1 = new int[scanscreensize+2*tempsizeadd][scanscreensize+2*tempsizeadd][3];
+        int[][][] tempmatrix2 = new int[scanscreensize+2*tempsizeadd][scanscreensize+2*tempsizeadd][3];
+        for (int i = 0; i < scanscreensize+2*tempsizeadd; i++) {
+            for (int j = 0; j < scanscreensize+2*tempsizeadd; j++) {
+                for (int k = 0; k < 3; k++) {
+                    tempmatrix1[i][j][k] = matrix1[row1 + i - tempsizeadd][col1 + j - tempsizeadd][k];
+                    tempmatrix2[i][j][k] = matrix2[row2 + i - tempsizeadd][col2 + j - tempsizeadd][k];
+                }
+            }
         }
-        return false;
+        return method.DoMagic(tempmatrix1, tempmatrix2, scanscreensize, average4ssdandsad);
     }
 
     public BufferedImage CalculateDeepMap(int width, int height, int scanscreensize, int userchoise) {
         if (width % scanscreensize == 0 && height % scanscreensize == 0) {
             matrix3 = new double[width / scanscreensize][height / scanscreensize]; //матрица смещений
             //процесс нахождение точно значения пикселя первой матрицы во второй
-            Double besttotal = (double) 0;
-            int coincidentx=0;
-            int coinncidenty=0;
-            for (int row_image1 = 0; row_image1 < width - scanscreensize + 1; row_image1 += scanscreensize) {
-                for (int col_image1 = 0; col_image1 < height - scanscreensize + 1; col_image1 += scanscreensize) {
-                    switch (userchoise){
+            CompareMethod method = null;
+            switch (userchoise) {
+                //Пирсона (NСС)
+                case 1:
+                    method = new NCC();
+                    break;
+                //SAD
+                case 2:
+                    method = new SAD();
+                    break;
+                //SSD
+                case 3:
+                    method = new SSD();
+                    break;
+            }
+            Double starttotal = 0.0;
+            int coincidentx = 0;
+            int coinncidenty = 0;
+            int eps = 2;
+            int tempsizeadd;
+            double avg_average = (average4ssdandsad[0]+ average4ssdandsad[1] + average4ssdandsad[2])/3;
+            for (int col_image1 = 0; col_image1 < width - scanscreensize+1; col_image1 += scanscreensize) {
+                for (int row_image1 = 0; row_image1 < height - scanscreensize+1; row_image1 += scanscreensize) {
+                    tempsizeadd = 0;
+                    //System.out.println("!!!!!!!!!!!!!!!!!!!" + col_image1 + " "+ row_image1 + " "+width+"");
+                    switch (userchoise) {
                         case 1:
-                            besttotal = 0.75;
+                            starttotal = 0.1;
                             break;
                         case 2:
-                            besttotal = average4ssdandsad*0.2*Math.pow(scanscreensize,2);
+                            starttotal = avg_average * 0.2 * Math.pow(scanscreensize, 2)*5;
                             break;
                         case 3:
-                            besttotal = Math.pow(average4ssdandsad*Math.pow(0.2*scanscreensize,2),2);
+                            starttotal = Math.pow(avg_average * Math.pow(0.2 * scanscreensize, 2), 2)*5;
                             break;
                     }
-                    for (int row_image2 = 0; row_image2 < width-scanscreensize + 1; row_image2++) {
-                        for (int col_image2 = 0; col_image2 < height - scanscreensize + 1; col_image2++) {
-                            //На самом деле ограничение области поиска (гипотенуза) должно быть намного уже, но программа просто напросто отказывается адекватно работать
-                            if (Functions(userchoise, row_image1, col_image1, row_image2, col_image2, besttotal)) {
-                                coincidentx=row_image2;
-                                coinncidenty=col_image2;
+                    int[][][] tempmatrix1 = new int[scanscreensize][scanscreensize][3];
+                    for (int i = 0; i < scanscreensize; i++) {
+                        for (int j = 0; j < scanscreensize; j++) {
+                            for (int k = 0; k < 3; k++) {
+                                //System.out.println(row_image1 +" "+ i+" "+col_image1 + " "+j);
+                                tempmatrix1[i][j][k] = matrix1[col_image1 + i][row_image1 + j][k];
                             }
                         }
                     }
-                    matrix3[row_image1/scanscreensize][col_image1/scanscreensize] = Math.hypot(coincidentx-row_image1,coinncidenty-col_image1);
+                    if(AdaptiveSize.isSelected()) {
+                        int counter = 0;
+                        while (improc.Std(tempmatrix1) < 0.4 && (col_image1 - 2 * tempsizeadd) > 0 && (width - scanscreensize - 2 * tempsizeadd - col_image1) > 0 && (row_image1 - 2 * tempsizeadd) > 0 && (height - scanscreensize - 2 * tempsizeadd - row_image1) > 0) {
+                            counter += 1;
+                            tempsizeadd += counter;
+                            tempmatrix1 = new int[scanscreensize + 2 * tempsizeadd][scanscreensize + 2 * tempsizeadd][3];
+                            for (int i = 0; i < scanscreensize + 2 * tempsizeadd; i++) {
+                                for (int j = 0; j < scanscreensize + 2 * tempsizeadd; j++) {
+                                    for (int k = 0; k < 3; k++) {
+                                        //System.out.println(Double.toString((col_image1 - 2*tempsizeadd))+" "+Double.toString((width-scanscreensize-2*tempsizeadd-col_image1))+" "+Double.toString(row_image1 - 2*tempsizeadd)+ " " +Double.toString(height-scanscreensize-2*tempsizeadd-row_image1)+" "+improc.Std(tempmatrix1));
+                                        tempmatrix1[i][j][k] = matrix1[col_image1 + i - tempsizeadd][row_image1 + j - tempsizeadd][k];
+                                    }
+                                }
+                            }
+                            System.out.println("&&&&&&&&&&&&&&&&& " + tempsizeadd + " " + col_image1 + " " + row_image1);
+                        }
+                    }
+                    method.setStartTotal(starttotal);
+                    //for(int row_image2 = Math.max(0,row_image1-eps); row_image2 < Math.min(height-scanscreensize+1,row_image1+eps); row_image2++) {
+                        for (int col_image2 = tempsizeadd; col_image2 < width - tempsizeadd - scanscreensize + 1; col_image2++) {
+                            if (Math.abs(col_image1 - col_image2) < 50) {
+                                //На самом деле ограничение области поиска (гипотенуза) должно быть намного уже, но программа просто напросто отказывается адекватно работать
+                                if (Functions(method, col_image1, row_image1, col_image2, row_image1, tempsizeadd)) {
+                                    coincidentx = col_image2;
+                                    coinncidenty = row_image1;
+                                    System.out.print("New Best: " + method.bestTotal + " ");
+                                }
+                            }
+                        }
+                    System.out.println();
+                    matrix3[col_image1 / scanscreensize][row_image1 / scanscreensize] = Math.hypot(coincidentx - col_image1, coinncidenty - row_image1);
                 }
             }
         }
@@ -683,14 +1003,14 @@ class Malen extends JFrame {
         // double min = matrix3[0][0];
         int i_max = 0;
         int y_max = 0;
-        BufferedImage DeepMap = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+        BufferedImage DeepMap = new BufferedImage(width/scanscreensize, height/scanscreensize, BufferedImage.TYPE_INT_RGB);
         /*поиск максимума в матрице.
         RGB это три числа, каждое от 0 до 255. (0,0,0) - чёрный
         (255,255,255) - абсолютно белый цвет.
         Максимальное число в матрице считаем как бы за максимальную удалённость, это будет чисто белый цвет - 255.
         Далее каждый элемент матрицы закрашиваем цветом, равным (текущий элемент/максимальный элемент)*255.*/
         for (int i = 0; i < width / scanscreensize; i++)
-            for (int j = 0; j < height / scanscreensize; j++){
+            for (int j = 0; j < height / scanscreensize; j++) {
                 if (Math.abs(matrix3[i][j]) > Math.abs(max)) {
                     max = matrix3[i][j];
                     //System.out.print("max= "+ max);
@@ -703,21 +1023,24 @@ class Malen extends JFrame {
             }
         //System.out.print("max= " + max+" min=" + min);
         //System.out.print(i_max + "   " + y_max);
-        gradientstripe = new BufferedImage(20, height , BufferedImage.TYPE_INT_RGB);
+        gradientstripe = new BufferedImage(20, height, BufferedImage.TYPE_INT_RGB);
         Color mycolor;
-        for(int i = 0; i < height; i++){
-            for (int j=0; j<20;j++){
-                mycolor = new Color((int)(255*i/height), (int)(255*i/height), (int)(255*i/height));
-                gradientstripe.setRGB(j, height-i-1, mycolor.getRGB());
+        for (int i = 0; i < height; i++) {
+            for (int j = 0; j < 20; j++) {
+                mycolor = new Color((int) (255 * i / height), (int) (255 * i / height), (int) (255 * i / height));
+                gradientstripe.setRGB(j, height - i - 1, mycolor.getRGB());
             }
         }
-        for (int i = 0; i < width; i++)
-            for (int j = 0; j < height; j++)//максимальное количество пикселей в строке
+        for (int i = 0; i < width/scanscreensize; i++) {
+            for (int j = 0; j < height/scanscreensize; j++)//максимальное количество пикселей в строке
             {
-                Color MyColor = new Color((int) ((matrix3[i / scanscreensize][j / scanscreensize] / matrix3[i_max][y_max]) * 255), (int) (matrix3[i / scanscreensize][j / scanscreensize] / matrix3[i_max][y_max] * 255), (int) (matrix3[i / scanscreensize][j / scanscreensize] / matrix3[i_max][y_max] * 255));
+                System.out.print((int)matrix3[i][j]+" ");
+                Color MyColor = new Color((int) ((matrix3[i][j] / matrix3[i_max][y_max]) * 255), (int) (matrix3[i][j] / matrix3[i_max][y_max] * 255), (int) (matrix3[i][j] / matrix3[i_max][y_max] * 255));
                 DeepMap.setRGB(i, j, MyColor.getRGB()); //установка цвета
                 //рисование закрашенного прямоугольника с началом координам x=i*w, y=j*w. Ширина и длина w.
-            }//после запуска программы открывается фрейм. Его надо растянуть, или сжать, если ничего не происходит, ХЗ почему так.
+            }
+            System.out.println();
+        }
         // После этого нужно выбрать нужные данные и нажать на кнопку снизу менюшки, потом подождать, пока кнопка не станет вновь доступна и снова растянуть/сжать окно
         return DeepMap;
     }
