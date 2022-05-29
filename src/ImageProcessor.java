@@ -269,7 +269,7 @@ public class ImageProcessor {
             }
             dispersion[k] = Math.pow(dispersion[k],0.5) / (matrix.length*matrix[0].length-1);
         }
-
+        System.out.println((dispersion[0]+dispersion[1]+dispersion[2])/3);
         return (dispersion[0]+dispersion[1]+dispersion[2])/3;
     }
 
@@ -375,6 +375,21 @@ public class ImageProcessor {
             }
         }
         return Result;
+    }
+    public BufferedImage ImageSubstitution(BufferedImage first, BufferedImage second, double alpha){
+        int width = first.getWidth();
+        int height = second.getHeight();
+        for (int i = 0; i < width; i++) {
+            for (int j = 0; j < height; j++) {
+                Color color1 = new Color(first.getRGB(i, j));
+                Color color2 = new Color(second.getRGB(i, j));
+                int blue = Math.max((int)(color1.getBlue() - alpha*color2.getBlue()),0);
+                int red = Math.max((int)(color1.getRed() - alpha*color2.getRed()),0);
+                int green = Math.max((int)(color1.getGreen() - alpha*color2.getGreen()), 0);
+                first.setRGB(i, j, new Color(red, green, blue).getRGB());
+            }
+        }
+        return first;
     }
     /**
      * Standard factorial function

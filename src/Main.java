@@ -6,6 +6,9 @@ import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 
@@ -246,7 +249,116 @@ class NCC extends CompareMethod {
             return false;
     }
 }
-
+class SCC extends CompareMethod {
+    public int[] arrayRankTransform(int[] arr) {
+        int N = arr.length;
+        //create result array and re-use it to store sorted elements of original array
+        int[] ranks = Arrays.copyOf(arr, N);
+        Arrays.sort(ranks);
+        int rank = 1;
+        //fill map of ranks based on sorted sequence of elements
+        Map<Integer, Integer> m = new HashMap();
+        for (int n : ranks) {
+            if (!m.containsKey(n))
+                m.put(n, rank++);
+        }
+        //fill result array with ranks, sequence of elements must be preserved from orignal array
+        for (int i = 0; i < N; i++)
+            ranks[i] = m.get(arr[i]);
+        return ranks;
+    }
+    @Override
+    public boolean DoMagic(int[][][] scanim1, int[][][] scanim2, int scanscreensize, double[] average) {
+        int N = scanscreensize*scanscreensize;
+        int[] array1 = new int[N];
+        int[] array2 = new int[N];
+        int[] ranks1 = new int[N];
+        int[] ranks2 = new int[N];
+        int[] d = {0,0,0};
+        double[] total = {0, 0, 0};
+        for (int k = 0; k < 3; k++) {
+            for (int i = 0; i < scanscreensize; i++) {
+                for (int j = 0; j < scanscreensize; j++) {
+                    array1[scanscreensize*i+j] = scanim1[i][j][k];
+                    array2[scanscreensize*i+j] = scanim2[i][j][k];
+                }
+            }
+            ranks1 = arrayRankTransform(array1);
+            ranks2 = arrayRankTransform(array2);
+            for (int i = 0; i < N; i++) {
+                d[k] += Math.pow(ranks1[i]-ranks2[i],2);
+            }
+            d[k] *= 6;
+            total[k] = (1 - (double) d[k] / (N * (Math.pow(N,2) - 1)));
+        }
+        double total_avg = (total[0] + total[1] + total[2])/3;
+        //предел как всегда подбирался вручную
+        if (total_avg > bestTotal) {//чем больше total, тем более схожи части изображений, но не стоит ставить слишком высокий, иначе просто не найдет совпадений
+            bestTotal = total_avg;
+            //System.out.println("New besttotal " + besttotal);
+            return true;
+        } else
+            return false;
+    }
+}
+class KCC extends CompareMethod {
+    public int[] arrayRankTransform(int[] arr) {
+        int N = arr.length;
+        //create result array and re-use it to store sorted elements of original array
+        int[] ranks = Arrays.copyOf(arr, N);
+        Arrays.sort(ranks);
+        int rank = 1;
+        //fill map of ranks based on sorted sequence of elements
+        Map<Integer, Integer> m = new HashMap();
+        for (int n : ranks) {
+            if (!m.containsKey(n))
+                m.put(n, rank++);
+        }
+        //fill result array with ranks, sequence of elements must be preserved from orignal array
+        for (int i = 0; i < N; i++)
+            ranks[i] = m.get(arr[i]);
+        return ranks;
+    }
+    @Override
+    public boolean DoMagic(int[][][] scanim1, int[][][] scanim2, int scanscreensize, double[] average) {
+        int N = scanscreensize*scanscreensize;
+        int[] array1 = new int[N];
+        int[] array2 = new int[N];
+        int[] ranks1;
+        int[] ranks2;
+        int[] c = {0,0,0};
+        int[] b = {0,0,0};
+        double[] total = {0, 0, 0};
+        for (int k = 0; k < 3; k++) {
+            for (int i = 0; i < scanscreensize; i++) {
+                for (int j = 0; j < scanscreensize; j++) {
+                    array1[scanscreensize*i+j] = scanim1[i][j][k];
+                    array2[scanscreensize*i+j] = scanim2[i][j][k];
+                }
+            }
+            ranks1 = arrayRankTransform(array1);
+            ranks2 = arrayRankTransform(array2);
+            for (int i = 0; i < N; i++) {
+                for(int j = i+1; j<N; j++){
+                    if((ranks1[i] > ranks1[j] && ranks2[i] > ranks2[j]) ||(ranks1[i] <= ranks1[j] && ranks2[i] <= ranks2[j]))
+                        c[k]++;
+                    else
+                        b[k]++;
+                }
+            }
+            total[k] = (double)2*(c[k] - b[k])/ (N * (N - 1));
+            //System.out.println("CB: "+ c[k] +" "+ b[k]+" "+total[k]);
+        }
+        double total_avg = (total[0] + total[1] + total[2])/3;
+        //предел как всегда подбирался вручную
+        if (total_avg > bestTotal) {//чем больше total, тем более схожи части изображений, но не стоит ставить слишком высокий, иначе просто не найдет совпадений
+            bestTotal = total_avg;
+            //System.out.println("New besttotal " + besttotal);
+            return true;
+        } else
+            return false;
+    }
+}
 class SAD extends CompareMethod {
     @Override
     public boolean DoMagic(int[][][] scanim1, int[][][] scanim2, int scanscreensize, double[] average) {
@@ -313,6 +425,8 @@ class MainFrame extends JFrame {
     JFrame frame = new JFrame();
     JPanel panel = new JPanel();
     JLabel NCC = new JLabel("NCC");
+    JLabel SCC = new JLabel("SCC");
+    JLabel KCC = new JLabel("KCC");
     JLabel SAD = new JLabel("SAD");
     JLabel SSD = new JLabel("SSD");
     JLabel BW = new JLabel("BW");
@@ -324,9 +438,11 @@ class MainFrame extends JFrame {
     //JLabel TopImageLabel = new JLabel("Main image");
     JLabel LeftImageLabel = new JLabel("Left image");
     JLabel RightImageLabel = new JLabel("Right image");
-    JLabel BottomImageLabel = new JLabel("Deep map");
+    JLabel BottomImageLabel = new JLabel("Depth map");
     JLabel GradientOfColors = new JLabel();
     JRadioButton ncc = new JRadioButton("", false);
+    JRadioButton scc = new JRadioButton("", false);
+    JRadioButton kcc = new JRadioButton("", false);
     JRadioButton sad = new JRadioButton("", false);
     JRadioButton ssd = new JRadioButton("", false);
     JCheckBox bw = new JCheckBox("BW", false);
@@ -386,6 +502,8 @@ class MainFrame extends JFrame {
         frame.setVisible(true);
         UserSize.setMaximumSize(UserSize.getPreferredSize());
         methods.add(ncc);
+        methods.add(scc);
+        methods.add(kcc);
         methods.add(sad);
         methods.add(ssd);
         filtration.add(Sobel);
@@ -418,7 +536,9 @@ class MainFrame extends JFrame {
         third.add(ApplyForDepthMap);
         third.add(Box.createHorizontalGlue());
         third2.add(Box.createHorizontalGlue());
-        third2.add(bw);
+        third2.add(SCC);
+        third2.add(Box.createHorizontalGlue());
+        third2.add(scc);
         third2.add(Box.createHorizontalGlue());
         third2.add(AdaptiveSize);
         third2.add(Box.createHorizontalGlue());
@@ -428,6 +548,10 @@ class MainFrame extends JFrame {
         filtersize_panel.setPreferredSize(new Dimension(30, 30));
         third2.add(filtersize_panel);
         third2.add(Box.createHorizontalGlue());
+        fourth.add(Box.createHorizontalGlue());
+        fourth.add(KCC);
+        fourth.add(Box.createHorizontalGlue());
+        fourth.add(kcc);
         fourth.add(Box.createHorizontalGlue());
         fourth.add(ScanScreen);
         fourth.add(Box.createHorizontalGlue());
@@ -610,6 +734,7 @@ class MainFrame extends JFrame {
                             case "gamma":
                                 improc.setSize(0);
                                 improc.loadFull(DeepMap);
+                                //DeepMap = improc.ImageSubstitution(DeepMap, ImageCopy(improc.applyFunction(2, Double.parseDouble(Filtersize.getText()))), 1);
                                 DeepMap = ImageCopy(improc.applyFunction(2, Double.parseDouble(Filtersize.getText())));
                                 BottomImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(improc.SizeChanger(DeepMap, Math.round(((double)scanscreensize*guiImageWidth/width))), guiImageWidth, guiImageHeight)));
                                 break;
@@ -627,6 +752,18 @@ class MainFrame extends JFrame {
                                 improc.loadFull(DeepMap);
                                 DeepMap = ImageCopy(improc.OrderStatFiltration("median"));
                                 BottomImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(improc.SizeChanger(DeepMap, Math.round(((double)scanscreensize*guiImageWidth/width))), guiImageWidth, guiImageHeight)));
+                                try {
+                                    int counter4savedimage = 0;
+                                    File outputfile;
+                                    do {
+                                        counter4savedimage++;
+                                        outputfile = new File("DepthMap" + counter4savedimage + ".png");
+                                    } while (outputfile.exists());
+                                    ImageIO.write(improc.SizeChangerLinear(improc.SizeChanger(DeepMap, Math.round(((double)scanscreensize*guiImageWidth/width))), guiImageWidth, guiImageHeight), "png", outputfile);
+                                    //JOptionPane.showMessageDialog(MainFrame.this, "Saved");
+                                } catch (IOException ex) {
+                                    JOptionPane.showMessageDialog(MainFrame.this, "Something went wrong, try again");
+                                }
                                 break;
                             case "avg":
                                 improc.loadFull(DeepMap);
@@ -657,11 +794,35 @@ class MainFrame extends JFrame {
                                 improc.loadFull(DeepMap);
                                 DeepMap = ImageCopy(improc.AdaptiveMedianFiltration());
                                 BottomImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(improc.SizeChanger(DeepMap, Math.round(((double)scanscreensize*guiImageWidth/width))), guiImageWidth, guiImageHeight)));
+                                try {
+                                    int counter4savedimage = 0;
+                                    File outputfile;
+                                    do {
+                                        counter4savedimage++;
+                                        outputfile = new File("DepthMap" + counter4savedimage + ".png");
+                                    } while (outputfile.exists());
+                                    ImageIO.write(improc.SizeChangerLinear(improc.SizeChanger(DeepMap, Math.round(((double)scanscreensize*guiImageWidth/width))), guiImageWidth, guiImageHeight), "png", outputfile);
+                                    //JOptionPane.showMessageDialog(MainFrame.this, "Saved");
+                                } catch (IOException ex) {
+                                    JOptionPane.showMessageDialog(MainFrame.this, "Something went wrong, try again");
+                                }
                                 break;
                             case "wmedian":
                                 improc.loadFull(DeepMap);
                                 DeepMap = ImageCopy(improc.WeightedMedian());
                                 BottomImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(improc.SizeChanger(DeepMap, Math.round(((double)scanscreensize*guiImageWidth/width))), guiImageWidth, guiImageHeight)));
+                                try {
+                                    int counter4savedimage = 0;
+                                    File outputfile;
+                                    do {
+                                        counter4savedimage++;
+                                        outputfile = new File("DepthMap" + counter4savedimage + ".png");
+                                    } while (outputfile.exists());
+                                    ImageIO.write(improc.SizeChangerLinear(improc.SizeChanger(DeepMap, Math.round(((double)scanscreensize*guiImageWidth/width))), guiImageWidth, guiImageHeight), "png", outputfile);
+                                    //JOptionPane.showMessageDialog(MainFrame.this, "Saved");
+                                } catch (IOException ex) {
+                                    JOptionPane.showMessageDialog(MainFrame.this, "Something went wrong, try again");
+                                }
                                 break;
                         }
                     }
@@ -824,10 +985,14 @@ class MainFrame extends JFrame {
             int userchoise = 0;
             if (ncc.isSelected())
                 userchoise = 1;
-            else if (sad.isSelected())
+            else if (scc.isSelected())
                 userchoise = 2;
-            else if (ssd.isSelected())
+            else if (kcc.isSelected())
                 userchoise = 3;
+            else if (sad.isSelected())
+                userchoise = 4;
+            else if (ssd.isSelected())
+                userchoise = 5;
             //Пожалуй, самая трудоемкая функция в данной программе, сложность - порядка O(n^3), но т.к число n - далеко не такое маленькое, зачастую приходится подождать
             DeepMap = CalculateDeepMap(width, height, scanscreensize, userchoise);
 
@@ -843,7 +1008,7 @@ class MainFrame extends JFrame {
                     counter4savedimage++;
                     outputfile = new File("DepthMap" + counter4savedimage + ".png");
                 } while (outputfile.exists());
-                ImageIO.write(DeepMap, "png", outputfile);
+                ImageIO.write(improc.SizeChangerLinear(improc.SizeChanger(DeepMap, Math.round(((double)scanscreensize*guiImageWidth/width))), guiImageWidth, guiImageHeight), "png", outputfile);
                 //JOptionPane.showMessageDialog(MainFrame.this, "Saved");
             } catch (IOException ex) {
                 JOptionPane.showMessageDialog(MainFrame.this, "Something went wrong, try again");
@@ -926,12 +1091,19 @@ class MainFrame extends JFrame {
                 case 1:
                     method = new NCC();
                     break;
-                //SAD
+                //Спирмена (SCC)
                 case 2:
+                    method = new SCC();
+                    break;
+                case 3:
+                    method = new KCC();
+                    break;
+                //SAD
+                case 4:
                     method = new SAD();
                     break;
                 //SSD
-                case 3:
+                case 5:
                     method = new SSD();
                     break;
             }
@@ -947,13 +1119,15 @@ class MainFrame extends JFrame {
                     //System.out.println("!!!!!!!!!!!!!!!!!!!" + col_image1 + " "+ row_image1 + " "+width+"");
                     switch (userchoise) {
                         case 1:
-                            starttotal = 0.1;
-                            break;
-                        case 2:
-                            starttotal = avg_average * 0.2 * Math.pow(scanscreensize, 2)*5;
-                            break;
                         case 3:
-                            starttotal = Math.pow(avg_average * Math.pow(0.2 * scanscreensize, 2), 2)*5;
+                        case 2:
+                            starttotal = 0.01;
+                            break;
+                        case 4:
+                            starttotal = avg_average * Math.pow(scanscreensize, 2)*5;
+                            break;
+                        case 5:
+                            starttotal = Math.pow(avg_average * Math.pow(scanscreensize, 2), 2)*5;
                             break;
                     }
                     int[][][] tempmatrix1 = new int[scanscreensize][scanscreensize][3];
@@ -967,7 +1141,7 @@ class MainFrame extends JFrame {
                     }
                     if(AdaptiveSize.isSelected()) {
                         int counter = 0;
-                        while (improc.Std(tempmatrix1) < 0.4 && (col_image1 - 2 * tempsizeadd) > 0 && (width - scanscreensize - 2 * tempsizeadd - col_image1) > 0 && (row_image1 - 2 * tempsizeadd) > 0 && (height - scanscreensize - 2 * tempsizeadd - row_image1) > 0) {
+                        while (improc.Std(tempmatrix1) < 0.2 && (col_image1 - 2 * tempsizeadd) > 0 && (width - scanscreensize - 2 * tempsizeadd - col_image1) > 0 && (row_image1 - 2 * tempsizeadd) > 0 && (height - scanscreensize - 2 * tempsizeadd - row_image1) > 0) {
                             counter += 1;
                             tempsizeadd += counter;
                             tempmatrix1 = new int[scanscreensize + 2 * tempsizeadd][scanscreensize + 2 * tempsizeadd][3];
