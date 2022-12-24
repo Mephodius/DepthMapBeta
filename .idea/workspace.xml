@@ -5,11 +5,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="7dd86005-f897-43f1-873c-4c0ff72538be" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/out/production/Deepmap/CompareMethod.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/Deepmap/CompareMethod.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/out/production/Deepmap/ImageChanger.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/Deepmap/ImageChanger.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/Deepmap/ImageProcessor.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/Deepmap/ImageProcessor.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/out/production/Deepmap/KCC.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/Deepmap/KCC.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/out/production/Deepmap/MainFrame$1.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/Deepmap/MainFrame$1.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/out/production/Deepmap/MainFrame.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/Deepmap/MainFrame.class" afterDir="false" />
@@ -17,7 +15,6 @@
       <change beforePath="$PROJECT_DIR$/out/production/Deepmap/SAD.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/Deepmap/SAD.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/out/production/Deepmap/SCC.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/Deepmap/SCC.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/out/production/Deepmap/SSD.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/Deepmap/SSD.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ImageProcessor.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/ImageProcessor.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/Main.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />

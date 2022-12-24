@@ -13,6 +13,7 @@ import java.util.Map;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.util.Random;
+import java.util.logging.Filter;
 
 class ImageChanger {
     //Уменьшает изображение в натуральное количество раз
@@ -520,14 +521,21 @@ class MainFrame extends JFrame {
     Box fifth = Box.createHorizontalBox();
     Box sixth = Box.createHorizontalBox();
     Box firstvert = Box.createVerticalBox();
+    Box finalvert = Box.createVerticalBox();
     Box deepmap = Box.createHorizontalBox();
-    JCheckBox ApplyForDepthMap = new JCheckBox("Apply to depth map");
-    JCheckBox AdaptiveSize = new JCheckBox("AS");
+    Box methdsb = Box.createVerticalBox();
+    Box nccb = Box.createHorizontalBox();
+    Box sadb = Box.createHorizontalBox();
+    Box ssdb = Box.createHorizontalBox();
+    Box sccb = Box.createHorizontalBox();
+    Box kccb = Box.createHorizontalBox();
+    Box parambox = Box.createHorizontalBox();
+    JCheckBox ApplyForDepthMap = new JCheckBox("Apply to DM");
+    JCheckBox AdaptiveSize = new JCheckBox("Adaptive scanning option");
     JTextField Filtersize = new JTextField("3", 5);
-    JPanel filtersize_panel = new JPanel();
-    JLabel text = new JLabel("size");
-    JButton ApplyFunction = new JButton("Apply Function");
-    JComboBox Function = new JComboBox(new String[]{"wmedian","amedian","prewitt","sobel","median", "avg", "min", "max", "gamma", "clarity", "equalize"});
+    JLabel text = new JLabel("Size");
+    JButton ApplyFunction = new JButton("Apply");
+    JComboBox Function = new JComboBox(new String[]{"amedian", "wmedian","prewitt","sobel","median", "avg", "min", "max", "gamma", "clarity", "equalize"});
     ImageProcessor improc = new ImageProcessor();
     int[] size_adjustment = {0, 0};
     int filtersize = 9;
@@ -542,8 +550,6 @@ class MainFrame extends JFrame {
 
     public MainFrame() throws IOException {
 
-        ncc.setSelected(true);
-
         loadleftimage.setCurrentDirectory(new File("D:\\Images\\"));
         loadrightimage.setCurrentDirectory(new File("D:\\Images\\"));
 
@@ -554,8 +560,15 @@ class MainFrame extends JFrame {
         frame.setLocationRelativeTo(null);
         frame.setResizable(false);
         frame.setVisible(true);
+
         UserSize.setMaximumSize(UserSize.getPreferredSize());
-        VdevTF.setMaximumSize(UserSize.getPreferredSize());
+        VdevTF.setMaximumSize(VdevTF.getPreferredSize());
+        Filtersize.setMaximumSize(Filtersize.getPreferredSize());
+        UserSize.setHorizontalAlignment(JTextField.CENTER);
+        VdevTF.setHorizontalAlignment(JTextField.CENTER);
+        Filtersize.setHorizontalAlignment(JTextField.CENTER);
+
+
         methods.add(ncc);
         methods.add(scc);
         methods.add(kcc);
@@ -564,54 +577,79 @@ class MainFrame extends JFrame {
         filtration.add(Sobel);
         filtration.add(Previtt);
         filtration.add(none);
+
+        nccb.add(Box.createHorizontalGlue());
+        nccb.add(Ncc);
+        nccb.add(Box.createHorizontalGlue());
+        nccb.add(ncc);
+        nccb.add(Box.createHorizontalGlue());
+
+        sadb.add(Box.createHorizontalGlue());
+        sadb.add(Sad);
+        sadb.add(Box.createHorizontalGlue());
+        sadb.add(sad);
+        sadb.add(Box.createHorizontalGlue());
+
+        ssdb.add(Box.createHorizontalGlue());
+        ssdb.add(Ssd);
+        ssdb.add(Box.createHorizontalGlue());
+        ssdb.add(ssd);
+        ssdb.add(Box.createHorizontalGlue());
+
+        sccb.add(Box.createHorizontalGlue());
+        sccb.add(Scc);
+        sccb.add(Box.createHorizontalGlue());
+        sccb.add(scc);
+        sccb.add(Box.createHorizontalGlue());
+
+        kccb.add(Box.createHorizontalGlue());
+        kccb.add(Kcc);
+        kccb.add(Box.createHorizontalGlue());
+        kccb.add(kcc);
+        kccb.add(Box.createHorizontalGlue());
+
+        methdsb.add(Box.createVerticalGlue());
+        methdsb.add(nccb);
+        methdsb.add(Box.createVerticalGlue());
+        methdsb.add(sadb);
+        methdsb.add(Box.createVerticalGlue());
+        methdsb.add(ssdb);
+        methdsb.add(Box.createVerticalGlue());
+        methdsb.add(sccb);
+        methdsb.add(Box.createVerticalGlue());
+        methdsb.add(kccb);
+        methdsb.add(Box.createVerticalGlue());
+
         zero.add(Box.createHorizontalGlue());
         zero.add(SelectLeftImage);
         zero.add(Box.createHorizontalGlue());
         zero.add(SelectRightImage);
         zero.add(Box.createHorizontalGlue());
+
         first.add(Box.createHorizontalGlue());
-        first.add(Ncc);
-        first.add(Box.createHorizontalGlue());
-        first.add(ncc);
+        first.add(Function);
         first.add(Box.createHorizontalGlue());
         first.add(ApplyFunction);
         first.add(Box.createHorizontalGlue());
+
         second.add(Box.createHorizontalGlue());
-        second.add(Sad);
+        second.add(text);
         second.add(Box.createHorizontalGlue());
-        second.add(sad);
+        second.add(Filtersize);
         second.add(Box.createHorizontalGlue());
-        second.add(Function);
+        second.add(ApplyForDepthMap);
         second.add(Box.createHorizontalGlue());
+
         third.add(Box.createHorizontalGlue());
-        third.add(Ssd);
+        third.add(AdaptiveSize);
         third.add(Box.createHorizontalGlue());
-        third.add(ssd);
-        third.add(Box.createHorizontalGlue());
-        third.add(ApplyForDepthMap);
-        third.add(Box.createHorizontalGlue());
-        third2.add(Box.createHorizontalGlue());
-        third2.add(Scc);
-        third2.add(Box.createHorizontalGlue());
-        third2.add(scc);
-        third2.add(Box.createHorizontalGlue());
-        third2.add(AdaptiveSize);
-        third2.add(Box.createHorizontalGlue());
-        third2.add(text);
-        third2.add(Box.createHorizontalGlue());
-        filtersize_panel.add(Filtersize);
-        filtersize_panel.setPreferredSize(new Dimension(30, 30));
-        third2.add(filtersize_panel);
-        third2.add(Box.createHorizontalGlue());
-        fourth.add(Box.createHorizontalGlue());
-        fourth.add(Kcc);
-        fourth.add(Box.createHorizontalGlue());
-        fourth.add(kcc);
+
         fourth.add(Box.createHorizontalGlue());
         fourth.add(VdevLabel);
         fourth.add(Box.createHorizontalGlue());
         fourth.add(VdevTF);
         fourth.add(Box.createHorizontalGlue());
+
         sixth.add(Box.createHorizontalGlue());
         sixth.add(GoMakeSomeMagic);
         sixth.add(Box.createHorizontalGlue());
@@ -621,9 +659,14 @@ class MainFrame extends JFrame {
         sixth.add(Box.createHorizontalGlue());
         sixth.add(GetLogs);
         sixth.add(Box.createHorizontalGlue());//чуть позже вернемся к графическому интерфейсу, для начала нужно раздобыть немного информации
+
+
+        ncc.setSelected(true);
+        ApplyForDepthMap.setSelected(true);
         LoadDM.setEnabled(true);
         GetMetrics.setEnabled(false);
         GetLogs.setEnabled(false);
+
         SelectLeftImage.addActionListener(actionEvent -> {
             try {
                 File LI = null;
@@ -860,25 +903,34 @@ class MainFrame extends JFrame {
         fifth.add(Box.createHorizontalGlue());
         fifth.add(UserSize);
         fifth.add(Box.createHorizontalGlue());
+
         firstvert.add(Box.createVerticalGlue());
-        firstvert.add(zero);
-        firstvert.add(Box.createVerticalGlue());
-        //firstvert.add(zero_first);
-        //firstvert.add(Box.createVerticalGlue());
         firstvert.add(first);
         firstvert.add(Box.createVerticalGlue());
         firstvert.add(second);
         firstvert.add(Box.createVerticalGlue());
         firstvert.add(third);
         firstvert.add(Box.createVerticalGlue());
-        firstvert.add(third2);
-        firstvert.add(Box.createVerticalGlue());
         firstvert.add(fourth);
         firstvert.add(Box.createVerticalGlue());
         firstvert.add(fifth);
         firstvert.add(Box.createVerticalGlue());
-        firstvert.add(sixth);
-        firstvert.add(Box.createVerticalGlue());
+
+        parambox.add(Box.createHorizontalGlue());
+        parambox.add(methdsb);
+        parambox.add(Box.createHorizontalGlue());
+        parambox.add(firstvert);
+        parambox.add(Box.createHorizontalGlue());
+
+
+        finalvert.add(Box.createVerticalGlue());
+        finalvert.add(zero);
+        finalvert.add(Box.createVerticalGlue());
+        finalvert.add(parambox);
+        finalvert.add(Box.createVerticalGlue());
+        finalvert.add(sixth);
+        finalvert.add(Box.createVerticalGlue());
+
         deepmap.add(Box.createHorizontalGlue());
         deepmap.add(BottomImageLabel);
         deepmap.add(Box.createHorizontalGlue());
@@ -895,10 +947,9 @@ class MainFrame extends JFrame {
         panel.add(RightImageLabel);
         /* TopImageLabel.setIcon(null*//*new ImageIcon(ichange.SizeDecreaser(image1,2))*//*);
         panel.add(TopImageLabel);*/
-        panel.add(firstvert);
+        panel.add(finalvert);
         BottomImageLabel.setIcon(null);
         panel.add(deepmap);
-        // panel.add(GradientOfColors);
         frame.add(panel);
         //frame.pack();
         frame.setVisible(true);
