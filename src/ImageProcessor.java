@@ -11,7 +11,7 @@ import java.util.Collections;
 public class ImageProcessor {
     private MainFrame mf;
     private final double e = Math.pow(10,-6);
-    private int L = 256; //квантование по яркости
+    private final int L = 256; //квантование по яркости
     private Double[][] mask;
     private Integer[][][] tempMat;
     private Integer size;
@@ -1085,6 +1085,29 @@ public class ImageProcessor {
             }
         }
         return matrix;
+    }
+    public int[][] BWImageToMatrix(BufferedImage image){
+        int[][] matrix = new int[image.getHeight()][image.getWidth()];
+        for(int i = 0; i< image.getHeight(); i++) {
+            for (int j = 0; j < image.getWidth(); j++) {
+                Color color = new Color(image.getRGB(j,i));
+                matrix[i][j] = color.getRed();
+            }
+        }
+        return matrix;
+    }
+    public BufferedImage MatrixToImage(int[][][] matrix){
+        int width = matrix.length;
+        int height = matrix[0].length;
+        BufferedImage tempimg = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+        for (int i = 0; i < width; i++) {
+            for (int j = 0; j < height; j++)
+            {
+                Color MyColor = new Color(matrix[i][j][0], matrix[i][j][1], matrix[i][j][2]);
+                tempimg.setRGB(i, j, MyColor.getRGB());
+            }
+        }
+        return tempimg;
     }
     public double[] getMetrics(BufferedImage im1, BufferedImage im2){
         double[] metrics = {0, 0, 0};
