@@ -21,6 +21,7 @@ public class DMComparator extends JFrame {
     private Box fhBox = Box.createHorizontalBox();
 
     public DMComparator(MainFrame mf, BufferedImage truemap, BufferedImage mymap, double hdeviation, double metrics){
+        setTitle("Depth Map Comparator");
         this.addWindowListener(new WindowListener() {
             @Override
             public void windowOpened(WindowEvent e) {

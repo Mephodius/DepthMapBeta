@@ -22,6 +22,7 @@ public class PlotFrame extends JFrame {
     private Box fvBox = Box.createVerticalBox();
 
     public PlotFrame(MainFrame mf, BufferedImage left, BufferedImage right, double hdeviation, double metrics, double[][] logs){
+        setTitle("Correlation function plot");
         this.addWindowListener(new WindowListener() {
             @Override
             public void windowOpened(WindowEvent e) {

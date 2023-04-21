@@ -24,12 +24,6 @@ public class PlotVisualizator extends JPanel {
     // Список координат точек для построения графика
     private double[][] graphicsData;
     // Флаговые переменные, задающие правила отображения графика
-    private boolean showAxis = true;
-    private boolean showMarkers = true;
-    //private boolean showNumeration = true;
-    private boolean turnGraph = false;
-    private boolean showIntegrals = false;
-    // Границы диапазона пространства, подлежащего отображению
     private double minX;
     private double maxX;
     private double minY;
@@ -76,30 +70,6 @@ public class PlotVisualizator extends JPanel {
 
     // Методы-модификаторы для изменения параметров отображения графика
 // Изменение любого параметра приводит к перерисовке области
-    public void setShowAxis(boolean showAxis) {
-        this.showAxis = showAxis;
-        repaint();
-    }
-
-    public void setShowMarkers(boolean showMarkers) {
-        this.showMarkers = showMarkers;
-        repaint();
-    }
-
-    /* public void setNumeration(boolean showNumeration) {
-         this.showNumeration = showNumeration;
-         repaint();
-     }*/
-    public void setTurnGrid(boolean turnGraph) {
-        this.turnGraph = turnGraph;
-        System.out.println(turnGraph);
-        repaint();
-    }
-
-    public void setShowIntegrals(boolean showIntegrals) {
-        this.showIntegrals = showIntegrals;
-        repaint();
-    }
 
     // Метод отображения всего компонента, содержащего график
     public void paintComponent(Graphics g) {

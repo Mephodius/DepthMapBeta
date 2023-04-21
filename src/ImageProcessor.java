@@ -259,18 +259,17 @@ public class ImageProcessor {
 
 
     public double Std(int[][][] matrix) {
-        double[] dispersion = {0,0,0};
+        double[] std = {0,0,0};
         double[] avg = Average(matrix);
         for (int k = 0; k < 3; k++) {
             for (int i = 0; i < matrix.length; i++) {
                 for (int j = 0; j < matrix[0].length; j++) {
-                    dispersion[k] += Math.pow((matrix[i][j][k]-avg[k]),2);
+                    std[k] += Math.pow((matrix[i][j][k]-avg[k]),2);
                 }
             }
-            dispersion[k] = Math.pow(dispersion[k],0.5) / (matrix.length*matrix[0].length-1);
+            std[k] = Math.pow(std[k] / (matrix.length*matrix[0].length-1), 0.5);
         }
-        System.out.println((dispersion[0]+dispersion[1]+dispersion[2])/3);
-        return (dispersion[0]+dispersion[1]+dispersion[2])/3;
+        return (std[0]+std[1]+std[2])/3;
     }
 
     /**
@@ -453,7 +452,7 @@ public class ImageProcessor {
             }
         }
         div = 1.0;
-        return MatrixFilter();
+        return MatrixFiltration();
     }
 
     /**
@@ -472,7 +471,7 @@ public class ImageProcessor {
                 div += mask[i][j];
             }
         }
-        return MatrixFilter();
+        return MatrixFiltration();
     }
 
     /**
@@ -491,7 +490,7 @@ public class ImageProcessor {
                 div += mask[i][j];
             }
         }
-        return MatrixFilter();
+        return MatrixFiltration();
     }
     /**
      * Gaussian matrix filter (blur)
@@ -518,7 +517,7 @@ public class ImageProcessor {
                 div += mask[i][j];
             }
         }
-        return MatrixFilter();
+        return MatrixFiltration();
     }
     public BufferedImage WeightedMedian() {
         ImageExtension();
@@ -559,7 +558,7 @@ public class ImageProcessor {
         }
         if (div == 0)
             div = 1.0;
-        return MatrixFilter();
+        return MatrixFiltration();
     }
 
     /**
@@ -691,7 +690,7 @@ public class ImageProcessor {
         }
         if (div == 0)
             div = 1.0;
-        return MatrixFilter();
+        return MatrixFiltration();
     }
 
     /**
@@ -701,7 +700,7 @@ public class ImageProcessor {
      * @used in Random filter method
      * @used in User filter method
      */
-    private BufferedImage MatrixFilter() {
+    private BufferedImage MatrixFiltration() {
         ImageExtension();
         syncMatrix();
         Double[] temprgb = new Double[3];
@@ -1074,6 +1073,19 @@ public class ImageProcessor {
         }
         return Result;
     }
+    public double PSNR(int[][][] mat1, int[][][] mat2){
+        double psnr = -1;
+        double temp = 0;
+        for (int i = 0; i < mat1.length; i++) {
+            for (int j = 0; j < mat1[0].length; j++) {
+                for (int k = 0; k < 3; k++) {
+                    temp += Math.pow(mat1[i][j][k] - mat2[i][j][k], 2);
+                }
+            }
+        }
+        psnr = 10*Math.log10((double)255*255*mat1.length*mat1[0].length/(Math.sqrt(temp)));
+        return psnr;
+    }
     public int[][][] ImageToMatrix(BufferedImage image){
         int[][][] matrix = new int[image.getHeight()][image.getWidth()][3];
         for(int i = 0; i< image.getHeight(); i++) {
@@ -1148,7 +1160,7 @@ public class ImageProcessor {
         metrics[0] = (total[0] + total[1] + total[2])/3;
 
         total = new double[]{0, 0, 0};
-        
+
         for (int k = 0; k < 3; k++) {
             for (int i = 0; i < temp_height; i++) {
                 for (int j = 0; j < temp_width; j++) {

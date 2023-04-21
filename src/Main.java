@@ -2,18 +2,12 @@
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.image.BufferedImage;
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.net.http.HttpResponse;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.util.Random;
-import java.util.logging.Filter;
 
 class ImageChanger {
     //Уменьшает изображение в натуральное количество раз
@@ -258,7 +252,7 @@ class NCC extends CompareMethod {
 
     @Override
     public boolean DoMagic(int[][][] scanim1, int[][][] scanim2) {
-       double total_avg = get_similarity(scanim1, scanim2);
+        double total_avg = get_similarity(scanim1, scanim2);
 
         if (total_avg > bestTotal) {
             bestTotal = total_avg;
@@ -381,7 +375,7 @@ class KCC extends CompareMethod {
 
     @Override
     public boolean DoMagic(int[][][] scanim1, int[][][] scanim2) {
-       double total_avg = get_similarity(scanim1, scanim2);
+        double total_avg = get_similarity(scanim1, scanim2);
         if (total_avg > bestTotal) {
             bestTotal = total_avg;
             //System.out.println("New besttotal " + besttotal);
@@ -391,7 +385,6 @@ class KCC extends CompareMethod {
     }
 }
 class SAD extends CompareMethod {
-
     public static double get_similarity(int[][][] scanim1, int[][][] scanim2) {
         int width = scanim1.length;
         int height = scanim1[0].length;
@@ -403,13 +396,14 @@ class SAD extends CompareMethod {
                 }
             }
         }
-        return (total[0] + total[1] + total[2])/3;
+
+        return 1 - (total[0] + total[1] + total[2])/(3*255*width*height);
     }
 
     @Override
     public boolean DoMagic(int[][][] scanim1, int[][][] scanim2) {
         double total_avg = get_similarity(scanim1, scanim2);
-        if (total_avg < bestTotal) {//В данном случае также
+        if (total_avg > bestTotal) {//В данном случае также
             bestTotal = total_avg;
             //System.out.println("New besttotal " + besttotal);
             return true;
@@ -431,13 +425,13 @@ class SSD extends CompareMethod {
                 }
             }
         }
-        return (total[0] + total[1] + total[2])/3;
+        return 1 - (total[0] + total[1] + total[2])/(3*255*255*width*height);
     }
 
     @Override
     public boolean DoMagic(int[][][] scanim1, int[][][] scanim2) {
         double total_avg = get_similarity(scanim1, scanim2);
-        if (total_avg < bestTotal/*Math.pow(average*Math.pow(0.2*size,2),2)*/) {//В данном случае также
+        if (total_avg > bestTotal/*Math.pow(average*Math.pow(0.2*size,2),2)*/) {//В данном случае также
             bestTotal = total_avg;
             //System.out.println("New besttotal " + besttotal);
             return true;
@@ -468,6 +462,7 @@ class MainFrame extends JFrame {
     public double[][] matrix3;//deviation matrix
     public int[][][] logs;
     public LogsVisualizator lv;
+    public DMComparator dmc;
     public PlotFrame pf;
     int width, height; //ширина и высота фотки
     public double[] average4ssdandsad = new double[3];//средняя "яркость" на элемент матриц, похже используется в паре методов
@@ -483,8 +478,14 @@ class MainFrame extends JFrame {
     JLabel PREVITT = new JLabel("PREVITT");
     JLabel NONE = new JLabel("NONE");
     JLabel ScanScreenLabel = new JLabel("Scan screen size");
-    JLabel VdevLabel = new JLabel("Max vertical deviation");
+    JLabel VdevLabel = new JLabel("Max vertical dev");
+    JLabel TimeLabel = new JLabel("Time");
+    JLabel IterLabel = new JLabel("Iters");
+    JLabel ACLabel = new JLabel("AC");
+    JLabel NSLabel = new JLabel("NS");
     JTextField VdevTF = new JTextField("0", 4);
+    JTextField TimeTF = new JTextField("0", 4);
+    JTextField IterTF = new JTextField("0", 4);
     JLabel Selections = new JLabel("");
     //JLabel TopImageLabel = new JLabel("Main image");
     JLabel LeftImageLabel = new JLabel("");
@@ -531,8 +532,12 @@ class MainFrame extends JFrame {
     Box kccb = Box.createHorizontalBox();
     Box parambox = Box.createHorizontalBox();
     JCheckBox ApplyForDepthMap = new JCheckBox("Apply to DM");
-    JCheckBox AdaptiveSize = new JCheckBox("Adaptive scanning option");
-    JTextField Filtersize = new JTextField("3", 5);
+    JCheckBox AdaptiveSize = new JCheckBox("AdaptSize");
+    JCheckBox ConvolutionApproximation = new JCheckBox("ConvApprx");
+    JTextField FiltersizeTF = new JTextField("3", 5);
+    JTextField ACoefTF = new JTextField("2.1", 3);
+    JTextField NSegmentsTF = new JTextField("5", 3);
+
     JLabel text = new JLabel("Size");
     JButton ApplyFunction = new JButton("Apply");
     JComboBox Function = new JComboBox(new String[]{"amedian", "wmedian","prewitt","sobel","median", "avg", "min", "max", "gamma", "clarity", "equalize"});
@@ -542,6 +547,12 @@ class MainFrame extends JFrame {
     private int max_deviation;
     private int vdev;
     private int counter4saving = 0;
+
+    private int itercounter;
+    public static int dtis = 10000; // scale for converting double to int and then backwards
+
+    public BufferedImage THImage;
+
     public static void main(String[] args) throws IOException {
         MainFrame fr = new MainFrame();
 
@@ -563,11 +574,21 @@ class MainFrame extends JFrame {
 
         UserSize.setMaximumSize(UserSize.getPreferredSize());
         VdevTF.setMaximumSize(VdevTF.getPreferredSize());
-        Filtersize.setMaximumSize(Filtersize.getPreferredSize());
+        FiltersizeTF.setMaximumSize(FiltersizeTF.getPreferredSize());
+        TimeTF.setMaximumSize(TimeTF.getPreferredSize());
+        IterTF.setMaximumSize(IterTF.getPreferredSize());
+        ACoefTF.setMaximumSize(ACoefTF.getPreferredSize());
+        NSegmentsTF.setMaximumSize(NSegmentsTF.getPreferredSize());
         UserSize.setHorizontalAlignment(JTextField.CENTER);
         VdevTF.setHorizontalAlignment(JTextField.CENTER);
-        Filtersize.setHorizontalAlignment(JTextField.CENTER);
+        FiltersizeTF.setHorizontalAlignment(JTextField.CENTER);
+        TimeTF.setHorizontalAlignment(JTextField.CENTER);
+        IterTF.setHorizontalAlignment(JTextField.CENTER);
+        ACoefTF.setHorizontalAlignment(JTextField.CENTER);
+        NSegmentsTF.setHorizontalAlignment(JTextField.CENTER);
 
+        TimeTF.setEnabled(false);
+        IterTF.setEnabled(false);
 
         methods.add(ncc);
         methods.add(scc);
@@ -635,7 +656,7 @@ class MainFrame extends JFrame {
         second.add(Box.createHorizontalGlue());
         second.add(text);
         second.add(Box.createHorizontalGlue());
-        second.add(Filtersize);
+        second.add(FiltersizeTF);
         second.add(Box.createHorizontalGlue());
         second.add(ApplyForDepthMap);
         second.add(Box.createHorizontalGlue());
@@ -643,12 +664,36 @@ class MainFrame extends JFrame {
         third.add(Box.createHorizontalGlue());
         third.add(AdaptiveSize);
         third.add(Box.createHorizontalGlue());
+        third.add(ACLabel);
+        third.add(Box.createHorizontalGlue());
+        third.add(ACoefTF);
+        third.add(Box.createHorizontalGlue());
+        third.add(NSLabel);
+        third.add(Box.createHorizontalGlue());
+        third.add(NSegmentsTF);
+        //third.add(ConvolutionApproximation);
+        third.add(Box.createHorizontalGlue());
 
+        // HERE
         fourth.add(Box.createHorizontalGlue());
         fourth.add(VdevLabel);
         fourth.add(Box.createHorizontalGlue());
         fourth.add(VdevTF);
         fourth.add(Box.createHorizontalGlue());
+        fourth.add(TimeLabel);
+        fourth.add(Box.createHorizontalGlue());
+        fourth.add(TimeTF);
+        fourth.add(Box.createHorizontalGlue());
+
+        fifth.add(Box.createHorizontalGlue());
+        fifth.add(ScanScreenLabel);
+        fifth.add(Box.createHorizontalGlue());
+        fifth.add(UserSize);
+        fifth.add(Box.createHorizontalGlue());
+        fifth.add(IterLabel);
+        fifth.add(Box.createHorizontalGlue());
+        fifth.add(IterTF);
+        fifth.add(Box.createHorizontalGlue());
 
         sixth.add(Box.createHorizontalGlue());
         sixth.add(GoMakeSomeMagic);
@@ -675,6 +720,7 @@ class MainFrame extends JFrame {
                     LI = loadleftimage.getSelectedFile();
                 }
                 image1 = improc.SizeChangerLinear(ImageIO.read(LI), guiImageWidth*2, guiImageHeight*2);
+                //image1 = ImageIO.read(LI);
                 width = image1.getWidth();
                 height = image1.getHeight();
 //                StringBuilder SIZES = new StringBuilder();
@@ -706,6 +752,7 @@ class MainFrame extends JFrame {
                     RI = loadrightimage.getSelectedFile();
                 }
                 image2 = improc.SizeChangerLinear(ImageIO.read(RI), guiImageWidth*2, guiImageHeight*2);
+                //image2 = ImageIO.read(RI);
                 width = image2.getWidth();
                 height = image2.getHeight();
                 StringBuilder SIZES = new StringBuilder();
@@ -733,15 +780,15 @@ class MainFrame extends JFrame {
             public void actionPerformed(ActionEvent e) {
                 if(image1 != null && image2 != null){
                     String str = Function.getSelectedItem().toString();
-                    improc.setSize((int)Double.parseDouble(Filtersize.getText()));
+                    improc.setSize((int)Double.parseDouble(FiltersizeTF.getText()));
                     if (!ApplyForDepthMap.isSelected()) {
                         switch (str) {
                             case "gamma":
                                 improc.setSize(0);
                                 improc.loadFull(image1);
-                                image1 = ImageCopy(improc.applyFunction(2, Double.parseDouble(Filtersize.getText())));
+                                image1 = ImageCopy(improc.applyFunction(2, Double.parseDouble(FiltersizeTF.getText())));
                                 improc.loadFull(image2);
-                                image2 = ImageCopy(improc.applyFunction(2, Double.parseDouble(Filtersize.getText())));
+                                image2 = ImageCopy(improc.applyFunction(2, Double.parseDouble(FiltersizeTF.getText())));
                                 LeftImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(image1, guiImageWidth, guiImageHeight)));
                                 RightImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(image2, guiImageWidth, guiImageHeight)));
                                 break;
@@ -834,7 +881,7 @@ class MainFrame extends JFrame {
                                 improc.setSize(0);
                                 improc.loadFull(DepthMap);
                                 //DepthMap = improc.ImageSubstitution(DepthMap, ImageCopy(improc.applyFunction(2, Double.parseDouble(Filtersize.getText()))), 1);
-                                DepthMap = ImageCopy(improc.applyFunction(2, Double.parseDouble(Filtersize.getText())));
+                                DepthMap = ImageCopy(improc.applyFunction(2, Double.parseDouble(FiltersizeTF.getText())));
                                 BottomImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(improc.SizeChanger(DepthMap, Math.round(((double)scanscreensize*guiImageWidth/width))), guiImageWidth, guiImageHeight)));
                                 break;
                             case "min":
@@ -896,13 +943,6 @@ class MainFrame extends JFrame {
       /*  width = image1.getWidth() >= image2.getWidth() ? image2.getWidth() : image1.getWidth();
         height = image1.getHeight() >= image2.getHeight() ? image2.getHeight() : image1.getHeight();*/
         // System.out.println("Разрешение фоток " + width + " на " + height);
-
-        //подсчет допустимых размеров сканирования, таких, чтобы изображение делилось без остатка
-        fifth.add(Box.createHorizontalGlue());
-        fifth.add(ScanScreenLabel);
-        fifth.add(Box.createHorizontalGlue());
-        fifth.add(UserSize);
-        fifth.add(Box.createHorizontalGlue());
 
         firstvert.add(Box.createVerticalGlue());
         firstvert.add(first);
@@ -969,10 +1009,10 @@ class MainFrame extends JFrame {
         });
         GetMetrics.addActionListener(actionEvent -> {
             double[] metrics = getMapMetrics(improc.ImageToMatrix(buff), improc.ImageToMatrix(DepthMap_full), true);
-            DMComparator dmComparator = new DMComparator(this, buff, DepthMap_full, metrics[0], metrics[1]);
+            dmc = new DMComparator(this, buff, DepthMap_full, metrics[0], metrics[1]);
         });
         GetLogs.addActionListener(actionEvent -> {
-            lv = new LogsVisualizator(this, matrix1, matrix2, logs, max_deviation, vdev);
+            lv = new LogsVisualizator(this, matrix1, matrix2, logs, max_deviation, vdev, dtis);
         });
         GoMakeSomeMagic.addActionListener(actionEvent -> {
             if(pf != null) {
@@ -982,6 +1022,10 @@ class MainFrame extends JFrame {
             if(lv != null) {
                 lv.dispose();
                 lv = null;
+            }
+            if(dmc != null) {
+                dmc.dispose();
+                dmc = null;
             }
             System.out.flush();
             matrix1 = new int[width][height][3]; //матрица для первого снимка
@@ -1088,7 +1132,12 @@ class MainFrame extends JFrame {
             else if (ssd.isSelected())
                 userchoise = 5;
             //Пожалуй, самая трудоемкая функция в данной программе, сложность - порядка O(n^3), но т.к. число n - далеко не такое маленькое, зачастую приходится подождать
+            long start = System.currentTimeMillis();
             DepthMap_full = CalculateDeepMap(scanscreensize, userchoise);
+            long finish = System.currentTimeMillis();
+            long timeElapsed = finish - start;
+            TimeTF.setText(Long.toString(timeElapsed));
+            IterTF.setText(Long.toString(itercounter));
 
             // Сохранение
 
@@ -1098,8 +1147,21 @@ class MainFrame extends JFrame {
                 }
 
                 File outputfile;
-                outputfile = new File("DepthMap" + counter4saving + ".png");
+                outputfile = new File("Maps\\DepthMap" + counter4saving + ".png");
                 ImageIO.write(DepthMap_full, "png", outputfile);
+                //JOptionPane.showMessageDialog(MainFrame.this, "Saved");
+            } catch (IOException ex) {
+                JOptionPane.showMessageDialog(MainFrame.this, "Something went wrong, try again");
+            }
+
+            try {
+                if (THImage == null) {
+                    throw new IOException();
+                }
+
+                File outputfile;
+                outputfile = new File("Thresholds\\Thresholds" + counter4saving + ".png");
+                ImageIO.write(THImage, "png", outputfile);
                 //JOptionPane.showMessageDialog(MainFrame.this, "Saved");
             } catch (IOException ex) {
                 JOptionPane.showMessageDialog(MainFrame.this, "Something went wrong, try again");
@@ -1116,10 +1178,12 @@ class MainFrame extends JFrame {
 
                 }
             }*/
-            System.out.println("!!!!!!!!!!!!! "+((double)scanscreensize*guiImageWidth/width) +" "+ DepthMap.getWidth() +" "+ DepthMap.getWidth()*scanscreensize*guiImageWidth/width);
-            System.out.println("!!!!!!!!!!!!! "+(double)scanscreensize*guiImageHeight/height +" "+ DepthMap.getHeight() +" "+ DepthMap.getHeight()*scanscreensize*guiImageHeight/height);
-            System.out.println(improc.SizeChanger(DepthMap, ((double)scanscreensize*guiImageWidth/width + (double)scanscreensize*guiImageHeight/height)/2).getWidth()+" "+improc.SizeChanger(DepthMap, ((double)scanscreensize*guiImageWidth/width + (double)scanscreensize*guiImageHeight/height)/2).getHeight());
+            //System.out.println("!!!!!!!!!!!!! "+((double)scanscreensize*guiImageWidth/width) +" "+ DepthMap.getWidth() +" "+ DepthMap.getWidth()*scanscreensize*guiImageWidth/width);
+            //System.out.println("!!!!!!!!!!!!! "+(double)scanscreensize*guiImageHeight/height +" "+ DepthMap.getHeight() +" "+ DepthMap.getHeight()*scanscreensize*guiImageHeight/height);
+            //System.out.println(improc.SizeChanger(DepthMap, ((double)scanscreensize*guiImageWidth/width + (double)scanscreensize*guiImageHeight/height)/2).getWidth()+" "+improc.SizeChanger(DepthMap, ((double)scanscreensize*guiImageWidth/width + (double)scanscreensize*guiImageHeight/height)/2).getHeight());
+            //BottomImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(improc.SizeChanger(DepthMap, Math.round(((double)scanscreensize*guiImageWidth/width))), guiImageWidth, guiImageHeight)));
             BottomImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(improc.SizeChanger(DepthMap, Math.round(((double)scanscreensize*guiImageWidth/width))), guiImageWidth, guiImageHeight)));
+
             //GradientOfColors.setIcon(new ImageIcon(improc.SizeChangerLinear(gradientstripe, guiImageWidth, guiImageHeight)));
             LoadDM.setEnabled(true);
             GetLogs.setEnabled(true);
@@ -1145,8 +1209,34 @@ class MainFrame extends JFrame {
         // !!! }
 
     }
-
-
+    public int[][] GenerateGKernel(double dispersion, int size) {
+        int[][] mask = new int[2 * size + 1][2 * size + 1];
+        double min = ((double)1/((2*Math.PI*dispersion)*Math.exp(Math.hypot((-size),(-size))/(2*dispersion))));
+        for (int i = 0; i < mask.length; i++) {
+            for (int j = 0; j < mask.length; j++) {
+                mask[i][j] = (int)(((double)1/((2*Math.PI*dispersion)*Math.exp(Math.hypot((i-size),(j-size))/(2*dispersion))))/min);
+            }
+        }
+        return mask;
+    }
+    public int[][][] Convolve(int[][][] matrix, int[][] kernel){
+        int width = matrix.length;
+        int height = matrix[0].length;
+        int size = (kernel.length-1)/2;
+        int[][][] result = new int[width-2*size][height-2*size][3];
+        for (int i = size; i < width - size; i++) {
+            for (int j = size; j < height - size; j++) {
+                for (int k = 0; k < 3; k++) {
+                    for (int m = -size; m <= size; m++) {
+                        for (int n = -size; n <= size; n++) {
+                            result[i-size][j-size][k] += (matrix[i + m][j + n][k] * kernel[m + size][n + size]);
+                        }
+                    }
+                }
+            }
+        }
+        return result;
+    }
     public BufferedImage ImageCopy(BufferedImage img) {
         BufferedImage temp = new BufferedImage(img.getWidth(), img.getHeight(), BufferedImage.TYPE_INT_RGB);
         for (int i = 0; i < img.getWidth(); i++) {
@@ -1156,8 +1246,45 @@ class MainFrame extends JFrame {
         }
         return temp;
     }
+    public int[] extendPart(int col, int row, int width, int height, int tempsizeadd){
+        return new int[]{col - tempsizeadd, row, width + tempsizeadd, height};
+    }
+    public int[][][] getPart(int[][][] matrix, int col, int row, int width, int height, int tempsizeadd){
+        if (tempsizeadd != 0) {
+            int[] eP = extendPart(col, row, width, height, tempsizeadd);
+            col = eP[0];
+            row = eP[1];
+            width = eP[2];
+            height = eP[3];
+        }
+        int[][][] part = new int[width][height][3];
+        // 500 rows and 400 columns
 
-    public boolean Compare(CompareMethod method, int row1, int col1, int row2, int col2, int height, int width, int tempsizeadd) {
+        for (int i = 0; i < width; i++) {
+            for (int j = 0; j < height; j++) {
+                for (int k = 0; k < 3; k++) {
+                    //System.out.println("Height: " + matrix.length  + ' ' + (col+i) + " Width: " + matrix[0].length + ' '+ (row+j));
+                    part[i][j][k] = matrix[col + i][row + j][k];
+                }
+            }
+        }
+        return part;
+    }
+    //    public int[][][] getPartU(int[][][] matrix, int col, int row, int width, int height, int tempsizeadd){
+//        return getPart(matrix,col - tempsizeadd, row - tempsizeadd,width + 2*tempsizeadd, height + 2*tempsizeadd);
+//    }
+    public boolean Compare(CompareMethod method, int[][][] part1, int[][][] part2, boolean capprx) {
+        if (capprx) {
+            //int size = Math.min(tempmatrix1.length, tempmatrix1[0].length) / 20;
+            int size = 1;
+            int[][] kernel = GenerateGKernel(1, size);
+            return method.DoMagic(Convolve(part1, kernel), Convolve(part2, kernel));
+        }
+        else
+            return method.DoMagic(part1, part2);
+
+    }
+    public boolean CompareOLD(CompareMethod method, int row1, int col1, int row2, int col2, int height, int width, int tempsizeadd, boolean capprx) {
         //чтобы не таскать дальше эти большие фотки, создаем копии только нужных областей
         int[][][] tempmatrix1 = new int[width+2*tempsizeadd][height+2*tempsizeadd][3];
         int[][][] tempmatrix2 = new int[width+2*tempsizeadd][height+2*tempsizeadd][3];
@@ -1169,7 +1296,15 @@ class MainFrame extends JFrame {
                 }
             }
         }
-        return method.DoMagic(tempmatrix1, tempmatrix2);
+        if (capprx) {
+            //int size = Math.min(tempmatrix1.length, tempmatrix1[0].length) / 20;
+            int size = 1;
+            int[][] kernel = GenerateGKernel(1, size);
+            return method.DoMagic(Convolve(tempmatrix1, kernel), Convolve(tempmatrix2, kernel));
+        }
+        else
+            return method.DoMagic(tempmatrix1, tempmatrix2);
+
     }
     public int[][][] MCopy(int[][][] matrix){
         int[][][] temp = new int[matrix.length][matrix[0].length][matrix[0][0].length];
@@ -1190,8 +1325,8 @@ class MainFrame extends JFrame {
         int stripe = Math.max((int)area/75, 1);
         int[][][] temp_matrix1, temp_matrix2, best_matrix1 = null, best_matrix2 = null;
 
-        int n_rnd = width/2;
-        int size = width/30;
+        int n_rnd = width/10;
+        int size = width/10;
         int ls, rs;
         ls = (int) (-area / 2);
         rs = (int) (area / 2);
@@ -1231,7 +1366,7 @@ class MainFrame extends JFrame {
                             }
                         }
                     }
-                    double temp = SCC.get_similarity(rbatch1, rbatch2);
+                    double temp = NCC.get_similarity(rbatch1, rbatch2);
                     if(!Double.isNaN(temp)) {
                         correlation += temp;
                         counter++;
@@ -1240,7 +1375,7 @@ class MainFrame extends JFrame {
                 correlation /= counter;
             }
             else {
-                correlation = SCC.get_similarity(temp_matrix1, temp_matrix2);
+                correlation = NCC.get_similarity(temp_matrix1, temp_matrix2);
             }
             if (correlation > best_correlation) {
                 best_matrix1 = MCopy(temp_matrix1);
@@ -1260,24 +1395,84 @@ class MainFrame extends JFrame {
             File outputfile;
             do {
                 counter4saving++;
-                outputfile = new File("DepthMap" + counter4saving + ".png");
+                outputfile = new File("Maps\\DepthMap" + counter4saving + ".png");
             } while (outputfile.exists());
-            BufferedWriter writer = new BufferedWriter(new FileWriter("Correlation_data" + counter4saving + ".txt"));
-            for (int i = 0; i < logs.length; i++) {
-                writer.append(logs[i][0] +","+logs[i][1] + "\n");
-            }
-            writer.close();
-        }catch (IOException e){
-            
+//            BufferedWriter writer = new BufferedWriter(new FileWriter("Correlations\\Correlation_data" + counter4saving + ".txt"));
+//            for (int i = 0; i < logs.length; i++) {
+//                writer.append(logs[i][0] +","+logs[i][1] + "\n");
+//            }
+//            writer.close();
+        }catch (Exception e){
+
         }
         return new double[]{opt_deviation, best_correlation};
     }
-    public double[] getMapMetrics(int[][][] matrix1, int[][][] matrix2, boolean use_approx){
+    public double[] getMapMetrics(int[][][] matrix1, int[][][] matrix2, boolean use_approx) {
         // matrix2 is our map and is smaller
         int width = matrix2[0].length;
 
         int height = matrix2.length;
         double best_correlation = 0;
+        int opt_deviation = width / 5;
+        int[][][] temp_matrix1, temp_matrix2;
+
+        int n_rnd = width / 15;
+        int size = width / 15;
+        for (int deviation = 0; deviation <= matrix1[0].length - matrix2[0].length; deviation += 1) {
+            temp_matrix1 = new int[height][width][3];
+            temp_matrix2 = new int[height][width][3];
+            for (int i = 0; i < width; i++) {
+                for (int j = 0; j < height; j++) {
+                    for (int k = 0; k < 3; k++) {
+                        temp_matrix1[j][i][k] = matrix1[j][i + deviation][k];
+                        temp_matrix2[j][i][k] = matrix2[j][i][k];
+                    }
+                }
+            }
+            double correlation = 0;
+            double counter = 0;
+            if (use_approx) {
+                Random rand = new Random();
+                for (int i = 0; i < n_rnd; i++) {
+                    int[][][] rbatch1 = new int[size][size][3];
+                    int[][][] rbatch2 = new int[size][size][3];
+                    int y_r = rand.nextInt(width - size + 1);
+                    int x_r = rand.nextInt(height - size + 1);
+                    for (int n = 0; n < size; n++) {
+                        for (int m = 0; m < size; m++) {
+                            for (int k = 0; k < 3; k++) {
+                                rbatch1[n][m][k] = temp_matrix1[x_r + n][y_r + m][k];
+                                rbatch2[n][m][k] = temp_matrix2[x_r + n][y_r + m][k];
+                            }
+                        }
+                    }
+                    double temp = SCC.get_similarity(rbatch1, rbatch2);
+                    //double temp = improc.PSNR(rbatch1, rbatch2);
+                    if (!Double.isNaN(temp)) {
+                        correlation += temp;
+                        counter++;
+                    }
+                }
+                correlation /= counter;
+            } else {
+                correlation = SCC.get_similarity(temp_matrix1, temp_matrix2);
+                //correlation = improc.PSNR(temp_matrix1, temp_matrix2);
+            }
+            if (correlation > best_correlation) {
+                best_correlation = correlation;
+                opt_deviation = deviation;
+            }
+
+            System.out.println(" " + correlation + " " + deviation);
+        }
+        return new double[]{opt_deviation, best_correlation};
+    }
+    public double[] getMapPSNR(int[][][] matrix1, int[][][] matrix2, boolean use_approx){
+        // matrix2 is our map and is smaller
+        int width = matrix2[0].length;
+
+        int height = matrix2.length;
+        double best_metrics = 1000;
         int opt_deviation = width/5;
         int[][][] temp_matrix1, temp_matrix2;
 
@@ -1294,7 +1489,7 @@ class MainFrame extends JFrame {
                     }
                 }
             }
-            double correlation = 0;
+            double metrics = 0;
             double counter = 0;
             if (use_approx){
                 Random rand = new Random();
@@ -1313,47 +1508,47 @@ class MainFrame extends JFrame {
                     }
                     double temp = SCC.get_similarity(rbatch1, rbatch2);
                     if(!Double.isNaN(temp)) {
-                        correlation += temp;
+                        metrics += temp;
                         counter++;
                     }
                 }
-                correlation /= counter;
+                metrics /= counter;
             }
             else {
-                correlation = SCC.get_similarity(temp_matrix1, temp_matrix2);
+                metrics = SCC.get_similarity(temp_matrix1, temp_matrix2);
             }
-            if (correlation > best_correlation) {
-                best_correlation = correlation;
+            if (metrics < best_metrics) {
+                best_metrics = metrics;
                 opt_deviation = deviation;
             }
 
-            System.out.println(" " + correlation +" "+ deviation);
+            System.out.println(" " + metrics +" "+ deviation);
         }
-        return new double[]{opt_deviation, best_correlation};
+        return new double[]{opt_deviation, best_metrics};
     }
     public double[][] getFullMap(int[][] map, int width, int height){
         double[][] tempmap = new double[width][height];
         for(int i=0; i < width; i++){
             for(int j=0; j < height; j++){
-                System.out.println("********** " + ((int)Math.ceil((double)(i+1)/scanscreensize) - 1) + " " + ((int)Math.ceil((double)(j+1)/scanscreensize) - 1) + " " + i + " " + j);
+                //System.out.println("********** " + ((int)Math.ceil((double)(i+1)/scanscreensize) - 1) + " " + ((int)Math.ceil((double)(j+1)/scanscreensize) - 1) + " " + i + " " + j);
                 tempmap[i][j] = map[(int)Math.ceil((double)(j+1)/scanscreensize) - 1][(int)Math.ceil((double)(i+1)/scanscreensize) - 1];
             }
         }
         return tempmap;
     }
     public BufferedImage CalculateDeepMap(int scanscreensize, int userchoise) {
-        int width = matrix1.length;
-        int height = matrix1[0].length;
-        double[] devInfo = getDeviation(matrix1, matrix2, true, true);
+        int width = matrix1.length; // 500
+        int height = matrix1[0].length; // 400
+        double[] devInfo = getDeviation(matrix1, matrix2, false, false);
         int opt_deviation = (int)(devInfo[0]);
-        double light_coef = 2/devInfo[1];
+        double light_coef = 2.2/devInfo[1];
         this.max_deviation = (int)(opt_deviation * light_coef);
         int corrected_width = (width - Math.abs(opt_deviation));
         System.out.println("\nOPTIMAL DEVIATION: " + Integer.toString(opt_deviation) + " pixels");
         System.out.println("\nMatrix size: " + (int)Math.ceil((double)corrected_width / scanscreensize) + ' ' + (int)Math.ceil((double)height / scanscreensize) + " pixels");
         matrix3 = new double[(int)Math.ceil((double)corrected_width / scanscreensize)][(int)Math.ceil((double)height / scanscreensize)]; //матрица смещений
         double[][] m3_upd = new double[corrected_width][height];
-        logs = new int[(int)Math.ceil((double)corrected_width / scanscreensize)][(int)Math.ceil((double)height / scanscreensize)][8];
+        logs = new int[(int)Math.ceil((double)corrected_width / scanscreensize)][(int)Math.ceil((double)height / scanscreensize)][];
         //процесс нахождение точно значения пикселя первой матрицы во второй
         CompareMethod method = switch (userchoise) {
             // Pearson (NСС)
@@ -1373,84 +1568,137 @@ class MainFrame extends JFrame {
         int coincidenty;
         this.vdev = Integer.valueOf(VdevTF.getText());
         int tempsizeadd;
+        itercounter = 0;
 
         int sc_height, sc_width;
+        double std1 = 0, std2 = 0;
+        int[][][] tempmatrix1, tempmatrix2;
+        int comp_counter;
+        double std_thresh = improc.Std(matrix1)/6;
+        int locale_c = Integer.parseInt(NSegmentsTF.getText());
+        int locale_w = width/locale_c;
+        int locale_h = height/locale_c;
+        double[][] thresh_matrix = new double[locale_c][locale_c];
+
+        double AC = Double.parseDouble(ACoefTF.getText());
+
+        for (int i = 0; i < locale_c; i++){
+            for (int j = 0; j < locale_c; j++){
+                double temp = improc.Std(getPart(matrix1, locale_w*i, locale_h*j, Math.min(width - locale_w*i, locale_w), Math.min(height - locale_h*j, locale_h), 0));
+                thresh_matrix[i][j] = 2.1*Math.pow(temp, 0.5);
+            }
+        }
+        for (int i = 0; i < locale_c; i++){
+            for (int j = 0; j < locale_c; j++){
+                System.out.print((int)thresh_matrix[j][i] + " ");
+            }
+            System.out.println();
+        }
+        System.out.println("Adaptive Areas: " + locale_w + " " + locale_h);
+        //double [][] thresh_matrix = new double[(int)Math.ceil((double)corrected_width / scanscreensize)][(int)Math.ceil((double)height / scanscreensize)];
+        double[][] tm_upd = new double[corrected_width][height];
+        System.out.println("START STD THRESH: " + std_thresh);
         for (int col_image1 = -Math.min(opt_deviation, 0); col_image1 < width - Math.max(opt_deviation, 0) - 1; col_image1 += scanscreensize) {
             sc_width = scanscreensize - Math.max((col_image1 + scanscreensize) - (width - Math.max(opt_deviation, 0)) + 1, 0);
-            System.out.println("###1#### " + col_image1 + ' '+ width +' '+sc_width);
+            //System.out.println("###1#### " + col_image1 + ' '+ width +' '+sc_width);
             for (int row_image1 = 0; row_image1 < height; row_image1 += scanscreensize) {
+                comp_counter = 0;
                 sc_height = scanscreensize - Math.max((row_image1 + scanscreensize) - height + 1, 0);
-                System.out.println("###2#### " + row_image1 + ' '+ height +' '+sc_height);
+                //System.out.println("###2#### " + row_image1 + ' '+ height +' '+sc_height);
                 tempsizeadd = 0;
                 //System.out.println("!!!!!!!!!!!!!!!!!!!" + col_image1 + " "+ row_image1 + " "+width+"");
-                switch (userchoise) {
-                    case 1, 2, 3 -> starttotal = 0.0;
-                    case 4 -> starttotal = 255 * Math.pow(scanscreensize, 2);
-                    case 5 -> starttotal = Math.pow(255, 2) * Math.pow(scanscreensize, 2);
-                }
-                int[][][] tempmatrix1 = new int[sc_width][sc_height][3];
-                for (int i = 0; i < sc_width; i++) {
-                    for (int j = 0; j < sc_height; j++) {
-                        for (int k = 0; k < 3; k++) {
-                            //System.out.println(row_image1 +" "+ i+" "+col_image1 + " "+j);
-                            tempmatrix1[i][j][k] = matrix1[col_image1 + i][row_image1 + j][k];
-                        }
-                    }
-                }
-                if(AdaptiveSize.isSelected()) {
+                starttotal  = 0;
+                tempmatrix1 = getPart(matrix1, col_image1, row_image1, sc_width, sc_height, tempsizeadd);
+                std1 = improc.Std(tempmatrix1);
+//                if ((col_image1 % locale_w < sc_width) && (row_image1 % locale_h < sc_height)) {
+//                    System.out.println("IS THE START OF AREA: " + col_image1 + " " + row_image1);
+//                    std_thresh = improc.Std(getPart(matrix1, col_image1, row_image1, locale_w - sc_width, locale_h - sc_height, 0)) / 6;
+//                    System.out.println("NEW THRESH: " + std_thresh);
+//                }
+                //System.out.println(col_image1 + " " + row_image1 + " " +  col_image1/locale_w + " " + row_image1/locale_h);
+                std_thresh = thresh_matrix[(Math.min(col_image1/locale_w, locale_c-1))][Math.min((row_image1/locale_h), locale_c-1)];
+                //std_thresh = (std_thresh + std1/10)/1.1;
+                //System.out.println("NEW STD THRESH: " + std_thresh);
+                if(AdaptiveSize.isSelected() && std1 < std_thresh) {
                     int counter = 0;
-                    System.out.println("STD" + improc.Std(tempmatrix1));
-                    while (improc.Std(tempmatrix1) < 0.3 && (col_image1 - 2 * tempsizeadd) > 0 && (width - scanscreensize - 2 * tempsizeadd - col_image1) > 0 && (row_image1 - 2 * tempsizeadd) > 0 && (height - scanscreensize - 2 * tempsizeadd - row_image1) > 0) {
-                        counter += 1;
-                        tempsizeadd += 2*counter;
-                        tempmatrix1 = new int[scanscreensize + 2 * tempsizeadd][scanscreensize + 2 * tempsizeadd][3];
-                        for (int i = 0; i < scanscreensize + 2 * tempsizeadd; i++) {
-                            for (int j = 0; j < scanscreensize + 2 * tempsizeadd; j++) {
-                                for (int k = 0; k < 3; k++) {
-                                    //System.out.println(Double.toString((col_image1 - 2*tempsizeadd))+" "+Double.toString((width-scanscreensize-2*tempsizeadd-col_image1))+" "+Double.toString(row_image1 - 2*tempsizeadd)+ " " +Double.toString(height-scanscreensize-2*tempsizeadd-row_image1)+" "+improc.Std(tempmatrix1));
-                                    tempmatrix1[i][j][k] = matrix1[col_image1 + i - tempsizeadd][row_image1 + j - tempsizeadd][k];
-                                }
-                            }
+                    tempsizeadd = 0;
+                    int[] eP = extendPart(col_image1, row_image1, sc_width, sc_height, tempsizeadd);
+                    int[][][] asmatrix;
+                    //System.out.println("STD " + improc.Std(tempmatrix1));
+                    // && tempsizeadd < 2*sc_width
+                    double start_std = std1;
+                    if(eP[0] >= -max_deviation && (width - eP[2] - eP[0]) > 0 && eP[1] >= 0 && (height - eP[3] - eP[1]) > 0) {
+                        while (std1 <= Math.min(std_thresh, AC*start_std) && eP[0] >= -max_deviation && (width - eP[2] - eP[0]) > 0 && eP[1] >= 0 && (height - eP[3] - eP[2]) > 0) {
+                            asmatrix = getPart(matrix1, col_image1, row_image1, sc_width, sc_height, tempsizeadd);
+                            //System.out.println("&&&&&&&&&&&&&&&&& " + tempsizeadd + " " + col_image1 + " " + row_image1);
+                            std1 = improc.Std(asmatrix);
+                            if (std1 < Math.min(std_thresh, AC*start_std))
+                                tempmatrix1 = asmatrix;
+
+                            counter += 1;
+                            tempsizeadd += 1;
+                            eP = extendPart(col_image1, row_image1, sc_width, sc_height, tempsizeadd);
                         }
-                        System.out.println("&&&&&&&&&&&&&&&&& " + tempsizeadd + " " + col_image1 + " " + row_image1);
+                        tempsizeadd -= 1;
                     }
                 }
+                std1 = improc.Std(tempmatrix1);
                 method.setStartTotal(starttotal);
                 coincidentx = col_image1;
                 coincidenty = row_image1;
-                for(int row_image2 = Math.max(0,row_image1-vdev); row_image2 < Math.min(height-sc_height+1,row_image1 + vdev + 1); row_image2++) {
-                    for (int col_image2 = tempsizeadd; col_image2 < width - tempsizeadd - sc_width + 1; col_image2++) {
+                //System.out.println("Top: " + Math.max(tempsizeadd,row_image1-vdev) + " Bottom:" + (Math.min(height- sc_height - tempsizeadd + 1,row_image1 + vdev + 1)));
+                //System.out.println("Left: " + tempsizeadd + " Right:" + (width - tempsizeadd - sc_width));
+                //System.out.println("TEMPSIZEADD: " + tempsizeadd);
+                for (int col_image2 = tempsizeadd; col_image2 < width - sc_width; col_image2++) {
+                    for(int row_image2 = Math.max(0,row_image1-vdev); row_image2 < Math.min(height-sc_height+1,row_image1 + vdev + 1); row_image2++) {
                         if (opt_deviation <= 0) {
                             if ((col_image2 - col_image1) <= 0 && (col_image2 - col_image1) >= this.max_deviation) {
+                                //System.out.println("XD " + col_image2 +' '+ row_image2 + ' ' + sc_width +' '+ sc_height);
+                                tempmatrix2 = getPart(matrix2, col_image2, row_image2, sc_width, sc_height, tempsizeadd);
                                 //На самом деле ограничение области поиска (гипотенуза) должно быть намного уже, но программа просто-напросто отказывается адекватно работать
-                                if (Compare(method, col_image1, row_image1, col_image2, row_image2, sc_height, sc_width, tempsizeadd)) {
+                                if (Compare(method, tempmatrix1, tempmatrix2, ConvolutionApproximation.isSelected())) {
                                     coincidentx = col_image2;
                                     coincidenty = row_image2;
-                                    System.out.print("New Best: " + method.bestTotal + " ");
+                                    std2 = improc.Std(tempmatrix2);
+                                    //System.out.print("New Best: " + method.bestTotal + " ");
                                 }
+                                itercounter++;
+                                comp_counter++;
                             }
                         } else {
                             if ((col_image2 - col_image1) >= 0 && (col_image2 - col_image1) <= this.max_deviation) {
+                                //System.out.println("XD " + col_image2 +' '+ row_image2 + ' ' + sc_width +' '+ sc_height);
+                                tempmatrix2 = getPart(matrix2, col_image2, row_image2, sc_width, sc_height, tempsizeadd);
                                 //На самом деле ограничение области поиска (гипотенуза) должно быть намного уже, но программа просто-напросто отказывается адекватно работать
-                                if (Compare(method, col_image1, row_image1, col_image2, row_image2, sc_height, sc_width, tempsizeadd)) {
+                                if (Compare(method, tempmatrix1, tempmatrix2, ConvolutionApproximation.isSelected())) {
                                     coincidentx = col_image2;
                                     coincidenty = row_image2;
-                                    System.out.print("New Best: " + method.bestTotal + " ");
+                                    std2 = improc.Std(tempmatrix2);
+                                    //System.out.print("New Best: " + method.bestTotal + " ");
                                 }
+                                itercounter++;
+                                comp_counter++;
                             }
                         }
                     }
                 }
+
                 //hdprob += Math.abs(coincidenty - row_image1);
-                //
                 double distance = Math.hypot(coincidentx - col_image1, coincidenty - row_image1);
-                logs[(int)Math.ceil((double)(col_image1 + Math.min(opt_deviation, 0))/ scanscreensize)][(int)Math.ceil((double)row_image1 / scanscreensize)] = new int[]{col_image1, row_image1, coincidentx, coincidenty, (int)distance, sc_width, sc_height, (int)(10000*method.bestTotal)};
-                System.out.println("&&&&& " + col_image1 + ' ' + sc_width);
+                //System.out.println("DIST: " + distance);
+                int[] eP1 = extendPart(col_image1, row_image1, sc_width, sc_height, tempsizeadd);
+                int[] eP2 = extendPart(coincidentx, coincidenty, sc_width, sc_height, tempsizeadd);
+                //System.out.println(tempsizeadd);
+                //col_image1, row_image1, coincidentx, coincidenty, sc_width, sc_height, metrics, (int)distance, std1, std2
+                logs[(int)Math.ceil((double)(col_image1 + Math.min(opt_deviation, 0))/ scanscreensize)][(int)Math.ceil((double)row_image1 / scanscreensize)] = new int[]{eP1[0], eP1[1], eP2[0], eP2[1], eP1[2], eP1[3], (int)(dtis*method.bestTotal),  (int)((dtis*distance)/Math.hypot(max_deviation, 2*vdev)), (int)(dtis*std1), (int)(dtis*std2), (int)(dtis*tempsizeadd/width), comp_counter};
+                //System.out.println("&&&&& " + col_image1 + ' ' + sc_width);
                 matrix3[(int)Math.ceil((double)(col_image1 + Math.min(opt_deviation, 0))/ scanscreensize)][(int)Math.ceil((double)row_image1 / scanscreensize)] = distance;
+                //thresh_matrix[(int)Math.ceil((double)(col_image1 + Math.min(opt_deviation, 0))/ scanscreensize)][(int)Math.ceil((double)row_image1 / scanscreensize)] = std_thresh;
                 for (int i = 0; i < sc_width; i++) {
                     for (int j = 0; j < sc_height; j++) {
-                            //System.out.println(row_image1 +" "+ i+" "+col_image1 + " "+j);
-                            m3_upd[col_image1 + Math.min(opt_deviation, 0) + i][row_image1 + j] = distance;
+                        //System.out.println(row_image1 +" "+ i+" "+col_image1 + " "+j);
+                        m3_upd[col_image1 + Math.min(opt_deviation, 0) + i][row_image1 + j] = distance;
+                        tm_upd[col_image1 + Math.min(opt_deviation, 0) + i][row_image1 + j] = std_thresh;
                     }
                 }
 
@@ -1479,6 +1727,7 @@ class MainFrame extends JFrame {
 
         DepthMap = MatrixToImage(matrix3);
         BufferedImage DepthMap_full = MatrixToImage(m3_upd);
+        THImage = MatrixToImage(tm_upd);
 
         // После этого нужно выбрать нужные данные и нажать на кнопку снизу менюшки, потом подождать, пока кнопка не станет вновь доступна и снова растянуть/сжать окно
         return DepthMap_full;
@@ -1504,12 +1753,12 @@ class MainFrame extends JFrame {
         for (int i = 0; i < width; i++) {
             for (int j = 0; j < height; j++)//максимальное количество пикселей в строке
             {
-                System.out.print((int)matrix[i][j]+" ");
+                //System.out.print((int)matrix[i][j]+" ");
                 Color MyColor = new Color((int) ((matrix[i][j] / matrix[i_max][j_max]) * 255), (int) (matrix[i][j] / matrix[i_max][j_max] * 255), (int) (matrix[i][j] / matrix[i_max][j_max] * 255));
                 Result.setRGB(i, j, MyColor.getRGB()); //установка цвета
                 // Рисование закрашенного прямоугольника с началом координам x=i*w, y=j*w. Ширина и длина w.
             }
-            System.out.println();
+            //System.out.println();
         }
         return Result;
     }
