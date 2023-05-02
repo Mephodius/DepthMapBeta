@@ -206,8 +206,8 @@ abstract class CompareMethod {
     }
     protected Double bestTotal;
     //Суть методов установления соотвествия довольно похожа, различаются в основном математические формулы и их смысл (вследствие чего и разные предельные функции)
-    public static double get_similarity(int[][][] scanim1, int[][][] scanim2){return 0;}
-    public abstract boolean DoMagic(int[][][] scanim1, int[][][] scanim2);
+    public static double get_similarity(byte[][][] scanim1, byte[][][] scanim2){return 0;}
+    public abstract boolean DoMagic(byte[][][] scanim1, byte[][][] scanim2);
     public void setStartTotal(Double startTotal){
         this.bestTotal = startTotal;
     }
@@ -215,7 +215,7 @@ abstract class CompareMethod {
 
 class NCC extends CompareMethod {
 
-    public static double get_similarity(int[][][] scanim1, int[][][] scanim2){
+    public static double get_similarity(byte[][][] scanim1, byte[][][] scanim2){
         int width = scanim1.length;
         int height = scanim1[0].length;
         double[] averageim1 = {0, 0, 0};
@@ -251,7 +251,7 @@ class NCC extends CompareMethod {
     }
 
     @Override
-    public boolean DoMagic(int[][][] scanim1, int[][][] scanim2) {
+    public boolean DoMagic(byte[][][] scanim1, byte[][][] scanim2) {
         double total_avg = get_similarity(scanim1, scanim2);
 
         if (total_avg > bestTotal) {
@@ -263,11 +263,11 @@ class NCC extends CompareMethod {
     }
 }
 class SCC extends CompareMethod {
-    public static int[] arrayRankTransform(int[] arr) {
+    public static int[] arrayRankTransform(byte[] arr) {
         int N = arr.length;
         //create result array and re-use it to store sorted elements of original array
-        int[] sorted = Arrays.copyOf(arr, N);
-        int[] ranks = Arrays.copyOf(arr, N);
+        byte[] sorted = Arrays.copyOf(arr, N);
+        int[] ranks = new int[N];
         Arrays.sort(sorted);
         //fill map of ranks based on sorted sequence of elements
         int counter, temp;
@@ -285,12 +285,34 @@ class SCC extends CompareMethod {
         //fill result array with ranks, sequence of elements must be preserved from original array
         return ranks;
     }
-    public static double get_similarity(int[][][] scanim1, int[][][] scanim2){
+    public static int[] arrayRankTransform(int[] arr) {
+        int N = arr.length;
+        //create result array and re-use it to store sorted elements of original array
+        int[] sorted = Arrays.copyOf(arr, N);
+        int[] ranks = new int[N];
+        Arrays.sort(sorted);
+        //fill map of ranks based on sorted sequence of elements
+        int counter, temp;
+        for (int i = 0; i < N; i++){
+            counter = 0;
+            temp = 0;
+            for (int j = 0; j < N; j++){
+                if (arr[i] == sorted[j]){
+                    counter++;
+                    temp += j;
+                }
+            }
+            ranks[i] = temp/counter;
+        }
+        //fill result array with ranks, sequence of elements must be preserved from original array
+        return ranks;
+    }
+    public static double get_similarity(byte[][][] scanim1, byte[][][] scanim2){
         int width = scanim1.length;
         int height = scanim1[0].length;
         int N = width*height;
-        int[] array1 = new int[N];
-        int[] array2 = new int[N];
+        byte[] array1 = new byte[N];
+        byte[] array2 = new byte[N];
         int[] ranks1;
         int[] ranks2;
         long[] d = {0,0,0};
@@ -311,8 +333,35 @@ class SCC extends CompareMethod {
         }
         return (total[0] + total[1] + total[2])/3;
     }
+
+    public static double get_similarity(int[][][] scanim1, int[][][] scanim2) {
+        int width = scanim1.length;
+        int height = scanim1[0].length;
+        int N = width * height;
+        int[] array1 = new int[N];
+        int[] array2 = new int[N];
+        int[] ranks1;
+        int[] ranks2;
+        long[] d = {0, 0, 0};
+        double[] total = {0, 0, 0};
+        for (int k = 0; k < 3; k++) {
+            for (int i = 0; i < width; i++) {
+                for (int j = 0; j < height; j++) {
+                    array1[height * i + j] = scanim1[i][j][k];
+                    array2[height * i + j] = scanim2[i][j][k];
+                }
+            }
+            ranks1 = arrayRankTransform(array1);
+            ranks2 = arrayRankTransform(array2);
+            for (int i = 0; i < N; i++) {
+                d[k] += Math.pow(ranks1[i] - ranks2[i], 2);
+            }
+            total[k] = (1 - (((double) d[k] / N) * 6) / (Math.pow(N, 2) - 1));
+        }
+        return (total[0] + total[1] + total[2]) / 3;
+    }
     @Override
-    public boolean DoMagic(int[][][] scanim1, int[][][] scanim2) {
+    public boolean DoMagic(byte[][][] scanim1, byte[][][] scanim2) {
         double total_avg = get_similarity(scanim1, scanim2);
         if (total_avg > bestTotal) {
             bestTotal = total_avg;
@@ -323,11 +372,11 @@ class SCC extends CompareMethod {
     }
 }
 class KCC extends CompareMethod {
-    public static int[] arrayRankTransform(int[] arr) {
+    public static int[] arrayRankTransform(byte[] arr) {
         int N = arr.length;
         //create result array and re-use it to store sorted elements of original array
-        int[] sorted = Arrays.copyOf(arr, N);
-        int[] ranks = Arrays.copyOf(arr, N);
+        byte[] sorted = Arrays.copyOf(arr, N);
+        int[] ranks = new int[N];
         Arrays.sort(sorted);
         //fill map of ranks based on sorted sequence of elements
         for (int i = 0; i < N; i++){
@@ -343,12 +392,12 @@ class KCC extends CompareMethod {
         return ranks;
     }
 
-    public static double get_similarity(int[][][] scanim1, int[][][] scanim2) {
+    public static double get_similarity(byte[][][] scanim1, byte[][][] scanim2) {
         int width = scanim1.length;
         int height = scanim1[0].length;
         int N = width*height;
-        int[] array1 = new int[N];
-        int[] array2 = new int[N];
+        byte[] array1 = new byte[N];
+        byte[] array2 = new byte[N];
         int[] ranks1;
         int[] ranks2;
         double[] t = {0,0,0};
@@ -374,7 +423,7 @@ class KCC extends CompareMethod {
     }
 
     @Override
-    public boolean DoMagic(int[][][] scanim1, int[][][] scanim2) {
+    public boolean DoMagic(byte[][][] scanim1, byte[][][] scanim2) {
         double total_avg = get_similarity(scanim1, scanim2);
         if (total_avg > bestTotal) {
             bestTotal = total_avg;
@@ -385,7 +434,7 @@ class KCC extends CompareMethod {
     }
 }
 class SAD extends CompareMethod {
-    public static double get_similarity(int[][][] scanim1, int[][][] scanim2) {
+    public static double get_similarity(byte[][][] scanim1, byte[][][] scanim2) {
         int width = scanim1.length;
         int height = scanim1[0].length;
         double[] total = {0, 0, 0};
@@ -399,9 +448,8 @@ class SAD extends CompareMethod {
 
         return 1 - (total[0] + total[1] + total[2])/(3*255*width*height);
     }
-
     @Override
-    public boolean DoMagic(int[][][] scanim1, int[][][] scanim2) {
+    public boolean DoMagic(byte[][][] scanim1, byte[][][] scanim2) {
         double total_avg = get_similarity(scanim1, scanim2);
         if (total_avg > bestTotal) {//В данном случае также
             bestTotal = total_avg;
@@ -414,7 +462,7 @@ class SAD extends CompareMethod {
 
 class SSD extends CompareMethod {
 
-    public static double get_similarity(int[][][] scanim1, int[][][] scanim2) {
+    public static double get_similarity(byte[][][] scanim1, byte[][][] scanim2) {
         int width = scanim1.length;
         int height = scanim1[0].length;
         double[] total = {0, 0, 0};
@@ -429,7 +477,7 @@ class SSD extends CompareMethod {
     }
 
     @Override
-    public boolean DoMagic(int[][][] scanim1, int[][][] scanim2) {
+    public boolean DoMagic(byte[][][] scanim1, byte[][][] scanim2) {
         double total_avg = get_similarity(scanim1, scanim2);
         if (total_avg > bestTotal/*Math.pow(average*Math.pow(0.2*size,2),2)*/) {//В данном случае также
             bestTotal = total_avg;
@@ -439,6 +487,7 @@ class SSD extends CompareMethod {
             return false;
     }
 }
+
 
 
 class MainFrame extends JFrame {
@@ -457,8 +506,8 @@ class MainFrame extends JFrame {
     BufferedImage DepthMap;
     BufferedImage DepthMap_full;
     int scanscreensize;
-    int[][][] matrix1;//first image
-    int[][][] matrix2;//second image
+    byte[][][] matrix1;//first image
+    byte[][][] matrix2;//second image
     public double[][] matrix3;//deviation matrix
     public int[][][] logs;
     public LogsVisualizator lv;
@@ -553,12 +602,26 @@ class MainFrame extends JFrame {
 
     public BufferedImage THImage;
 
+    int start, finish;
+
     public static void main(String[] args) throws IOException {
         MainFrame fr = new MainFrame();
 
 
     }
-
+    public int[][][] BtoIMatrix(byte[][][] matrix) {
+        width = matrix.length;
+        height = matrix[0].length;
+        int[][][] result = new int[width][height][3];
+        for (int i = 0; i < width; i++) {
+            for (int j = 0; j < height; j++) {
+                for (int k = 0; k < 3; k++){
+                    result[i][j][k] = matrix[i][j][k] + 128;
+                }
+            }
+        }
+        return result;
+    }
     public MainFrame() throws IOException {
 
         loadleftimage.setCurrentDirectory(new File("D:\\Images\\"));
@@ -1012,7 +1075,7 @@ class MainFrame extends JFrame {
             dmc = new DMComparator(this, buff, DepthMap_full, metrics[0], metrics[1]);
         });
         GetLogs.addActionListener(actionEvent -> {
-            lv = new LogsVisualizator(this, matrix1, matrix2, logs, max_deviation, vdev, dtis);
+            lv = new LogsVisualizator(this, BtoIMatrix(matrix1), BtoIMatrix(matrix2), logs, max_deviation, vdev, dtis);
         });
         GoMakeSomeMagic.addActionListener(actionEvent -> {
             if(pf != null) {
@@ -1028,8 +1091,8 @@ class MainFrame extends JFrame {
                 dmc = null;
             }
             System.out.flush();
-            matrix1 = new int[width][height][3]; //матрица для первого снимка
-            matrix2 = new int[width][height][3]; //матрица для второго снимка
+            matrix1 = new byte[width][height][3]; //матрица для первого снимка
+            matrix2 = new byte[width][height][3]; //матрица для второго снимка
             //преобразование изображения в чб, конфликтует с некоторыми цветами
             if (bw.isSelected()) {
                 improc.loadFull(image1);
@@ -1045,14 +1108,14 @@ class MainFrame extends JFrame {
             for (int i = 0; i < width; i++) {
                 for (int j = 0; j < height; j++) {
                     // matrix1[i][j] = Math.abs(image1.getRGB(i, j));
-                    matrix1[i][j][0] = Math.abs(new Color(image1.getRGB(i, j)).getRed());
-                    matrix1[i][j][1] = Math.abs(new Color(image1.getRGB(i, j)).getGreen());
-                    matrix1[i][j][2] = Math.abs(new Color(image1.getRGB(i, j)).getBlue());
+                    matrix1[i][j][0] = (byte)(Math.abs(new Color(image1.getRGB(i, j)).getRed()) - 128);
+                    matrix1[i][j][1] = (byte)(Math.abs(new Color(image1.getRGB(i, j)).getGreen()) - 128);
+                    matrix1[i][j][2] = (byte)(Math.abs(new Color(image1.getRGB(i, j)).getBlue()) - 128);
                     //System.out.print(matrix1[i][j] + " ");
                     // matrix2[i][j] = Math.abs(image2.getRGB(i, j));
-                    matrix2[i][j][0] = Math.abs(new Color(image2.getRGB(i, j)).getRed());
-                    matrix2[i][j][1] = Math.abs(new Color(image2.getRGB(i, j)).getGreen());
-                    matrix2[i][j][2] = Math.abs(new Color(image2.getRGB(i, j)).getBlue());
+                    matrix2[i][j][0] = (byte)(Math.abs(new Color(image2.getRGB(i, j)).getRed()) - 128);
+                    matrix2[i][j][1] = (byte)(Math.abs(new Color(image2.getRGB(i, j)).getGreen()) - 128);
+                    matrix2[i][j][2] = (byte)(Math.abs(new Color(image2.getRGB(i, j)).getBlue()) - 128);
                     for (int k = 0; k < 3; k++){
                         average4ssdandsad[k] += matrix1[i][j][k] + matrix2[i][j][k];
                     }
@@ -1103,14 +1166,14 @@ class MainFrame extends JFrame {
             for (int i = 0; i < width; i++) {
                 for (int j = 0; j < height; j++) {
                     // matrix1[i][j] = Math.abs(image1.getRGB(i, j));
-                    matrix1[i][j][0] = Math.abs(new Color(image1.getRGB(i, j)).getRed());
-                    matrix1[i][j][1] = Math.abs(new Color(image1.getRGB(i, j)).getGreen());
-                    matrix1[i][j][2] = Math.abs(new Color(image1.getRGB(i, j)).getBlue());
+                    matrix1[i][j][0] = (byte)(Math.abs(new Color(image1.getRGB(i, j)).getRed()) - 128);
+                    matrix1[i][j][1] = (byte)(Math.abs(new Color(image1.getRGB(i, j)).getGreen()) - 128);
+                    matrix1[i][j][2] = (byte)(Math.abs(new Color(image1.getRGB(i, j)).getBlue()) - 128);
                     //System.out.print(matrix1[i][j] + " ");
                     // matrix2[i][j] = Math.abs(image2.getRGB(i, j));
-                    matrix2[i][j][0] = Math.abs(new Color(image2.getRGB(i, j)).getRed());
-                    matrix2[i][j][1] = Math.abs(new Color(image2.getRGB(i, j)).getGreen());
-                    matrix2[i][j][2] = Math.abs(new Color(image2.getRGB(i, j)).getBlue());
+                    matrix2[i][j][0] = (byte)(Math.abs(new Color(image2.getRGB(i, j)).getRed()) - 128);
+                    matrix2[i][j][1] = (byte)(Math.abs(new Color(image2.getRGB(i, j)).getGreen()) - 128);
+                    matrix2[i][j][2] = (byte)(Math.abs(new Color(image2.getRGB(i, j)).getBlue()) - 128);
                     for (int k = 0; k < 3; k++){
                         average4ssdandsad[k] += matrix1[i][j][k] + matrix2[i][j][k];
                     }
@@ -1132,9 +1195,9 @@ class MainFrame extends JFrame {
             else if (ssd.isSelected())
                 userchoise = 5;
             //Пожалуй, самая трудоемкая функция в данной программе, сложность - порядка O(n^3), но т.к. число n - далеко не такое маленькое, зачастую приходится подождать
-            long start = System.currentTimeMillis();
+
             DepthMap_full = CalculateDeepMap(scanscreensize, userchoise);
-            long finish = System.currentTimeMillis();
+            finish = (int)System.currentTimeMillis();
             long timeElapsed = finish - start;
             TimeTF.setText(Long.toString(timeElapsed));
             IterTF.setText(Long.toString(itercounter));
@@ -1219,11 +1282,12 @@ class MainFrame extends JFrame {
         }
         return mask;
     }
-    public int[][][] Convolve(int[][][] matrix, int[][] kernel){
+    // NOT WORKING, CHANGE TYPE OF RESULT FROM BYTE TO INT
+    public byte[][][] Convolve(byte[][][] matrix, int[][] kernel){
         int width = matrix.length;
         int height = matrix[0].length;
         int size = (kernel.length-1)/2;
-        int[][][] result = new int[width-2*size][height-2*size][3];
+        byte[][][] result = new byte[width-2*size][height-2*size][3];
         for (int i = size; i < width - size; i++) {
             for (int j = size; j < height - size; j++) {
                 for (int k = 0; k < 3; k++) {
@@ -1249,7 +1313,7 @@ class MainFrame extends JFrame {
     public int[] extendPart(int col, int row, int width, int height, int tempsizeadd){
         return new int[]{col - tempsizeadd, row, width + tempsizeadd, height};
     }
-    public int[][][] getPart(int[][][] matrix, int col, int row, int width, int height, int tempsizeadd){
+    public byte[][][] getPart(byte[][][] matrix, int col, int row, int width, int height, int tempsizeadd){
         if (tempsizeadd != 0) {
             int[] eP = extendPart(col, row, width, height, tempsizeadd);
             col = eP[0];
@@ -1257,14 +1321,14 @@ class MainFrame extends JFrame {
             width = eP[2];
             height = eP[3];
         }
-        int[][][] part = new int[width][height][3];
+        byte[][][] part = new byte[width][height][3];
         // 500 rows and 400 columns
 
         for (int i = 0; i < width; i++) {
             for (int j = 0; j < height; j++) {
                 for (int k = 0; k < 3; k++) {
                     //System.out.println("Height: " + matrix.length  + ' ' + (col+i) + " Width: " + matrix[0].length + ' '+ (row+j));
-                    part[i][j][k] = matrix[col + i][row + j][k];
+                    part[i][j][k] = (byte) matrix[col + i][row + j][k];
                 }
             }
         }
@@ -1273,7 +1337,7 @@ class MainFrame extends JFrame {
     //    public int[][][] getPartU(int[][][] matrix, int col, int row, int width, int height, int tempsizeadd){
 //        return getPart(matrix,col - tempsizeadd, row - tempsizeadd,width + 2*tempsizeadd, height + 2*tempsizeadd);
 //    }
-    public boolean Compare(CompareMethod method, int[][][] part1, int[][][] part2, boolean capprx) {
+    public boolean Compare(CompareMethod method, byte[][][] part1, byte[][][] part2, boolean capprx) {
         if (capprx) {
             //int size = Math.min(tempmatrix1.length, tempmatrix1[0].length) / 20;
             int size = 1;
@@ -1284,30 +1348,9 @@ class MainFrame extends JFrame {
             return method.DoMagic(part1, part2);
 
     }
-    public boolean CompareOLD(CompareMethod method, int row1, int col1, int row2, int col2, int height, int width, int tempsizeadd, boolean capprx) {
-        //чтобы не таскать дальше эти большие фотки, создаем копии только нужных областей
-        int[][][] tempmatrix1 = new int[width+2*tempsizeadd][height+2*tempsizeadd][3];
-        int[][][] tempmatrix2 = new int[width+2*tempsizeadd][height+2*tempsizeadd][3];
-        for (int i = 0; i < width+2*tempsizeadd; i++) {
-            for (int j = 0; j < height+2*tempsizeadd; j++) {
-                for (int k = 0; k < 3; k++) {
-                    tempmatrix1[i][j][k] = matrix1[row1 + i - tempsizeadd][col1 + j - tempsizeadd][k];
-                    tempmatrix2[i][j][k] = matrix2[row2 + i - tempsizeadd][col2 + j - tempsizeadd][k];
-                }
-            }
-        }
-        if (capprx) {
-            //int size = Math.min(tempmatrix1.length, tempmatrix1[0].length) / 20;
-            int size = 1;
-            int[][] kernel = GenerateGKernel(1, size);
-            return method.DoMagic(Convolve(tempmatrix1, kernel), Convolve(tempmatrix2, kernel));
-        }
-        else
-            return method.DoMagic(tempmatrix1, tempmatrix2);
 
-    }
-    public int[][][] MCopy(int[][][] matrix){
-        int[][][] temp = new int[matrix.length][matrix[0].length][matrix[0][0].length];
+    public byte[][][] MCopy(byte[][][] matrix){
+        byte[][][] temp = new byte[matrix.length][matrix[0].length][matrix[0][0].length];
         for (int i = 0; i < matrix.length; i++){
             for(int j = 0; j < matrix[0].length; j++){
                 for(int k = 0; k < matrix[0][0].length; k++)
@@ -1316,14 +1359,28 @@ class MainFrame extends JFrame {
         }
         return temp;
     }
-    public double[] getDeviation(int[][][] matrix1, int[][][] matrix2, boolean use_approx, boolean verbose) {
+
+    public BufferedImage MatrixToImage(byte[][][] matrix){
+        int width = matrix.length;
+        int height = matrix[0].length;
+        BufferedImage tempimg = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+        for (int i = 0; i < width; i++) {
+            for (int j = 0; j < height; j++)
+            {
+                Color MyColor = new Color(matrix[i][j][0], matrix[i][j][1], matrix[i][j][2]);
+                tempimg.setRGB(i, j, MyColor.getRGB());
+            }
+        }
+        return tempimg;
+    }
+    public double[] getDeviation(byte[][][] matrix1, byte[][][] matrix2, boolean use_approx, boolean verbose) {
         int width = matrix1.length;
         int height = matrix1[0].length;
         double best_correlation = 0;
         int opt_deviation = width/5;
         double area = width/3.5;
         int stripe = Math.max((int)area/75, 1);
-        int[][][] temp_matrix1, temp_matrix2, best_matrix1 = null, best_matrix2 = null;
+        byte[][][] temp_matrix1, temp_matrix2, best_matrix1 = null, best_matrix2 = null;
 
         int n_rnd = width/10;
         int size = width/10;
@@ -1334,8 +1391,8 @@ class MainFrame extends JFrame {
         double[][] logs = new double[rs-ls][2];
 
         for (int deviation = ls; deviation < rs; deviation += stripe) {
-            temp_matrix1 = new int[width - Math.abs(deviation)][height][3];
-            temp_matrix2 = new int[width - Math.abs(deviation)][height][3];
+            temp_matrix1 = new byte[width - Math.abs(deviation)][height][3];
+            temp_matrix2 = new byte[width - Math.abs(deviation)][height][3];
             for (int i = 0; i < width - Math.abs(deviation); i++) {
                 for (int j = 0; j < height; j++) {
                     for (int k = 0; k < 3; k++) {
@@ -1354,8 +1411,8 @@ class MainFrame extends JFrame {
             if (use_approx){
                 Random rand = new Random();
                 for (int i = 0; i < n_rnd; i++){
-                    int[][][] rbatch1 = new int[size][size][3];
-                    int[][][] rbatch2 = new int[size][size][3];
+                    byte[][][] rbatch1 = new byte[size][size][3];
+                    byte[][][] rbatch2 = new byte[size][size][3];
                     int x_r = rand.nextInt(width - Math.abs(deviation) - size + 1);
                     int y_r = rand.nextInt(height - size + 1);
                     for (int n = 0; n < size; n++){
@@ -1387,7 +1444,7 @@ class MainFrame extends JFrame {
             System.out.println(" " + correlation +" "+ deviation);
         }
         if (verbose){
-            pf = new PlotFrame(MainFrame.this, improc.MatrixToImage(best_matrix1), improc.MatrixToImage(best_matrix2), opt_deviation, best_correlation, logs);
+            pf = new PlotFrame(MainFrame.this, MatrixToImage(best_matrix1), MatrixToImage(best_matrix2), opt_deviation, best_correlation, logs);
         }
         // writing to file
         try{
@@ -1536,6 +1593,31 @@ class MainFrame extends JFrame {
         }
         return tempmap;
     }
+    public double Std(byte[][][] matrix) {
+        double[] std = {0,0,0};
+        double[] avg = Average(matrix);
+        for (int k = 0; k < 3; k++) {
+            for (int i = 0; i < matrix.length; i++) {
+                for (int j = 0; j < matrix[0].length; j++) {
+                    std[k] += Math.pow((matrix[i][j][k]-avg[k]),2);
+                }
+            }
+            std[k] = Math.pow(std[k] / (matrix.length*matrix[0].length-1), 0.5);
+        }
+        return (std[0]+std[1]+std[2])/3;
+    }
+    public double[] Average(byte[][][] matrix) {
+        double[] average_c = {0,0,0};
+        for (int k = 0; k < 3; k++) {
+            for (int i = 0; i < matrix.length; i++) {
+                for (int j = 0; j < matrix[0].length; j++) {
+                    average_c[k] += matrix[i][j][k];
+                }
+            }
+            average_c[k] = average_c[k] / (matrix.length*matrix[0].length);
+        }
+        return average_c;
+    }
     public BufferedImage CalculateDeepMap(int scanscreensize, int userchoise) {
         int width = matrix1.length; // 500
         int height = matrix1[0].length; // 400
@@ -1572,9 +1654,9 @@ class MainFrame extends JFrame {
 
         int sc_height, sc_width;
         double std1 = 0, std2 = 0;
-        int[][][] tempmatrix1, tempmatrix2;
+        byte[][][] tempmatrix1, tempmatrix2;
         int comp_counter;
-        double std_thresh = improc.Std(matrix1)/6;
+        double std_thresh = Std(matrix1)/6;
         int locale_c = Integer.parseInt(NSegmentsTF.getText());
         int locale_w = width/locale_c;
         int locale_h = height/locale_c;
@@ -1582,9 +1664,11 @@ class MainFrame extends JFrame {
 
         double AC = Double.parseDouble(ACoefTF.getText());
 
+        start = (int)System.currentTimeMillis();
+
         for (int i = 0; i < locale_c; i++){
             for (int j = 0; j < locale_c; j++){
-                double temp = improc.Std(getPart(matrix1, locale_w*i, locale_h*j, Math.min(width - locale_w*i, locale_w), Math.min(height - locale_h*j, locale_h), 0));
+                double temp = Std(getPart(matrix1, locale_w*i, locale_h*j, Math.min(width - locale_w*i, locale_w), Math.min(height - locale_h*j, locale_h), 0));
                 thresh_matrix[i][j] = 2.1*Math.pow(temp, 0.5);
             }
         }
@@ -1597,7 +1681,7 @@ class MainFrame extends JFrame {
         System.out.println("Adaptive Areas: " + locale_w + " " + locale_h);
         //double [][] thresh_matrix = new double[(int)Math.ceil((double)corrected_width / scanscreensize)][(int)Math.ceil((double)height / scanscreensize)];
         double[][] tm_upd = new double[corrected_width][height];
-        System.out.println("START STD THRESH: " + std_thresh);
+        //System.out.println("START STD THRESH: " + std_thresh);
         for (int col_image1 = -Math.min(opt_deviation, 0); col_image1 < width - Math.max(opt_deviation, 0) - 1; col_image1 += scanscreensize) {
             sc_width = scanscreensize - Math.max((col_image1 + scanscreensize) - (width - Math.max(opt_deviation, 0)) + 1, 0);
             //System.out.println("###1#### " + col_image1 + ' '+ width +' '+sc_width);
@@ -1609,7 +1693,7 @@ class MainFrame extends JFrame {
                 //System.out.println("!!!!!!!!!!!!!!!!!!!" + col_image1 + " "+ row_image1 + " "+width+"");
                 starttotal  = 0;
                 tempmatrix1 = getPart(matrix1, col_image1, row_image1, sc_width, sc_height, tempsizeadd);
-                std1 = improc.Std(tempmatrix1);
+                std1 = Std(tempmatrix1);
 //                if ((col_image1 % locale_w < sc_width) && (row_image1 % locale_h < sc_height)) {
 //                    System.out.println("IS THE START OF AREA: " + col_image1 + " " + row_image1);
 //                    std_thresh = improc.Std(getPart(matrix1, col_image1, row_image1, locale_w - sc_width, locale_h - sc_height, 0)) / 6;
@@ -1623,7 +1707,7 @@ class MainFrame extends JFrame {
                     int counter = 0;
                     tempsizeadd = 0;
                     int[] eP = extendPart(col_image1, row_image1, sc_width, sc_height, tempsizeadd);
-                    int[][][] asmatrix;
+                    byte[][][] asmatrix;
                     //System.out.println("STD " + improc.Std(tempmatrix1));
                     // && tempsizeadd < 2*sc_width
                     double start_std = std1;
@@ -1631,7 +1715,7 @@ class MainFrame extends JFrame {
                         while (std1 <= Math.min(std_thresh, AC*start_std) && eP[0] >= -max_deviation && (width - eP[2] - eP[0]) > 0 && eP[1] >= 0 && (height - eP[3] - eP[2]) > 0) {
                             asmatrix = getPart(matrix1, col_image1, row_image1, sc_width, sc_height, tempsizeadd);
                             //System.out.println("&&&&&&&&&&&&&&&&& " + tempsizeadd + " " + col_image1 + " " + row_image1);
-                            std1 = improc.Std(asmatrix);
+                            std1 = Std(asmatrix);
                             if (std1 < Math.min(std_thresh, AC*start_std))
                                 tempmatrix1 = asmatrix;
 
@@ -1642,7 +1726,7 @@ class MainFrame extends JFrame {
                         tempsizeadd -= 1;
                     }
                 }
-                std1 = improc.Std(tempmatrix1);
+                std1 = Std(tempmatrix1);
                 method.setStartTotal(starttotal);
                 coincidentx = col_image1;
                 coincidenty = row_image1;
@@ -1659,7 +1743,7 @@ class MainFrame extends JFrame {
                                 if (Compare(method, tempmatrix1, tempmatrix2, ConvolutionApproximation.isSelected())) {
                                     coincidentx = col_image2;
                                     coincidenty = row_image2;
-                                    std2 = improc.Std(tempmatrix2);
+                                    std2 = Std(tempmatrix2);
                                     //System.out.print("New Best: " + method.bestTotal + " ");
                                 }
                                 itercounter++;
@@ -1673,7 +1757,7 @@ class MainFrame extends JFrame {
                                 if (Compare(method, tempmatrix1, tempmatrix2, ConvolutionApproximation.isSelected())) {
                                     coincidentx = col_image2;
                                     coincidenty = row_image2;
-                                    std2 = improc.Std(tempmatrix2);
+                                    std2 = Std(tempmatrix2);
                                     //System.out.print("New Best: " + method.bestTotal + " ");
                                 }
                                 itercounter++;

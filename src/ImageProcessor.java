@@ -1115,6 +1115,7 @@ public class ImageProcessor {
         for (int i = 0; i < width; i++) {
             for (int j = 0; j < height; j++)
             {
+                //System.out.println(matrix[i][j][0] +" "+ matrix[i][j][1] + " "+  matrix[i][j][2]);
                 Color MyColor = new Color(matrix[i][j][0], matrix[i][j][1], matrix[i][j][2]);
                 tempimg.setRGB(i, j, MyColor.getRGB());
             }
