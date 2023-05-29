@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import javax.imageio.ImageIO;
 import javax.swing.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import java.util.Random;
 
 class ImageChanger {
@@ -491,10 +492,8 @@ class SSD extends CompareMethod {
 
 
 class MainFrame extends JFrame {
-    //В данном разделе, как уже понятно из класса-предка будет нудное создание интерфейса
-    //Который, к слову, получился совсем не так, как задумывался
-    int guiImageWidth = 250;
-    int guiImageHeight = 200;
+    int guiImageWidth = 280;
+    int guiImageHeight = 240;
 
     //new File("D:\\Images\\left.jpg");
     File RI = null;
@@ -514,7 +513,6 @@ class MainFrame extends JFrame {
     public DMComparator dmc;
     public PlotFrame pf;
     int width, height; //ширина и высота фотки
-    public double[] average4ssdandsad = new double[3];//средняя "яркость" на элемент матриц, похже используется в паре методов
     JFrame frame = new JFrame();
     JPanel panel = new JPanel();
     JLabel Ncc = new JLabel("NCC");
@@ -527,12 +525,12 @@ class MainFrame extends JFrame {
     JLabel PREVITT = new JLabel("PREVITT");
     JLabel NONE = new JLabel("NONE");
     JLabel ScanScreenLabel = new JLabel("Scan screen size");
-    JLabel VdevLabel = new JLabel("Max vertical dev");
+    JLabel VdevLabel = new JLabel("MVDev");
     JLabel TimeLabel = new JLabel("Time");
     JLabel IterLabel = new JLabel("Iters");
-    JLabel ACLabel = new JLabel("AC");
     JLabel NSLabel = new JLabel("NS");
-    JTextField VdevTF = new JTextField("0", 4);
+    JLabel ECLabel = new JLabel("EC");
+    JTextField VdevTF = new JTextField("0", 3);
     JTextField TimeTF = new JTextField("0", 4);
     JTextField IterTF = new JTextField("0", 4);
     JLabel Selections = new JLabel("");
@@ -551,18 +549,17 @@ class MainFrame extends JFrame {
     JRadioButton Previtt = new JRadioButton("", false);
     JRadioButton none = new JRadioButton("", true);
     JButton GoMakeSomeMagic = new JButton("Go");
-    JButton LoadDM = new JButton("LoadDM");
-    JButton GetMetrics = new JButton("GetM");
-    JButton GetLogs = new JButton("GetL");
+    JButton LoadDM = new JButton("LDM");
+    JButton GetMetrics = new JButton("GM");
+    JButton GetLogs = new JButton("GL");
+    JButton Save = new JButton("Save");
     JButton SelectLeftImage = new JButton("Load Left Image");
     JButton SelectRightImage = new JButton("Load Right Image");
     ButtonGroup methods = new ButtonGroup();
     ButtonGroup filtration = new ButtonGroup();
-    JFileChooser loadleftimage = new JFileChooser();
-    JFileChooser loadrightimage = new JFileChooser();
+    JFileChooser loadimage = new JFileChooser();
     JTextField UserSize = new JTextField("10", 4);
     Box zero = Box.createHorizontalBox();
-    Box zero_first = Box.createHorizontalBox();
     Box first = Box.createHorizontalBox();
     Box second = Box.createHorizontalBox();
     Box third = Box.createHorizontalBox();
@@ -583,19 +580,24 @@ class MainFrame extends JFrame {
     JCheckBox ApplyForDepthMap = new JCheckBox("Apply to DM");
     JCheckBox AdaptiveSize = new JCheckBox("AdaptSize");
     JCheckBox ConvolutionApproximation = new JCheckBox("ConvApprx");
-    JTextField FiltersizeTF = new JTextField("3", 5);
-    JTextField ACoefTF = new JTextField("2.1", 3);
+    JTextField FiltersizeTF = new JTextField("3", 3);
+    JCheckBox UseOptimCB = new JCheckBox("AX");
+    JCheckBox VerboseCB = new JCheckBox("VB");
+    JTextField ECoefTF = new JTextField("2.2", 3);
     JTextField NSegmentsTF = new JTextField("5", 3);
 
-    JLabel text = new JLabel("Size");
+    JLabel text = new JLabel("Filter size");
     JButton ApplyFunction = new JButton("Apply");
-    JComboBox Function = new JComboBox(new String[]{"amedian", "wmedian","prewitt","sobel","median", "avg", "min", "max", "gamma", "clarity", "equalize"});
+    //JComboBox Function = new JComboBox(new String[]{"amedian", "wmedian","prewitt","sobel","median", "avg", "min", "max", "gamma", "clarity", "equalize"});
+    JComboBox Function = new JComboBox(new String[]{"amedian", "wmedian", "median"});
+
     ImageProcessor improc = new ImageProcessor();
     int[] size_adjustment = {0, 0};
     int filtersize = 9;
     private int max_deviation;
     private int vdev;
     private int counter4saving = 0;
+    private boolean use_opt = false;
 
     private int itercounter;
     public static int dtis = 10000; // scale for converting double to int and then backwards
@@ -624,8 +626,8 @@ class MainFrame extends JFrame {
     }
     public MainFrame() throws IOException {
 
-        loadleftimage.setCurrentDirectory(new File("D:\\Images\\"));
-        loadrightimage.setCurrentDirectory(new File("D:\\Images\\"));
+        loadimage.setCurrentDirectory(new File("D:\\Images\\"));
+        loadimage.setFileFilter(new FileNameExtensionFilter("Images", "jpg", "png", "gif", "bmp"));
 
         frame.setLayout(new BorderLayout());
         frame.setSize(600, 500); //размер фрейма
@@ -640,15 +642,16 @@ class MainFrame extends JFrame {
         FiltersizeTF.setMaximumSize(FiltersizeTF.getPreferredSize());
         TimeTF.setMaximumSize(TimeTF.getPreferredSize());
         IterTF.setMaximumSize(IterTF.getPreferredSize());
-        ACoefTF.setMaximumSize(ACoefTF.getPreferredSize());
         NSegmentsTF.setMaximumSize(NSegmentsTF.getPreferredSize());
+        ECoefTF.setMaximumSize(ECoefTF.getPreferredSize());
         UserSize.setHorizontalAlignment(JTextField.CENTER);
         VdevTF.setHorizontalAlignment(JTextField.CENTER);
         FiltersizeTF.setHorizontalAlignment(JTextField.CENTER);
         TimeTF.setHorizontalAlignment(JTextField.CENTER);
         IterTF.setHorizontalAlignment(JTextField.CENTER);
-        ACoefTF.setHorizontalAlignment(JTextField.CENTER);
         NSegmentsTF.setHorizontalAlignment(JTextField.CENTER);
+        ECoefTF.setHorizontalAlignment(JTextField.CENTER);
+
 
         TimeTF.setEnabled(false);
         IterTF.setEnabled(false);
@@ -724,12 +727,13 @@ class MainFrame extends JFrame {
         second.add(ApplyForDepthMap);
         second.add(Box.createHorizontalGlue());
 
+
         third.add(Box.createHorizontalGlue());
         third.add(AdaptiveSize);
         third.add(Box.createHorizontalGlue());
-        third.add(ACLabel);
+        third.add(UseOptimCB);
         third.add(Box.createHorizontalGlue());
-        third.add(ACoefTF);
+        third.add(VerboseCB);
         third.add(Box.createHorizontalGlue());
         third.add(NSLabel);
         third.add(Box.createHorizontalGlue());
@@ -743,6 +747,12 @@ class MainFrame extends JFrame {
         fourth.add(Box.createHorizontalGlue());
         fourth.add(VdevTF);
         fourth.add(Box.createHorizontalGlue());
+        fourth.add(Box.createHorizontalStrut(8));
+        fourth.add(ECLabel);
+        fourth.add(Box.createHorizontalGlue());
+        fourth.add(ECoefTF);
+        fourth.add(Box.createHorizontalGlue());
+        fourth.add(Box.createHorizontalStrut(9));
         fourth.add(TimeLabel);
         fourth.add(Box.createHorizontalGlue());
         fourth.add(TimeTF);
@@ -766,6 +776,8 @@ class MainFrame extends JFrame {
         sixth.add(GetMetrics);
         sixth.add(Box.createHorizontalGlue());
         sixth.add(GetLogs);
+        sixth.add(Box.createHorizontalGlue());
+        sixth.add(Save);
         sixth.add(Box.createHorizontalGlue());//чуть позже вернемся к графическому интерфейсу, для начала нужно раздобыть немного информации
 
 
@@ -774,13 +786,14 @@ class MainFrame extends JFrame {
         LoadDM.setEnabled(true);
         GetMetrics.setEnabled(false);
         GetLogs.setEnabled(false);
+        Save.setEnabled(false);
 
         SelectLeftImage.addActionListener(actionEvent -> {
             try {
                 File LI = null;
-                int leftret = loadleftimage.showDialog(null, "Загрузите левое изображение формата jpg");
+                int leftret = loadimage.showDialog(null, "Load left image");
                 if (leftret == JFileChooser.APPROVE_OPTION) {
-                    LI = loadleftimage.getSelectedFile();
+                    LI = loadimage.getSelectedFile();
                 }
                 image1 = improc.SizeChangerLinear(ImageIO.read(LI), guiImageWidth*2, guiImageHeight*2);
                 //image1 = ImageIO.read(LI);
@@ -810,9 +823,9 @@ class MainFrame extends JFrame {
         SelectRightImage.addActionListener(actionEvent -> {
             try {
                 File RI = null;
-                int rightret = loadrightimage.showDialog(null, "Загрузите правое изображение формата jpg");
+                int rightret = loadimage.showDialog(null, "Load right image");
                 if (rightret == JFileChooser.APPROVE_OPTION) {
-                    RI = loadrightimage.getSelectedFile();
+                    RI = loadimage.getSelectedFile();
                 }
                 image2 = improc.SizeChangerLinear(ImageIO.read(RI), guiImageWidth*2, guiImageHeight*2);
                 //image2 = ImageIO.read(RI);
@@ -846,157 +859,128 @@ class MainFrame extends JFrame {
                     improc.setSize((int)Double.parseDouble(FiltersizeTF.getText()));
                     if (!ApplyForDepthMap.isSelected()) {
                         switch (str) {
-                            case "gamma":
-                                improc.setSize(0);
-                                improc.loadFull(image1);
-                                image1 = ImageCopy(improc.applyFunction(2, Double.parseDouble(FiltersizeTF.getText())));
-                                improc.loadFull(image2);
-                                image2 = ImageCopy(improc.applyFunction(2, Double.parseDouble(FiltersizeTF.getText())));
-                                LeftImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(image1, guiImageWidth, guiImageHeight)));
-                                RightImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(image2, guiImageWidth, guiImageHeight)));
-                                break;
-                            case "min":
-                                improc.loadFull(image1);
-                                image1 = ImageCopy(improc.OrderStatFiltration("min"));
-                                improc.loadFull(image2);
-                                image2 = ImageCopy(improc.OrderStatFiltration("min"));
-                                LeftImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(image1, guiImageWidth, guiImageHeight)));
-                                RightImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(image2, guiImageWidth, guiImageHeight)));
-                                break;
-                            case "max":
-                                improc.loadFull(image1);
-                                image1 = ImageCopy(improc.OrderStatFiltration("max"));
-                                improc.loadFull(image2);
-                                image2 = ImageCopy(improc.OrderStatFiltration("max"));
-                                LeftImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(image1, guiImageWidth, guiImageHeight)));
-                                RightImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(image2, guiImageWidth, guiImageHeight)));
-                                break;
                             case "median":
                                 improc.loadFull(image1);
                                 image1 = ImageCopy(improc.OrderStatFiltration("median"));
                                 improc.loadFull(image2);
                                 image2 = ImageCopy(improc.OrderStatFiltration("median"));
-                                LeftImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(image1, guiImageWidth, guiImageHeight)));
-                                RightImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(image2, guiImageWidth, guiImageHeight)));
-                                break;
-                            case "avg":
-                                improc.loadFull(image1);
-                                image1 = ImageCopy(improc.OrderStatFiltration("avg"));
-                                improc.loadFull(image2);
-                                image2 = ImageCopy(improc.OrderStatFiltration("avg"));
-                                LeftImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(image1, guiImageWidth, guiImageHeight)));
-                                RightImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(image2, guiImageWidth, guiImageHeight)));
-                                break;
-                            case "sobel":
-                                improc.loadFull(image1);
-                                image1 = ImageCopy(improc.Sobel());
-                                improc.loadFull(image2);
-                                image2 = ImageCopy(improc.Sobel());
-                                LeftImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(image1, guiImageWidth, guiImageHeight)));
-                                RightImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(image2, guiImageWidth, guiImageHeight)));
-                                break;
-                            case "prewitt":
-                                improc.loadFull(image1);
-                                image1 = ImageCopy(improc.Prewitt());
-                                improc.loadFull(image2);
-                                image2 = ImageCopy(improc.Prewitt());
-                                LeftImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(image1, guiImageWidth, guiImageHeight)));
-                                RightImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(image2, guiImageWidth, guiImageHeight)));
-                                break;
-                            case "clarity":
-                                improc.loadFull(image1);
-                                image1 = ImageCopy(improc.Clarity());
-                                improc.loadFull(image2);
-                                image2 = ImageCopy(improc.Clarity());
-                                LeftImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(image1, guiImageWidth, guiImageHeight)));
-                                RightImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(image2, guiImageWidth, guiImageHeight)));
-                                break;
-                            case "equalize":
-                                improc.loadFull(image1);
-                                image1 = improc.ImageContrastIncrease();
-                                improc.loadFull(image2);
-                                image2 = improc.ImageContrastIncrease();
-                                LeftImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(image1, guiImageWidth, guiImageHeight)));
-                                RightImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(image2, guiImageWidth, guiImageHeight)));
                                 break;
                             case "amedian":
                                 improc.loadFull(image1);
                                 image1 = ImageCopy(improc.AdaptiveMedianFiltration());
                                 improc.loadFull(image2);
                                 image2 = ImageCopy(improc.AdaptiveMedianFiltration());
-                                LeftImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(image1, guiImageWidth, guiImageHeight)));
-                                RightImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(image2, guiImageWidth, guiImageHeight)));
                                 break;
                             case "wmedian":
                                 improc.loadFull(image1);
                                 image1 = ImageCopy(improc.WeightedMedian());
                                 improc.loadFull(image2);
                                 image2 = ImageCopy(improc.WeightedMedian());
-                                LeftImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(image1, guiImageWidth, guiImageHeight)));
-                                RightImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(image2, guiImageWidth, guiImageHeight)));
                                 break;
+//                            case "gamma":
+//                                improc.setSize(0);
+//                                improc.loadFull(image1);
+//                                image1 = ImageCopy(improc.applyFunction(2, Double.parseDouble(FiltersizeTF.getText())));
+//                                improc.loadFull(image2);
+//                                image2 = ImageCopy(improc.applyFunction(2, Double.parseDouble(FiltersizeTF.getText())));
+//                                break;
+//                            case "min":
+//                                improc.loadFull(image1);
+//                                image1 = ImageCopy(improc.OrderStatFiltration("min"));
+//                                improc.loadFull(image2);
+//                                image2 = ImageCopy(improc.OrderStatFiltration("min"));
+//                                break;
+//                            case "max":
+//                                improc.loadFull(image1);
+//                                image1 = ImageCopy(improc.OrderStatFiltration("max"));
+//                                improc.loadFull(image2);
+//                                image2 = ImageCopy(improc.OrderStatFiltration("max"));
+//                                break;
+//                            case "avg":
+//                                improc.loadFull(image1);
+//                                image1 = ImageCopy(improc.OrderStatFiltration("avg"));
+//                                improc.loadFull(image2);
+//                                image2 = ImageCopy(improc.OrderStatFiltration("avg"));
+//                                break;
+//                            case "sobel":
+//                                improc.loadFull(image1);
+//                                image1 = ImageCopy(improc.Sobel());
+//                                improc.loadFull(image2);
+//                                image2 = ImageCopy(improc.Sobel());
+//                                break;
+//                            case "prewitt":
+//                                improc.loadFull(image1);
+//                                image1 = ImageCopy(improc.Prewitt());
+//                                improc.loadFull(image2);
+//                                image2 = ImageCopy(improc.Prewitt());
+//                                break;
+//                            case "clarity":
+//                                improc.loadFull(image1);
+//                                image1 = ImageCopy(improc.Clarity());
+//                                improc.loadFull(image2);
+//                                image2 = ImageCopy(improc.Clarity());
+//                                break;
+//                            case "equalize":
+//                                improc.loadFull(image1);
+//                                image1 = improc.ImageContrastIncrease();
+//                                improc.loadFull(image2);
+//                                image2 = improc.ImageContrastIncrease();
+//                                break;
                         }
+                        LeftImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(image1, guiImageWidth, guiImageHeight)));
+                        RightImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(image2, guiImageWidth, guiImageHeight)));
 
                     }
                     else{
                         switch (str) {
-                            case "gamma":
-                                improc.setSize(0);
-                                improc.loadFull(DepthMap);
-                                //DepthMap = improc.ImageSubstitution(DepthMap, ImageCopy(improc.applyFunction(2, Double.parseDouble(Filtersize.getText()))), 1);
-                                DepthMap = ImageCopy(improc.applyFunction(2, Double.parseDouble(FiltersizeTF.getText())));
-                                BottomImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(improc.SizeChanger(DepthMap, Math.round(((double)scanscreensize*guiImageWidth/width))), guiImageWidth, guiImageHeight)));
-                                break;
-                            case "min":
-                                improc.loadFull(DepthMap);
-                                DepthMap = ImageCopy(improc.OrderStatFiltration("min"));
-                                BottomImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(improc.SizeChanger(DepthMap, Math.round(((double)scanscreensize*guiImageWidth/width))), guiImageWidth, guiImageHeight)));
-                                break;
-                            case "max":
-                                improc.loadFull(DepthMap);
-                                DepthMap = ImageCopy(improc.OrderStatFiltration("max"));
-                                BottomImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(improc.SizeChanger(DepthMap, Math.round(((double)scanscreensize*guiImageWidth/width))), guiImageWidth, guiImageHeight)));
-                                break;
                             case "median":
                                 improc.loadFull(DepthMap);
                                 DepthMap = ImageCopy(improc.OrderStatFiltration("median"));
-                                BottomImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(improc.SizeChanger(DepthMap, Math.round(((double)scanscreensize*guiImageWidth/width))), guiImageWidth, guiImageHeight)));
-                                break;
-                            case "avg":
-                                improc.loadFull(DepthMap);
-                                DepthMap = ImageCopy(improc.OrderStatFiltration("avg"));
-                                BottomImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(improc.SizeChanger(DepthMap, Math.round(((double)scanscreensize*guiImageWidth/width))), guiImageWidth, guiImageHeight)));
-                                break;
-                            case "sobel":
-                                improc.loadFull(DepthMap);
-                                DepthMap = ImageCopy(improc.Sobel());
-                                BottomImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(improc.SizeChanger(DepthMap, Math.round(((double)scanscreensize*guiImageWidth/width))), guiImageWidth, guiImageHeight)));
-                                break;
-                            case "prewitt":
-                                improc.loadFull(DepthMap);
-                                DepthMap = ImageCopy(improc.Prewitt());
-                                BottomImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(improc.SizeChanger(DepthMap, Math.round(((double)scanscreensize*guiImageWidth/width))), guiImageWidth, guiImageHeight)));
-                                break;
-                            case "clarity":
-                                improc.loadFull(DepthMap);
-                                DepthMap = ImageCopy(improc.Clarity());
-                                BottomImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(improc.SizeChanger(DepthMap, Math.round(((double)scanscreensize*guiImageWidth/width))), guiImageWidth, guiImageHeight)));
-                                break;
-                            case "equalize":
-                                improc.loadFull(DepthMap);
-                                DepthMap = improc.ImageContrastIncrease();
-                                BottomImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(improc.SizeChanger(DepthMap, Math.round(((double)scanscreensize*guiImageWidth/width))), guiImageWidth, guiImageHeight)));
                                 break;
                             case "amedian":
                                 improc.loadFull(DepthMap);
                                 DepthMap = ImageCopy(improc.AdaptiveMedianFiltration());
-                                BottomImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(improc.SizeChanger(DepthMap, Math.round(((double)scanscreensize*guiImageWidth/width))), guiImageWidth, guiImageHeight)));
                                 break;
                             case "wmedian":
                                 improc.loadFull(DepthMap);
                                 DepthMap = ImageCopy(improc.WeightedMedian());
-                                BottomImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(improc.SizeChanger(DepthMap, Math.round(((double)scanscreensize*guiImageWidth/width))), guiImageWidth, guiImageHeight)));
+
+//                            case "gamma":
+//                                improc.setSize(0);
+//                                improc.loadFull(DepthMap);
+//                                //DepthMap = improc.ImageSubstitution(DepthMap, ImageCopy(improc.applyFunction(2, Double.parseDouble(Filtersize.getText()))), 1);
+//                                DepthMap = ImageCopy(improc.applyFunction(2, Double.parseDouble(FiltersizeTF.getText())));
+//                                break;
+//                            case "min":
+//                                improc.loadFull(DepthMap);
+//                                DepthMap = ImageCopy(improc.OrderStatFiltration("min"));
+//                                break;
+//                            case "max":
+//                                improc.loadFull(DepthMap);
+//                                DepthMap = ImageCopy(improc.OrderStatFiltration("max"));
+//                                break;
+//                            case "avg":
+//                                improc.loadFull(DepthMap);
+//                                DepthMap = ImageCopy(improc.OrderStatFiltration("avg"));
+//                                break;
+//                            case "sobel":
+//                                improc.loadFull(DepthMap);
+//                                DepthMap = ImageCopy(improc.Sobel());
+//                                break;
+//                            case "prewitt":
+//                                improc.loadFull(DepthMap);
+//                                DepthMap = ImageCopy(improc.Prewitt());
+//                                break;
+//                            case "clarity":
+//                                improc.loadFull(DepthMap);
+//                                DepthMap = ImageCopy(improc.Clarity());
+//                                break;
+//                            case "equalize":
+//                                improc.loadFull(DepthMap);
+//                                DepthMap = improc.ImageContrastIncrease();
+//                                break;
                         }
+                        BottomImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(improc.SizeChanger(DepthMap, Math.round(((double)scanscreensize*guiImageWidth/width))), guiImageWidth, guiImageHeight)));
                         DepthMap_full = MatrixToImage(getFullMap(improc.BWImageToMatrix(DepthMap), DepthMap_full.getWidth(), DepthMap_full.getHeight()));
                     }
                 }
@@ -1059,10 +1043,10 @@ class MainFrame extends JFrame {
 
         LoadDM.addActionListener(actionEvent -> {
             try {
-                int dmret = loadleftimage.showDialog(null, "Загрузите левое изображение формата jpg");
+                int dmret = loadimage.showDialog(null, "Load ground-true map");
                 File temp = null;
                 if (dmret == JFileChooser.APPROVE_OPTION) {
-                    temp = loadleftimage.getSelectedFile();
+                    temp = loadimage.getSelectedFile();
                 }
                 GetMetrics.setEnabled(true);
                 buff = improc.SizeChangerLinear(ImageIO.read(temp), guiImageWidth*2, guiImageHeight*2);
@@ -1076,6 +1060,28 @@ class MainFrame extends JFrame {
         });
         GetLogs.addActionListener(actionEvent -> {
             lv = new LogsVisualizator(this, BtoIMatrix(matrix1), BtoIMatrix(matrix2), logs, max_deviation, vdev, dtis);
+        });
+        Save.addActionListener(actionEvent -> {
+            try{
+                counter4saving = 0;
+                File outputfile;
+                do {
+                    counter4saving++;
+                    outputfile = new File("Maps\\DepthMap" + counter4saving + ".png");
+                } while (outputfile.exists());
+            }catch (Exception e){}
+
+            try {
+                if (DepthMap == null) {
+                    throw new IOException();
+                }
+                File outputfile;
+                outputfile = new File("Maps\\DepthMap" + counter4saving + ".png");
+                ImageIO.write(DepthMap_full, "png", outputfile);
+                JOptionPane.showMessageDialog(MainFrame.this, "Saved");
+            } catch (IOException ex) {
+                JOptionPane.showMessageDialog(MainFrame.this, "Something went wrong, try again");
+            }
         });
         GoMakeSomeMagic.addActionListener(actionEvent -> {
             if(pf != null) {
@@ -1093,18 +1099,17 @@ class MainFrame extends JFrame {
             System.out.flush();
             matrix1 = new byte[width][height][3]; //матрица для первого снимка
             matrix2 = new byte[width][height][3]; //матрица для второго снимка
+            use_opt = UseOptimCB.isSelected();
             //преобразование изображения в чб, конфликтует с некоторыми цветами
             if (bw.isSelected()) {
                 improc.loadFull(image1);
                 image1 = ImageCopy(improc.BW());
                 improc.loadFull(image2);
                 image2 = ImageCopy(improc.BW());
-                // TopImageLabel.setIcon(new ImageIcon(image1));
-                // panel.add(TopImageLabel, NORTH);
                 LeftImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(image1, guiImageWidth, guiImageHeight)));
                 RightImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(image2, guiImageWidth, guiImageHeight)));
             }
-            //Средняя "яркость" будет позже использоваться в некоторых методах
+
             for (int i = 0; i < width; i++) {
                 for (int j = 0; j < height; j++) {
                     // matrix1[i][j] = Math.abs(image1.getRGB(i, j));
@@ -1116,72 +1121,9 @@ class MainFrame extends JFrame {
                     matrix2[i][j][0] = (byte)(Math.abs(new Color(image2.getRGB(i, j)).getRed()) - 128);
                     matrix2[i][j][1] = (byte)(Math.abs(new Color(image2.getRGB(i, j)).getGreen()) - 128);
                     matrix2[i][j][2] = (byte)(Math.abs(new Color(image2.getRGB(i, j)).getBlue()) - 128);
-                    for (int k = 0; k < 3; k++){
-                        average4ssdandsad[k] += matrix1[i][j][k] + matrix2[i][j][k];
-                    }
-                }
-                //System.out.println();
-            }
-            //System.out.print("@@@@@@@@@" + matrix1[0][0][0]);
-            for(int k = 0; k < 3; k++) {
-                average4ssdandsad[k] /= width * height * 2;
-            }
-
-//            filtersize = Integer.parseInt(Filtersize.getText());
-//
-//            BufferedImage FiltratedImage1;
-//            BufferedImage FiltratedImage2;
-//            //фильтрация
-//            if (Previtt.isSelected()) {
-//                improc.setSize(filtersize);
-//                improc.loadFull(image1);
-//                FiltratedImage1 = ImageCopy(improc.Prewitt());
-//                improc.loadFull(image2);
-//                FiltratedImage2 = ImageCopy(improc.Prewitt());
-//                //FiltratedImage1 = ichange.Filtration(matrix1, height, width, average4ssdandsad, 2);
-//                //FiltratedImage2 = ichange.Filtration(matrix2, height, width, average4ssdandsad, 2);
-//            } else {
-//                if (Sobel.isSelected()) {
-//                    improc.setSize(filtersize);
-//                    improc.loadFull(image1);
-//                    FiltratedImage1 = ImageCopy(improc.Sobel());
-//                    improc.loadFull(image2);
-//                    FiltratedImage2 = ImageCopy(improc.Sobel());
-//                    //FiltratedImage1 = ichange.Filtration(matrix1, height, width, average4ssdandsad, 3);
-//                    //FiltratedImage2 = ichange.Filtration(matrix2, height, width, average4ssdandsad, 3);
-//                } else {
-//                    FiltratedImage1 = image1;
-//                    FiltratedImage2 = image2;
-//                }
-//            }
-//            RightImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(FiltratedImage1, guiImageWidth, guiImageHeight)));
-//            // panel.add(firstvert, CENTER);
-//            LeftImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(FiltratedImage2, guiImageWidth, guiImageHeight)));
-//            // panel.add(RightImageLabel, WEST);
-//            // panel.add(RightImageLabel, EAST);
-
-            for (int k = 0; k < 3; k++) {
-                average4ssdandsad[k] = 0;
-            }
-            for (int i = 0; i < width; i++) {
-                for (int j = 0; j < height; j++) {
-                    // matrix1[i][j] = Math.abs(image1.getRGB(i, j));
-                    matrix1[i][j][0] = (byte)(Math.abs(new Color(image1.getRGB(i, j)).getRed()) - 128);
-                    matrix1[i][j][1] = (byte)(Math.abs(new Color(image1.getRGB(i, j)).getGreen()) - 128);
-                    matrix1[i][j][2] = (byte)(Math.abs(new Color(image1.getRGB(i, j)).getBlue()) - 128);
-                    //System.out.print(matrix1[i][j] + " ");
-                    // matrix2[i][j] = Math.abs(image2.getRGB(i, j));
-                    matrix2[i][j][0] = (byte)(Math.abs(new Color(image2.getRGB(i, j)).getRed()) - 128);
-                    matrix2[i][j][1] = (byte)(Math.abs(new Color(image2.getRGB(i, j)).getGreen()) - 128);
-                    matrix2[i][j][2] = (byte)(Math.abs(new Color(image2.getRGB(i, j)).getBlue()) - 128);
-                    for (int k = 0; k < 3; k++){
-                        average4ssdandsad[k] += matrix1[i][j][k] + matrix2[i][j][k];
-                    }
                 }
             }
-            for(int k = 0; k < 3; k++) {
-                average4ssdandsad[k] /= width * height * 2;
-            }
+
             scanscreensize = Integer.valueOf(UserSize.getText());
             int userchoise = 0;
             if (ncc.isSelected())
@@ -1194,21 +1136,30 @@ class MainFrame extends JFrame {
                 userchoise = 4;
             else if (ssd.isSelected())
                 userchoise = 5;
-            //Пожалуй, самая трудоемкая функция в данной программе, сложность - порядка O(n^3), но т.к. число n - далеко не такое маленькое, зачастую приходится подождать
 
+            //Пожалуй, самая трудоемкая функция в данной программе, сложность - порядка O(n^3), но т.к. число n - далеко не такое маленькое, зачастую приходится подождать
+            start = (int) System.currentTimeMillis();
             DepthMap_full = CalculateDeepMap(scanscreensize, userchoise);
             finish = (int)System.currentTimeMillis();
             long timeElapsed = finish - start;
+
             TimeTF.setText(Long.toString(timeElapsed));
             IterTF.setText(Long.toString(itercounter));
 
             // Сохранение
+            try{
+                counter4saving = 0;
+                File outputfile;
+                do {
+                    counter4saving++;
+                    outputfile = new File("Maps\\DepthMap" + counter4saving + ".png");
+                } while (outputfile.exists());
+            }catch (Exception e){}
 
             try {
                 if (DepthMap == null) {
                     throw new IOException();
                 }
-
                 File outputfile;
                 outputfile = new File("Maps\\DepthMap" + counter4saving + ".png");
                 ImageIO.write(DepthMap_full, "png", outputfile);
@@ -1221,7 +1172,6 @@ class MainFrame extends JFrame {
                 if (THImage == null) {
                     throw new IOException();
                 }
-
                 File outputfile;
                 outputfile = new File("Thresholds\\Thresholds" + counter4saving + ".png");
                 ImageIO.write(THImage, "png", outputfile);
@@ -1250,6 +1200,7 @@ class MainFrame extends JFrame {
             //GradientOfColors.setIcon(new ImageIcon(improc.SizeChangerLinear(gradientstripe, guiImageWidth, guiImageHeight)));
             LoadDM.setEnabled(true);
             GetLogs.setEnabled(true);
+            Save.setEnabled(true);
             //frame.pack();
             //panel.add(BottomImageLabel, SOUTH);
             //panel.add(GradientOfColors, SOUTH);
@@ -1367,7 +1318,7 @@ class MainFrame extends JFrame {
         for (int i = 0; i < width; i++) {
             for (int j = 0; j < height; j++)
             {
-                Color MyColor = new Color(matrix[i][j][0], matrix[i][j][1], matrix[i][j][2]);
+                Color MyColor = new Color(matrix[i][j][0] + 128, matrix[i][j][1] + 128, matrix[i][j][2] + 128);
                 tempimg.setRGB(i, j, MyColor.getRGB());
             }
         }
@@ -1382,14 +1333,25 @@ class MainFrame extends JFrame {
         int stripe = Math.max((int)area/75, 1);
         byte[][][] temp_matrix1, temp_matrix2, best_matrix1 = null, best_matrix2 = null;
 
-        int n_rnd = width/10;
-        int size = width/10;
+        //int n_rnd = width/5;
+        //int size = width/20;
+        int n_rnd = width / 18;
+        int size = width / 16;
+
         int ls, rs;
         ls = (int) (-area / 2);
         rs = (int) (area / 2);
 
-        double[][] logs = new double[rs-ls][2];
+        double[][] logs = new double[(rs-ls)/stripe][2];
 
+        double[][] c_r = new double[n_rnd][];
+        if (use_approx) {
+            Random rand = new Random();
+            for (int i = 0; i < n_rnd; i++) {
+                c_r[i] = new double[]{rand.nextDouble(), rand.nextDouble()};
+                //new double[]{rand.nextInt(width - Math.abs(deviation) - size + 1), rand.nextInt(height - size + 1)}
+            }
+        }
         for (int deviation = ls; deviation < rs; deviation += stripe) {
             temp_matrix1 = new byte[width - Math.abs(deviation)][height][3];
             temp_matrix2 = new byte[width - Math.abs(deviation)][height][3];
@@ -1409,12 +1371,11 @@ class MainFrame extends JFrame {
             double correlation = 0;
             double counter = 0;
             if (use_approx){
-                Random rand = new Random();
                 for (int i = 0; i < n_rnd; i++){
                     byte[][][] rbatch1 = new byte[size][size][3];
                     byte[][][] rbatch2 = new byte[size][size][3];
-                    int x_r = rand.nextInt(width - Math.abs(deviation) - size + 1);
-                    int y_r = rand.nextInt(height - size + 1);
+                    int x_r = (int)(c_r[i][0] * (width - Math.abs(deviation) - size + 1));
+                    int y_r = (int)(c_r[i][1] * (height - size + 1));
                     for (int n = 0; n < size; n++){
                         for (int m = 0; m < size; m++){
                             for (int k = 0; k < 3; k++){
@@ -1440,29 +1401,147 @@ class MainFrame extends JFrame {
                 best_correlation = correlation;
                 opt_deviation = deviation;
             }
-            logs[deviation - ls] = new double[]{deviation, correlation*100};
+            logs[(deviation - ls)/stripe] = new double[]{deviation, 100*correlation};
             System.out.println(" " + correlation +" "+ deviation);
         }
         if (verbose){
             pf = new PlotFrame(MainFrame.this, MatrixToImage(best_matrix1), MatrixToImage(best_matrix2), opt_deviation, best_correlation, logs);
         }
         // writing to file
-        try{
-            counter4saving = 0;
-            File outputfile;
-            do {
-                counter4saving++;
-                outputfile = new File("Maps\\DepthMap" + counter4saving + ".png");
-            } while (outputfile.exists());
+//        try{
+//            counter4saving = 0;
+//            File outputfile;
+//            do {
+//                counter4saving++;
+//                outputfile = new File("Maps\\DepthMap" + counter4saving + ".png");
+//            } while (outputfile.exists());
 //            BufferedWriter writer = new BufferedWriter(new FileWriter("Correlations\\Correlation_data" + counter4saving + ".txt"));
 //            for (int i = 0; i < logs.length; i++) {
 //                writer.append(logs[i][0] +","+logs[i][1] + "\n");
 //            }
 //            writer.close();
-        }catch (Exception e){
-
-        }
+//        }catch (Exception e){
+//
+//        }
         return new double[]{opt_deviation, best_correlation};
+    }
+    public double[][] getDeviations(byte[][][] matrix1, byte[][][] matrix2, int n_segments) {
+        int width = matrix1.length;
+        int height = matrix1[0].length;
+        double best_correlation = 0;
+        int opt_deviation = width/5;
+        double area = width/3.5;
+        int stripe = Math.max((int)area/75, 1);
+        byte[][][] temp_matrix1, temp_matrix2;
+
+        int ls, rs;
+        ls = (int) (-area / 2);
+        rs = (int) (area / 2);
+
+        double[][] d_matrix = new double[n_segments][n_segments];
+        double[][] c_matrix = new double[n_segments][n_segments];
+        for (int i = 0; i < n_segments; i++) {
+            for (int j = 0; j < n_segments; j++) {
+                c_matrix[i][j] = 0;
+            }
+        }
+        double correlation;
+        int seg_w, seg_h;
+        for (int deviation = ls; deviation < rs; deviation += stripe) {
+            seg_w = (width-Math.abs(deviation))/n_segments;
+            seg_h = height/n_segments;
+            for (int i = 0; i < n_segments; i++) {
+                for (int j = 0; j < n_segments; j++) {
+                    int temph = Math.min(height - seg_h * j, seg_h);
+                    int tempw = Math.min(width - Math.abs(deviation) - seg_w * i, seg_w);
+                    //System.out.println(i + " "+ j +" " + deviation + " "+ tempw + " "+ temph);
+                    if (deviation < 0) {
+                        temp_matrix1 = getPart(matrix1, seg_w * i - deviation, seg_h * j, tempw, temph, 0);
+                        temp_matrix2 = getPart(matrix2, seg_w * i, seg_h * j, tempw, temph, 0);
+                    } else {
+                        temp_matrix1 = getPart(matrix1, seg_w * i, seg_h * j, tempw, temph, 0);
+                        temp_matrix2 = getPart(matrix2, seg_w * i + deviation, seg_h * j, tempw, temph, 0);
+                    }
+                    correlation = NCC.get_similarity(temp_matrix1, temp_matrix2);
+                    if (correlation > c_matrix[i][j]) {
+                        c_matrix[i][j] = correlation;
+                        d_matrix[i][j] = deviation;
+                    }
+                }
+            }
+        }
+
+        double avg_d = 0;
+        double avg_c = 0;
+        for (int i = 0; i < n_segments; i++) {
+            for (int j = 0; j < n_segments; j++) {
+                avg_d += d_matrix[i][j];
+                avg_c += c_matrix[i][j];
+            }
+        }
+        avg_d = avg_d / (n_segments*n_segments);
+        avg_c = avg_c / (n_segments*n_segments);
+        System.out.println("AVG "+avg_d + " "+ avg_c);
+        for (int i = 0; i < n_segments; i++) {
+            for (int j = 0; j < n_segments; j++) {
+                if (Math.abs(Math.signum(avg_d) - Math.signum(d_matrix[i][j])) >= 1){
+                    d_matrix[i][j] = avg_d;
+                    c_matrix[i][j] = avg_c;
+                }
+                if (Math.abs(avg_d)/3 > Math.abs(d_matrix[i][j])){
+                    d_matrix[i][j] = avg_d/3;
+                    c_matrix[i][j] = avg_c;
+                }
+                if (Math.abs(avg_d)*3 < Math.abs(d_matrix[i][j])){
+                    d_matrix[i][j] = avg_d*3;
+                    c_matrix[i][j] = avg_c;
+                }
+            }
+        }
+        for (int i = 0; i < n_segments; i++) {
+            for (int j = 0; j < n_segments; j++) {
+                avg_d += d_matrix[i][j];
+                avg_c += c_matrix[i][j];
+            }
+        }
+        avg_d = avg_d / (n_segments*n_segments);
+        avg_c = avg_c / (n_segments*n_segments);
+        System.out.println("AVG "+avg_d + " "+ avg_c);
+
+        for (int i = 0; i < n_segments; i++) {
+            for (int j = 0; j < n_segments; j++) {
+                d_matrix[i][j] /= c_matrix[i][j];
+            }
+            System.out.println();
+        }
+
+        for (int i = 0; i < n_segments; i++) {
+            for (int j = 0; j < n_segments; j++) {
+                System.out.print((int)Math.abs(d_matrix[i][j]) + " ");
+            }
+            System.out.println();
+        }
+        System.out.println();
+        for (int i = 0; i < n_segments; i++) {
+            for (int j = 0; j < n_segments; j++) {
+                System.out.print(c_matrix[i][j] + " ");
+            }
+            System.out.println();
+        }
+        BufferedImage DevsImage = MatrixToImage(d_matrix);
+        try {
+            if (DevsImage == null) {
+                throw new IOException();
+            }
+
+            File outputfile;
+            outputfile = new File("Deviations\\Deviations" + counter4saving + ".png");
+            ImageIO.write(DevsImage, "png", outputfile);
+            //JOptionPane.showMessageDialog(MainFrame.this, "Saved");
+        } catch (IOException ex) {
+            JOptionPane.showMessageDialog(MainFrame.this, "Something went wrong, try again");
+        }
+        return d_matrix;
     }
     public double[] getMapMetrics(int[][][] matrix1, int[][][] matrix2, boolean use_approx) {
         // matrix2 is our map and is smaller
@@ -1475,7 +1554,11 @@ class MainFrame extends JFrame {
 
         int n_rnd = width / 15;
         int size = width / 15;
-        for (int deviation = 0; deviation <= matrix1[0].length - matrix2[0].length; deviation += 1) {
+
+        double area = width/3.5;
+        int stripe = Math.max((int)area/75, 1);
+        System.out.println("Metrics calculation");
+        for (int deviation = 0; deviation <= matrix1[0].length - matrix2[0].length; deviation += stripe) {
             temp_matrix1 = new int[height][width][3];
             temp_matrix2 = new int[height][width][3];
             for (int i = 0; i < width; i++) {
@@ -1621,16 +1704,20 @@ class MainFrame extends JFrame {
     public BufferedImage CalculateDeepMap(int scanscreensize, int userchoise) {
         int width = matrix1.length; // 500
         int height = matrix1[0].length; // 400
-        double[] devInfo = getDeviation(matrix1, matrix2, false, false);
-        int opt_deviation = (int)(devInfo[0]);
-        double light_coef = 2.2/devInfo[1];
-        this.max_deviation = (int)(opt_deviation * light_coef);
+
+        double[] devInfo = getDeviation(matrix1, matrix2, use_opt, VerboseCB.isSelected());
+        int opt_deviation = (int) (devInfo[0]);
+        double EC = Double.parseDouble(ECoefTF.getText());
+        double light_coef = EC / devInfo[1];
+        this.max_deviation = (int) (opt_deviation * light_coef);
         int corrected_width = (width - Math.abs(opt_deviation));
         System.out.println("\nOPTIMAL DEVIATION: " + Integer.toString(opt_deviation) + " pixels");
-        System.out.println("\nMatrix size: " + (int)Math.ceil((double)corrected_width / scanscreensize) + ' ' + (int)Math.ceil((double)height / scanscreensize) + " pixels");
-        matrix3 = new double[(int)Math.ceil((double)corrected_width / scanscreensize)][(int)Math.ceil((double)height / scanscreensize)]; //матрица смещений
+        System.out.println("\nMAX DEVIATION: " + Integer.toString(max_deviation) + " pixels");
+        //max_deviation = -100;
+        System.out.println("\nMatrix size: " + (int) Math.ceil((double) corrected_width / scanscreensize) + ' ' + (int) Math.ceil((double) height / scanscreensize) + " pixels");
+        matrix3 = new double[(int) Math.ceil((double) corrected_width / scanscreensize)][(int) Math.ceil((double) height / scanscreensize)]; //матрица смещений
         double[][] m3_upd = new double[corrected_width][height];
-        logs = new int[(int)Math.ceil((double)corrected_width / scanscreensize)][(int)Math.ceil((double)height / scanscreensize)][];
+        logs = new int[(int) Math.ceil((double) corrected_width / scanscreensize)][(int) Math.ceil((double) height / scanscreensize)][];
         //процесс нахождение точно значения пикселя первой матрицы во второй
         CompareMethod method = switch (userchoise) {
             // Pearson (NСС)
@@ -1648,37 +1735,46 @@ class MainFrame extends JFrame {
         double starttotal = 0.0;
         int coincidentx;
         int coincidenty;
-        this.vdev = Integer.valueOf(VdevTF.getText());
+        vdev = Integer.valueOf(VdevTF.getText());
         int tempsizeadd;
         itercounter = 0;
 
         int sc_height, sc_width;
-        double std1 = 0, std2 = 0;
+        double std1, std2 = 0;
         byte[][][] tempmatrix1, tempmatrix2;
         int comp_counter;
-        double std_thresh = Std(matrix1)/6;
+        double std_thresh; // Std(matrix1)/6
         int locale_c = Integer.parseInt(NSegmentsTF.getText());
-        int locale_w = width/locale_c;
-        int locale_h = height/locale_c;
+        int locale_w = width / locale_c;
+        int locale_h = height / locale_c;
         double[][] thresh_matrix = new double[locale_c][locale_c];
 
-        double AC = Double.parseDouble(ACoefTF.getText());
+        //double AC = Double.parseDouble(ACoefTF.getText());
+        double AC = 2.15;
 
-        start = (int)System.currentTimeMillis();
 
-        for (int i = 0; i < locale_c; i++){
-            for (int j = 0; j < locale_c; j++){
-                double temp = Std(getPart(matrix1, locale_w*i, locale_h*j, Math.min(width - locale_w*i, locale_w), Math.min(height - locale_h*j, locale_h), 0));
-                thresh_matrix[i][j] = 2.1*Math.pow(temp, 0.5);
+
+        int w = (int) (2.6*Math.sqrt(Math.abs(max_deviation)));
+        System.out.println("W: " + w);
+        double c_thresh = 0.85;
+
+        if (AdaptiveSize.isSelected()) {
+            for (int i = 0; i < locale_c; i++) {
+                for (int j = 0; j < locale_c; j++) {
+                    double temp = Std(getPart(matrix1, locale_w * i, locale_h * j, Math.min(width - locale_w * i, locale_w), Math.min(height - locale_h * j, locale_h), 0));
+                    thresh_matrix[i][j] = AC * Math.pow(temp, 0.5);
+                }
             }
-        }
-        for (int i = 0; i < locale_c; i++){
-            for (int j = 0; j < locale_c; j++){
-                System.out.print((int)thresh_matrix[j][i] + " ");
+            for (int i = 0; i < locale_c; i++) {
+                for (int j = 0; j < locale_c; j++) {
+                    System.out.print((int) thresh_matrix[j][i] + " ");
+                }
+                System.out.println();
             }
-            System.out.println();
+
+            System.out.println("Adaptive Areas: " + locale_w + " " + locale_h);
         }
-        System.out.println("Adaptive Areas: " + locale_w + " " + locale_h);
+        //double[][] deviations = getDeviations(matrix1,matrix2,locale_c);
         //double [][] thresh_matrix = new double[(int)Math.ceil((double)corrected_width / scanscreensize)][(int)Math.ceil((double)height / scanscreensize)];
         double[][] tm_upd = new double[corrected_width][height];
         //System.out.println("START STD THRESH: " + std_thresh);
@@ -1701,10 +1797,13 @@ class MainFrame extends JFrame {
 //                }
                 //System.out.println(col_image1 + " " + row_image1 + " " +  col_image1/locale_w + " " + row_image1/locale_h);
                 std_thresh = thresh_matrix[(Math.min(col_image1/locale_w, locale_c-1))][Math.min((row_image1/locale_h), locale_c-1)];
+
+                //max_deviation = (int) (EC * 0.5 * deviations[(Math.min(col_image1/locale_w, locale_c-1))][Math.min((row_image1/locale_h), locale_c-1)]);
                 //std_thresh = (std_thresh + std1/10)/1.1;
                 //System.out.println("NEW STD THRESH: " + std_thresh);
+
+
                 if(AdaptiveSize.isSelected() && std1 < std_thresh) {
-                    int counter = 0;
                     tempsizeadd = 0;
                     int[] eP = extendPart(col_image1, row_image1, sc_width, sc_height, tempsizeadd);
                     byte[][][] asmatrix;
@@ -1718,8 +1817,6 @@ class MainFrame extends JFrame {
                             std1 = Std(asmatrix);
                             if (std1 < Math.min(std_thresh, AC*start_std))
                                 tempmatrix1 = asmatrix;
-
-                            counter += 1;
                             tempsizeadd += 1;
                             eP = extendPart(col_image1, row_image1, sc_width, sc_height, tempsizeadd);
                         }
@@ -1733,37 +1830,65 @@ class MainFrame extends JFrame {
                 //System.out.println("Top: " + Math.max(tempsizeadd,row_image1-vdev) + " Bottom:" + (Math.min(height- sc_height - tempsizeadd + 1,row_image1 + vdev + 1)));
                 //System.out.println("Left: " + tempsizeadd + " Right:" + (width - tempsizeadd - sc_width));
                 //System.out.println("TEMPSIZEADD: " + tempsizeadd);
-                for (int col_image2 = tempsizeadd; col_image2 < width - sc_width; col_image2++) {
+
+
+
+                int peak_b = 0;
+                int peak_f = 0;
+
+                //System.out.println(Math.min(Math.abs(max_deviation), width - sc_width - col_image1 - tempsizeadd));
+                for (int deviation = 0; (col_image1 - deviation) >= tempsizeadd && deviation <= Math.abs(max_deviation); deviation++){
+                //for (int col_image2 = tempsizeadd; col_image2 < width - sc_width; col_image2++) {
                     for(int row_image2 = Math.max(0,row_image1-vdev); row_image2 < Math.min(height-sc_height+1,row_image1 + vdev + 1); row_image2++) {
                         if (opt_deviation <= 0) {
-                            if ((col_image2 - col_image1) <= 0 && (col_image2 - col_image1) >= this.max_deviation) {
-                                //System.out.println("XD " + col_image2 +' '+ row_image2 + ' ' + sc_width +' '+ sc_height);
-                                tempmatrix2 = getPart(matrix2, col_image2, row_image2, sc_width, sc_height, tempsizeadd);
-                                //На самом деле ограничение области поиска (гипотенуза) должно быть намного уже, но программа просто-напросто отказывается адекватно работать
-                                if (Compare(method, tempmatrix1, tempmatrix2, ConvolutionApproximation.isSelected())) {
-                                    coincidentx = col_image2;
-                                    coincidenty = row_image2;
-                                    std2 = Std(tempmatrix2);
-                                    //System.out.print("New Best: " + method.bestTotal + " ");
-                                }
-                                itercounter++;
-                                comp_counter++;
+                            int col_image2 = col_image1 - deviation;
+                            //System.out.println(col_image1 + " " + col_image2);
+                            //if ((col_image2 - col_image1) <= 0 && (col_image2 - col_image1) >= this.max_deviation) {
+                            //System.out.println("XD " + col_image2 +' '+ row_image2 + ' ' + sc_width +' '+ sc_height);
+                            tempmatrix2 = getPart(matrix2, col_image2, row_image2, sc_width, sc_height, tempsizeadd);
+                            //На самом деле ограничение области поиска (гипотенуза) должно быть намного уже, но программа просто-напросто отказывается адекватно работать
+                            if (Compare(method, tempmatrix1, tempmatrix2, ConvolutionApproximation.isSelected())) {
+                                coincidentx = col_image2;
+                                coincidenty = row_image2;
+                                std2 = Std(tempmatrix2);
+                                //System.out.print("New Best: " + method.bestTotal + " ");
+                                if (peak_b >= 1)
+                                    peak_f = 0;
+                                peak_f++;
+                                peak_b = 0;
+                            }
+                            else{
+                                if (peak_f >= w)
+                                    peak_b++;
                             }
                         } else {
-                            if ((col_image2 - col_image1) >= 0 && (col_image2 - col_image1) <= this.max_deviation) {
-                                //System.out.println("XD " + col_image2 +' '+ row_image2 + ' ' + sc_width +' '+ sc_height);
-                                tempmatrix2 = getPart(matrix2, col_image2, row_image2, sc_width, sc_height, tempsizeadd);
-                                //На самом деле ограничение области поиска (гипотенуза) должно быть намного уже, но программа просто-напросто отказывается адекватно работать
-                                if (Compare(method, tempmatrix1, tempmatrix2, ConvolutionApproximation.isSelected())) {
-                                    coincidentx = col_image2;
-                                    coincidenty = row_image2;
-                                    std2 = Std(tempmatrix2);
-                                    //System.out.print("New Best: " + method.bestTotal + " ");
-                                }
-                                itercounter++;
-                                comp_counter++;
+                            int col_image2 = col_image1 + deviation;
+                            //if ((col_image2 - col_image1) >= 0 && (col_image2 - col_image1) <= this.max_deviation) {
+                            //System.out.println("XD " + col_image2 +' '+ row_image2 + ' ' + sc_width +' '+ sc_height);
+                            tempmatrix2 = getPart(matrix2, col_image2, row_image2, sc_width, sc_height, tempsizeadd);
+                            //На самом деле ограничение области поиска (гипотенуза) должно быть намного уже, но программа просто-напросто отказывается адекватно работать
+                            if (Compare(method, tempmatrix1, tempmatrix2, ConvolutionApproximation.isSelected())) {
+                                coincidentx = col_image2;
+                                coincidenty = row_image2;
+                                std2 = Std(tempmatrix2);
+                                //System.out.print("New Best: " + method.bestTotal + " ");
+                                if (peak_b >= 1)
+                                    peak_f = 0;
+                                peak_f++;
+                                peak_b = 0;
+                            }
+                            else{
+                                if (peak_f >= w)
+                                    peak_b++;
                             }
                         }
+                        if (use_opt && peak_b >= w && method.bestTotal > c_thresh)
+                            break;
+                        itercounter++;
+                        comp_counter++;
+                    }
+                    if (use_opt && peak_b >= w && method.bestTotal > c_thresh){
+                        break;
                     }
                 }
 
@@ -1791,6 +1916,7 @@ class MainFrame extends JFrame {
             //System.out.println("HDPROB: " + hdprob);
         }
 
+        itercounter = (int)((double) itercounter/(((int) Math.ceil((double) corrected_width / scanscreensize) * (int) Math.ceil((double) height / scanscreensize))));
         double max = 0;
         // double min = matrix3[0][0];
         int i_max = 0;

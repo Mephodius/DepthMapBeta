@@ -167,6 +167,7 @@ minY
         for (int i = 0; i < graphicsData.length; i++) {
 // Преобразовать значения (x,y) в точку на экране point
             Point2D.Double point = xyToPoint(graphicsData[i][0], graphicsData[i][1]);
+            //System.out.println(graphicsData[i][0] + " " + graphicsData[i][1]);
             if (i > 0) {
 // Не первая итерация цикла - вести линию в точку point
                 graphics.lineTo(point.getX(), point.getY());
@@ -332,7 +333,7 @@ minY
         Double domens = 0.0;
         GeneralPath path = new GeneralPath();
         for (int i = 0; i < graphicsData.length - 1; i++) {
-            System.out.println("X: " + graphicsData[i][0] + " Y: " + graphicsData[i][1] + " i: " + i);
+            //System.out.println("X: " + graphicsData[i][0] + " Y: " + graphicsData[i][1] + " i: " + i);
             if ((graphicsData[i][1] < 0 == graphicsData[i + 1][1] >= 0) || (graphicsData[i][1] == 0)) {
                 if (domens != 0) {
                     domens += 1;
@@ -341,15 +342,15 @@ minY
                     else
                         indexses.add(i);
                     indexses.add(i);
-                    System.out.println("End+Start");
+                    //System.out.println("End+Start");
                     if(graphicsData[i+1][1]==0) {
                         i++;
                     }
-                    System.out.println("X: " + graphicsData[i][0] + " Y: " + graphicsData[i][1] + " i: " + i);
+                    //System.out.println("X: " + graphicsData[i][0] + " Y: " + graphicsData[i][1] + " i: " + i);
                     continue;
                 } else {
                     indexses.add(i);
-                    System.out.println("Start");
+                    //System.out.println("Start");
                     domens += 0.5;
                 }
 
@@ -364,7 +365,7 @@ minY
         for (int i = 0; i < 2 * domens.intValue(); i++) {
             //формулка для рассчета точки пересейчения прямой с осью координат по известным двум точкам
             xcoordinates.add(-graphicsData[indexses.get(i)][1] / (graphicsData[indexses.get(i) + 1][1] - graphicsData[indexses.get(i)][1]) * (graphicsData[indexses.get(i) + 1][0] - graphicsData[indexses.get(i)][0]) + graphicsData[indexses.get(i)][0]);
-            System.out.println("Координата x пересечения c Ox с индексом " + i + " " + xcoordinates.get(i) + " на интервале от " + indexses.get(i) + " до " + (indexses.get(i) + 1));
+            //System.out.println("Координата x пересечения c Ox с индексом " + i + " " + xcoordinates.get(i) + " на интервале от " + indexses.get(i) + " до " + (indexses.get(i) + 1));
         }
 
         int k = 0;
@@ -391,7 +392,7 @@ minY
                     canvas.setColor(Color.red);
                     Point2D.Double point = xyToPoint(xcoordinates.get(k), 0);
                     path.moveTo(point.getX(), point.getY());
-                    System.out.println("The line moved to its initial position, x = " + point.getX() + " on the itaration i = " + i);
+                    //System.out.println("The line moved to its initial position, x = " + point.getX() + " on the itaration i = " + i);
                     point = xyToPoint(graphicsData[i][0], graphicsData[i][1]);
                     path.lineTo(point.getX(), point.getY());
                 }
