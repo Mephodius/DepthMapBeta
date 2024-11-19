@@ -1,0 +1,14 @@
+# Images and text files #
+######################
+*.txt
+*.png
+*.jpg
+
+# Folders #
+######################
+/Correlations/
+/Deviations/
+/Maps/
+/Shifted_Images/
+/Thresholds/
+/WithGroundTrue/
