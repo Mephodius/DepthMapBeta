@@ -1,8 +1,5 @@
 import javax.swing.*;
-import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ItemEvent;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.awt.image.BufferedImage;
@@ -79,14 +76,20 @@ public class DMComparator extends JFrame {
         fhBox.add(Box.createHorizontalGlue());
         add(fhBox);
 
+//        int guiImageWidth = mymap.getWidth();
+//        int guiImageHeight = mymap.getHeight();
         int guiImageWidth = mymap.getWidth();
-        int guiImageHeight = mymap.getHeight();
+        int guiImageHeight = 560;
 
-        LeftImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(truemap, guiImageWidth, guiImageHeight)));
-        RightImageLabel.setIcon(new ImageIcon(mymap));
+        int twidthl = truemap.getWidth()*guiImageHeight/truemap.getHeight();
+        LeftImageLabel.setIcon(new ImageIcon(improc.SizeChangerDistanceBased(truemap,
+                                    twidthl, guiImageHeight)));
+        int twidthr = guiImageWidth*guiImageHeight/truemap.getHeight();
+        RightImageLabel.setIcon(new ImageIcon(improc.SizeChangerDistanceBased(mymap, twidthr, guiImageHeight)));
+//        RightImageLabel.setIcon(new ImageIcon(mymap));
         Metrics.setText("Metrics: " + String.format(Locale.US,"%.3f",metrics));
         Deviation.setText("Deviation: " + (int)hdeviation);
-        setSize((int)(guiImageWidth * 2.3), (int)(guiImageHeight * 1.2));
+        setSize((int)(1.2*twidthl+twidthr), (int)(guiImageHeight * 1.12));
         setLocation((kit.getScreenSize().width - this.getWidth()) / 2, (kit.getScreenSize().height - this.getHeight()) / 2);
         repaint();
         setVisible(true);

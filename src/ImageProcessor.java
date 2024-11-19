@@ -769,7 +769,7 @@ public class ImageProcessor {
 
     /**
      * @deprecated
-     * Locally increases contrast, but works strange, that's why deprecated
+     * Locally increases contrast, but works strange, that's why deprecated (histogram equilization)
      * @return
      */
     public BufferedImage LocalContrastIncrease() {
@@ -935,8 +935,223 @@ public class ImageProcessor {
         }
         return source;
     }
-    //использует линейную интерполяцию для передискретизации размеров изображения
+    // Distance based interpolation
+    public BufferedImage SizeChangerDistanceBased(BufferedImage source, int newWidth, int newHeight) {
+        if(source.getWidth()==newWidth && source.getHeight()==newHeight){
+            return source;
+        }
+        else {
+            Result = new BufferedImage(newWidth, newHeight, BufferedImage.TYPE_INT_RGB);
+            UpdateTemp(source);
+            syncMatrix();
+            double dx = (double) (source.getWidth() - 1) / (newWidth - 1);
+            double dy = (double) (source.getHeight() - 1) / (newHeight - 1);
+            Integer[] temprgb = new Integer[3];
+            int x;
+            int y;
+            double realx;
+            double realy;
+            double coeflt;
+            double coefrt;
+            double coeflb;
+            double coefrb;
+            double totalcoef;
+            for (int i = 0; i < newWidth; i++) {
+                for (int j = 0; j < newHeight; j++) {
+                    temprgb[0] = 0;
+                    temprgb[1] = 0;
+                    temprgb[2] = 0;
+
+                    realx = i * dx;
+                    realy = j * dy;
+                    x = (int) realx;
+                    y = (int) realy;
+
+                    coeflt = 1/(Math.hypot(realx-Math.floor(realx), realy - Math.floor(realy))+e);
+                    coefrt = 1/(Math.hypot(Math.ceil(realx)-realx, realy - Math.floor(realy))+e);
+                    coeflb = 1/(Math.hypot(realx-Math.floor(realx), Math.ceil(realy) - realy)+e);
+                    coefrb = 1/(Math.hypot(Math.ceil(realx)-realx, Math.ceil(realy) - realy)+e);
+                    totalcoef = coeflt+coefrt+coeflb+coefrb;
+
+                    for (int k = 0; k < 3; k++) {
+
+                        if (i < newWidth - 1 && j < newHeight - 1) {
+                            temprgb[k] = (int) ((coeflt * tempMat[x][y][k] + coefrt * tempMat[x + 1][y][k] + coeflb * tempMat[x][y + 1][k] + coefrb * tempMat[x + 1][y + 1][k]) / totalcoef);
+                        }else{
+                            if(i < newWidth - 1) {
+                                temprgb[k] = (int) ((coeflt * tempMat[x][y][k] + coefrt * tempMat[x + 1][y][k]) / (coeflt+coefrt));
+                            }
+                            else{
+                                if (j < newHeight - 1){
+                                    temprgb[k] = (int) ((coeflt * tempMat[x][y][k] + coeflb * tempMat[x][y + 1][k]) / (coeflt+coeflb));
+
+                                }
+                                else{
+                                    temprgb[k] = tempMat[x][y][k];
+                                }
+                            }
+                        }
+                    }
+                    Result.setRGB(i, j, new Color(temprgb[0], temprgb[1], temprgb[2]).getRGB());
+                }
+                Result.setRGB(newWidth - 1, newHeight - 1, new Color(tempMat[width - 1][height - 1][0], tempMat[width - 1][height - 1][1], tempMat[width - 1][height - 1][2]).getRGB());
+            }
+            return Result;
+        }
+    }
+
+    public BufferedImage SizeChangerDistanceBasedU(BufferedImage source, int newWidth, int newHeight, int ksize) {
+
+        if(source.getWidth()==newWidth && source.getHeight()==newHeight){
+            return source;
+        }
+        else {
+            Result = new BufferedImage(newWidth, newHeight, BufferedImage.TYPE_INT_RGB);
+            UpdateTemp(source);
+            syncMatrix();
+            int width = source.getWidth();
+            int height = source.getHeight();
+            double dx = (double) (width - 1) / (newWidth - 1);
+            double dy = (double) (height - 1) / (newHeight - 1);
+            double[] temprgb = new double[3];
+            int x;
+            int y;
+            double realx;
+            double realy;
+
+            double[][] coefficients = new double[ksize*2][ksize*2];
+
+            double totalcoef;
+
+            for (int i = 0; i < newWidth; i++) {
+                for (int j = 0; j < newHeight; j++) {
+
+                    realx = i * dx;
+                    realy = j * dy;
+                    x = (int) realx;
+                    y = (int) realy;
+
+                    totalcoef=0;
+                    for (int m = -ksize+1; m <= ksize; m++) {
+                        for (int n = -ksize+1; n <= ksize; n++) {
+                            if(x+m >= width || x < -m || y+n >= height || y < -n){
+                                coefficients[m+ksize-1][n+ksize-1] = 0;
+                            }
+                            else {
+                                coefficients[m+ksize-1][n+ksize-1] = 1 / (Math.hypot(x + m - realx, y + n - realy) + e);
+                            }
+                            totalcoef += coefficients[m+ksize-1][n+ksize-1];
+                        }
+                    }
+
+                    for (int k = 0; k < 3; k++) {
+                        temprgb[k] = 0;
+                        for (int m = -ksize + 1; m <= ksize; m++) {
+                            for (int n = -ksize + 1; n <= ksize; n++) {
+                                if (x + m < width && x >= -m && y + n < height && y >= -n) {
+                                    temprgb[k] += coefficients[m+ksize-1][n+ksize-1] * tempMat[x + m][y + n][k] / totalcoef;
+                                }
+                            }
+                        }
+                    }
+                    Result.setRGB(i, j, new Color((int)temprgb[0], (int)temprgb[1], (int)temprgb[2]).getRGB());
+                }
+            }
+            return Result;
+        }
+    }
+
+    // Trilinear version
     public BufferedImage SizeChangerLinear(BufferedImage source, int newWidth, int newHeight) {
+        if(source.getWidth()==newWidth && source.getHeight()==newHeight){
+            return source;
+        }
+        else {
+            Result = new BufferedImage(newWidth, newHeight, BufferedImage.TYPE_INT_RGB);
+            UpdateTemp(source);
+            syncMatrix();
+            double dx = (double) (source.getWidth() - 1) / (newWidth - 1);
+            double dy = (double) (source.getHeight() - 1) / (newHeight - 1);
+            Integer[] temprgb = new Integer[3];
+            int x;
+            int y;
+            double xdist;
+            double ydist;
+            double diagd;
+            double temprgbx;
+            double temprgby;
+            double temprgbxy;
+            double coefx;
+            double coefy;
+            double coefxy;
+            for (int i = 0; i < newWidth; i++) {
+                for (int j = 0; j < newHeight; j++) {
+                    temprgb[0] = 0;
+                    temprgb[1] = 0;
+                    temprgb[2] = 0;
+                    for (int k = 0; k < 3; k++) {
+                        x = (int) (i * dx);
+                        y = (int) (j * dy);
+                        xdist = i * dx - x;
+                        ydist = j * dy - y;
+                        diagd = Math.hypot(xdist, ydist);
+                        if (i < newWidth - 1) {
+                            temprgbx = tempMat[x][y][k] + xdist * (tempMat[x + 1][y][k] - tempMat[x][y][k]);
+                        } else {
+                            temprgbx = 0;
+                        }
+                        if (j < newHeight - 1) {
+                            temprgby = tempMat[x][y][k] + ydist * (tempMat[x][y + 1][k] - tempMat[x][y][k]);
+                        } else {
+                            temprgby = 0;
+                        }
+                        if (i < newWidth - 1 && j < newHeight - 1){
+                            temprgbxy = tempMat[x][y][k] + diagd * (tempMat[x + 1][y + 1][k] - tempMat[x][y][k]);
+                        } else {
+                            temprgbxy = 0;
+                        }
+
+                        if (Math.abs(xdist) >= e) {
+                            coefx = xdist / (xdist + ydist);
+                        } else {
+                            coefx = 0;
+                        }
+                        if (Math.abs(ydist) >= e) {
+                            coefy = ydist / (xdist + ydist);
+                        } else {
+                            coefy = 0;
+                        }
+                        if (Math.abs(xdist) >= e && Math.abs(ydist) >= e) {
+                            coefxy = diagd / (xdist + diagd + ydist);
+                            coefy = ydist / (xdist + diagd + ydist);
+                            coefx = xdist / (xdist + diagd + ydist);
+                        } else {
+                            coefxy = 0;
+                        }
+
+                        if (Math.abs(xdist) < e && Math.abs(ydist) < e) {
+                            coefx = 0.35;
+                            coefy = 0.35;
+                            coefxy = 1 - coefx - coefy;
+                        }
+
+                        if (i >= newWidth - 1 && j < newHeight - 1) {
+                            coefy = 1;
+                        }
+                        if (i < newWidth - 1 && j >= newHeight - 1) {
+                            coefx = 1;
+                        }
+                        temprgb[k] = Math.min(255, Math.max(0, (int) (coefx * temprgbx + coefy * temprgby + coefxy * temprgbxy)));
+                    }
+                    Result.setRGB(i, j, new Color(temprgb[0], temprgb[1], temprgb[2]).getRGB());
+                }
+                Result.setRGB(newWidth - 1, newHeight - 1, new Color(tempMat[width - 1][height - 1][0], tempMat[width - 1][height - 1][1], tempMat[width - 1][height - 1][2]).getRGB());
+            }
+            return Result;
+        }
+    }
+
+    public BufferedImage SizeChangerBiLinear(BufferedImage source, int newWidth, int newHeight) {
         if(source.getWidth()==newWidth && source.getHeight()==newHeight){
             return source;
         }
@@ -966,12 +1181,12 @@ public class ImageProcessor {
                         realx = i * dx;
                         realy = j * dy;
                         if (i < newWidth - 1) {
-                            temprgbx = Math.min(tempMat[x + 1][y][k], tempMat[x][y][k]) + (realx - x) * Math.abs(tempMat[x + 1][y][k] - tempMat[x][y][k]);
+                            temprgbx = tempMat[x][y][k] + (realx - x) * (tempMat[x + 1][y][k] - tempMat[x][y][k]);
                         } else {
                             temprgbx = 0;
                         }
                         if (j < newHeight - 1) {
-                            temprgby = Math.min(tempMat[x][y + 1][k], tempMat[x][y][k]) + (realy - y) * Math.abs(tempMat[x][y + 1][k] - tempMat[x][y][k]);
+                            temprgby = tempMat[x][y][k] + (realy - y) * (tempMat[x][y + 1][k] - tempMat[x][y][k]);
                         } else {
                             temprgby = 0;
                         }
@@ -1005,6 +1220,54 @@ public class ImageProcessor {
         }
     }
 
+    public BufferedImage SizeChangerNearest(BufferedImage source, int newWidth, int newHeight) {
+
+        if (source.getWidth() == newWidth && source.getHeight() == newHeight) {
+            return source;
+        } else {
+            Result = new BufferedImage(newWidth, newHeight, BufferedImage.TYPE_INT_RGB);
+            UpdateTemp(source);
+            syncMatrix();
+            int width = source.getWidth();
+            int height = source.getHeight();
+            double dx = (double) (width - 1) / (newWidth - 1);
+            double dy = (double) (height - 1) / (newHeight - 1);
+            double[] temprgb = new double[3];
+            int x;
+            int y;
+            double realx;
+            double realy;
+            for (int i = 0; i < newWidth; i++) {
+                for (int j = 0; j < newHeight; j++) {
+
+                    realx = i * dx;
+                    realy = j * dy;
+                    x = (int) realx;
+                    y = (int) realy;
+
+                    for (int k = 0; k < 3; k++) {
+                        temprgb[k] = tempMat[(int)Math.round(realx)][(int)Math.round(realy)][k];
+                    }
+
+                    Result.setRGB(i, j, new Color((int) temprgb[0], (int) temprgb[1], (int) temprgb[2]).getRGB());
+                }
+            }
+            return Result;
+        }
+    }
+    public BufferedImage SizeChangerS(BufferedImage source, int newWidth, int newHeight, int choice){
+        switch (choice){
+            case 0:
+                return SizeChangerLinear(source, newWidth, newHeight);
+            case 1:
+                return SizeChangerNearest(source, newWidth, newHeight);
+            case 2:
+                return SizeChangerDistanceBased(source, newWidth, newHeight);
+            case 3:
+                return SizeChangerDistanceBasedU(source, newWidth, newHeight, 2);
+        }
+        return source;
+    }
     /**
      *
      * @param source Image needed to process
@@ -1024,7 +1287,7 @@ public class ImageProcessor {
                     for(int l = 0; l<8; l++){
                         tempbits[l] = (byte)Math.min(tempbits[l],bitconfig[l]);
                     }
-                    temprgb[k]=toDecent(tempbits);
+                    temprgb[k]=toDecimal(tempbits);
                 }
                 Result.setRGB(i,j,new Color(temprgb[0],temprgb[1],temprgb[2]).getRGB());
             }
@@ -1046,7 +1309,7 @@ public class ImageProcessor {
 
         return bits;
     }
-    private int toDecent(Byte[] bits){
+    private int toDecimal(Byte[] bits){
         int temp=0;
         for(int i = 0; i<bits.length; i++){
             temp+=bits[i]*Math.pow(2,7-i);
@@ -1086,6 +1349,44 @@ public class ImageProcessor {
         psnr = 10*Math.log10((double)255*255*mat1.length*mat1[0].length/(Math.sqrt(temp)));
         return psnr;
     }
+    public BufferedImage ImageScaler(BufferedImage image) {
+        int height = image.getHeight();
+        int width = image.getWidth();
+
+        int max=0, min=255;
+
+        BufferedImage Result = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+
+        for(int i = 0; i<width; i++) {
+            for (int j = 0; j<height; j++) {
+                Color color = new Color(image.getRGB(i,j));
+                int tempr = color.getRed();
+                int tempg = color.getGreen();
+                int tempb = color.getBlue();
+                max = max > tempr ? max : tempr;
+                max = max > tempg ? max : tempg;
+                max = max > tempb ? max : tempb;
+
+                min = min < tempr ? min : tempr;
+                min = min < tempg ? min : tempg;
+                min = min < tempb ? min : tempb;
+            }
+        }
+        System.out.println("Min: " + min + " Max: " + max);
+
+        for(int i = 0; i<width; i++) {
+            for (int j = 0; j < height; j++) {
+                Color color = new Color(image.getRGB(i,j));
+                int newred = (int)((double)(color.getRed()-min)*255/(max-min));
+                int newgreen = (int)((double)(color.getGreen()-min)*255/(max-min));
+                int newblue = (int)((double)(color.getBlue()-min)*255/(max-min));
+                Color newcolor = new Color(newred, newgreen, newblue);
+                Result.setRGB(i, j, newcolor.getRGB());
+            }
+        }
+        return Result;
+    }
+
     public int[][][] ImageToMatrix(BufferedImage image){
         int[][][] matrix = new int[image.getHeight()][image.getWidth()][3];
         for(int i = 0; i< image.getHeight(); i++) {
@@ -1094,6 +1395,19 @@ public class ImageProcessor {
                 matrix[i][j][0] = color.getRed();
                 matrix[i][j][1] = color.getGreen();
                 matrix[i][j][2] = color.getBlue();
+            }
+        }
+        return matrix;
+    }
+
+    public int[][][] ImageToMatrixT(BufferedImage image){
+        int[][][] matrix = new int[image.getWidth()][image.getHeight()][3];
+        for(int i = 0; i< image.getHeight(); i++) {
+            for (int j = 0; j < image.getWidth(); j++) {
+                Color color = new Color(image.getRGB(j,i));
+                matrix[j][i][0] = color.getRed();
+                matrix[j][i][1] = color.getGreen();
+                matrix[j][i][2] = color.getBlue();
             }
         }
         return matrix;
@@ -1117,6 +1431,44 @@ public class ImageProcessor {
             {
                 //System.out.println(matrix[i][j][0] +" "+ matrix[i][j][1] + " "+  matrix[i][j][2]);
                 Color MyColor = new Color(matrix[i][j][0], matrix[i][j][1], matrix[i][j][2]);
+                tempimg.setRGB(i, j, MyColor.getRGB());
+            }
+        }
+        return tempimg;
+    }
+    public double[][] MinMaxScaling(double[][] matrix){
+        double max = 0;
+        double min = 1;
+        int width = matrix.length;
+        int height = matrix[0].length;
+        for (int i = 0; i < width; i++) {
+            for (int j = 0; j < height; j++)
+            {
+               if (matrix[i][j] > max) {
+                   max = matrix[i][j];
+               }
+               if (matrix[i][j] < min) {
+                   min = matrix[i][j];
+               }
+            }
+        }
+        for (int i = 0; i < width; i++) {
+            for (int j = 0; j < height; j++){
+                matrix[i][j] = (matrix[i][j] - min)/(max-min);
+            }
+        }
+        return matrix;
+    }
+    public BufferedImage MatrixToImage(double[][] matrix){
+        matrix = MinMaxScaling(matrix);
+        int width = matrix.length;
+        int height = matrix[0].length;
+        BufferedImage tempimg = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+        for (int i = 0; i < width; i++) {
+            for (int j = 0; j < height; j++)
+            {
+                int tempc = (int)(Math.max(0, matrix[i][j])*255);
+                Color MyColor = new Color(tempc, tempc, tempc);
                 tempimg.setRGB(i, j, MyColor.getRGB());
             }
         }
@@ -1239,18 +1591,18 @@ public class ImageProcessor {
                         A1 = sorted[sorted.length / 2] - sorted[0];
                         A2 = sorted[sorted.length / 2] - sorted[sorted.length - 1];
                         if (A1 > 0 && A2 < 0) {
-                            B1 = tempMat[i][j][k]-sorted[0];
-                            B2 = tempMat[i][j][k]-sorted[sorted.length - 1];
-                            if (B1 > 0 && B2 < 0){
+                            B1 = tempMat[i][j][k] - sorted[0];
+                            B2 = tempMat[i][j][k] - sorted[sorted.length - 1];
+                            if (B1 > 0 && B2 < 0) {
                                 temprgb[k] = tempMat[i][j][k];
-                            }else{
-                                temprgb[k] = sorted[sorted.length/2];
+                            } else {
+                                temprgb[k] = sorted[sorted.length / 2];
                             }
                             break;
                         } else {
                             adaptive_size += 1;
-                            if(adaptive_size > size){
-                                temprgb[k] = sorted[sorted.length/2];
+                            if (adaptive_size > size) {
+                                temprgb[k] = sorted[sorted.length / 2];
                                 break;
                             }
                             continue;

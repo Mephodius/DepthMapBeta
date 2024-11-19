@@ -1,13 +1,10 @@
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ItemEvent;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.awt.image.BufferedImage;
 import java.util.Locale;
-import java.util.Arrays;
 
 public class PlotFrame extends JFrame {
     private Toolkit kit = Toolkit.getDefaultToolkit();
@@ -91,7 +88,7 @@ public class PlotFrame extends JFrame {
         int guiImageWidth = right.getWidth();
         int guiImageHeight = right.getHeight();
 
-        LeftImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(left, guiImageWidth, guiImageHeight)));
+        LeftImageLabel.setIcon(new ImageIcon(improc.SizeChangerDistanceBased(left, guiImageWidth, guiImageHeight)));
         RightImageLabel.setIcon(new ImageIcon(right));
         Metrics.setText("Best correlation: " + String.format(Locale.US,"%.3f",metrics));
         Deviation.setText("Optimal deviation: " + (int)hdeviation);
