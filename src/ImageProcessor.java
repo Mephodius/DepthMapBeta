@@ -1422,6 +1422,22 @@ public class ImageProcessor {
         }
         return matrix;
     }
+
+//    public BufferedImage MatrixToImage(int[][][] matrix){
+//        int height = matrix.length;
+//        int width = matrix[0].length;
+//        BufferedImage tempimg = new BufferedImage(height, width, BufferedImage.TYPE_INT_RGB);
+//        for (int i = 0; i < height; i++) {
+//            for (int j = 0; j < width; j++)
+//            {
+//                //System.out.println(matrix[i][j][0] +" "+ matrix[i][j][1] + " "+  matrix[i][j][2]);
+//                Color MyColor = new Color(matrix[i][j][0], matrix[i][j][1], matrix[i][j][2]);
+//                tempimg.setRGB(i, j, MyColor.getRGB());
+//            }
+//        }
+//        return tempimg;
+//    }
+
     public BufferedImage MatrixToImage(int[][][] matrix){
         int width = matrix.length;
         int height = matrix[0].length;
@@ -1436,6 +1452,7 @@ public class ImageProcessor {
         }
         return tempimg;
     }
+
     public double[][] MinMaxScaling(double[][] matrix){
         double max = 0;
         double min = 1;

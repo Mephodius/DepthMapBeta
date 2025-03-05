@@ -1,13 +1,19 @@
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.WindowEvent;
-import java.awt.event.WindowListener;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.UnsupportedFlavorException;
+import java.awt.event.*;
 import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.util.Locale;
 
 
 public class LogsVisualizator extends JFrame {
+
+    JFrame mainframe;
+    JPanel panel = new JPanel();
     Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
     int screen_width = (int)screenSize.getWidth();
     int screen_height = (int)screenSize.getHeight();
@@ -50,18 +56,139 @@ public class LogsVisualizator extends JFrame {
 
     private double scalex, scaley;
 
+
+    private Action closeAction;
+    private Action previousAction;
+    private Action nextAction;
+
+    private void ConfigureAllActions(){
+        closeAction = new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                LogsVisualizator.this.setVisible(false);
+                mainframe.setVisible(true);
+                mainframe.toFront();
+                LogsVisualizator.this.dispose();
+            }
+        };
+
+        previousAction = new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                int shift = FiltrateBy.getSelectedIndex();
+                int tempy, tempx;
+                double value, thresh;
+                boolean fits = true;
+
+                while (fits && counter > 0) {
+                    counter--;
+                    tempy = (int) ((double) counter / logs[0].length);
+                    tempx = counter % logs[0].length;
+                    value = Math.abs((double) logs[tempy][tempx][6 + shift] / dtis);
+                    thresh = Double.parseDouble(FilterMT.getText());
+
+                    fits = (value < thresh);
+
+                    if (InvertFilter.isSelected())
+                        fits = !fits;
+                }
+
+                if (counter >= 0) {
+                    repaint();
+                    Next.setEnabled(true);
+                }
+                if (counter == 0) {
+                    JOptionPane.showMessageDialog(LogsVisualizator.this, "You have reached the first element");
+                    Previous.setEnabled(false);
+                }
+            }
+        };
+        Previous.addActionListener(previousAction);
+
+        nextAction = new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                //                for (int i = 0; i < logs.length; i++){
+//                    for (int j = 0; j < logs[0].length; j++){
+//                        System.out.print(logs[i][j][6] + " ");
+//                    }
+//                    System.out.println();
+//                }
+                int shift = FiltrateBy.getSelectedIndex();
+                int tempy, tempx;
+                double value, thresh;
+                boolean fits = true;
+                while (fits && counter < logs.length * logs[0].length - 1) {
+                    counter++;
+                    tempy = (int) ((double) counter / logs[0].length);
+                    tempx = counter % logs[0].length;
+                    value = Math.abs((double) logs[tempy][tempx][6 + shift] / dtis);
+                    thresh = Double.parseDouble(FilterMT.getText());
+
+                    fits = (value < thresh);
+                    //System.out.println(counter + " " + logs[tempy][tempx][10]/dtis);
+
+                    if (InvertFilter.isSelected())
+                        fits = !fits;
+
+                }
+                //System.out.println(counter + " out of " + ((logs.length-1)*logs[0].length-1));
+
+                if (counter <= logs.length * logs[0].length - 1) {
+                    repaint();
+                    Previous.setEnabled(true);
+                }
+                if (counter == logs.length * logs[0].length - 1) {
+                    JOptionPane.showMessageDialog(LogsVisualizator.this, "You have reached the last element");
+                    Next.setEnabled(false);
+                }
+            }
+        };
+        Next.addActionListener(nextAction);
+
+    }
+
+    private Action GenClickAction(JButton but){
+        return new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                but.doClick();
+            }
+        };
+    }
+    private void ConfigureKeyBindings() {
+
+        InputMap inputMap = panel.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        ActionMap actionMap = panel.getActionMap();
+
+        actionMap.put("Close", closeAction);
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_Q, InputEvent.CTRL_DOWN_MASK), "Close");
+
+        actionMap.put("Previous", GenClickAction(Previous));
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0), "Previous");
+
+        actionMap.put("Next", GenClickAction(Next));
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0), "Next");
+
+
+    }
+
     public LogsVisualizator(MainFrame mf, BufferedImage image1, BufferedImage image2, int[][][] logs, double[][][] correlation_m, int vdeviation, int dtis) {
+        mainframe = mf;
         setTitle("Result Analyzer");
         this.addWindowListener(new WindowListener() {
             @Override
             public void windowOpened(WindowEvent e) {
-
+                mainframe.toBack();
+//                mf.setEnabled(false);
+                mainframe.setVisible(false);
             }
 
             @Override
             public void windowClosing(WindowEvent e) {
-                mf.toFront();
-                mf.setEnabled(true);
+                mainframe.toFront();
+//                mf.setEnabled(false);
+                mainframe.setVisible(true);
             }
 
             @Override
@@ -191,89 +318,30 @@ public class LogsVisualizator extends JFrame {
         fhBox.add(Box.createHorizontalGlue());
         fhBox.add(LeftImageLabel);
         fhBox.add(Box.createHorizontalGlue());
+        fhBox.add(Box.createHorizontalStrut(5));
         fhBox.add(cvBox);
         fhBox.add(Box.createHorizontalGlue());
+        fhBox.add(Box.createHorizontalStrut(5));
         fhBox.add(RightImageLabel);
         fhBox.add(Box.createHorizontalGlue());
-        add(fhBox);
+
+        panel.add(fhBox);
+        add(panel);
+
         LeftImageLabel.setIcon(new ImageIcon(improc.MatrixToImage(matrix1sc)));
         RightImageLabel.setIcon(new ImageIcon(improc.MatrixToImage(matrix2sc)));
-        Next.addActionListener(new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-//                for (int i = 0; i < logs.length; i++){
-//                    for (int j = 0; j < logs[0].length; j++){
-//                        System.out.print(logs[i][j][6] + " ");
-//                    }
-//                    System.out.println();
-//                }
-                int shift = FiltrateBy.getSelectedIndex();
-                int tempy, tempx;
-                double value, thresh;
-                boolean fits = true;
-                while (fits && counter < logs.length * logs[0].length - 1) {
-                    counter++;
-                    tempy = (int) ((double) counter / logs[0].length);
-                    tempx = counter % logs[0].length;
-                    value = Math.abs((double) logs[tempy][tempx][6 + shift] / dtis);
-                    thresh = Double.parseDouble(FilterMT.getText());
 
-                    fits = (value < thresh);
-                    //System.out.println(counter + " " + logs[tempy][tempx][10]/dtis);
 
-                    if (InvertFilter.isSelected())
-                        fits = !fits;
 
-                }
-                //System.out.println(counter + " out of " + ((logs.length-1)*logs[0].length-1));
-
-                if (counter <= logs.length * logs[0].length - 1) {
-                    repaint();
-                    Previous.setEnabled(true);
-                }
-                if (counter == logs.length * logs[0].length - 1) {
-                    JOptionPane.showMessageDialog(LogsVisualizator.this, "You have reached the last element");
-                    Next.setEnabled(false);
-                }
-            }
-        });
-        Previous.addActionListener(new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                int shift = FiltrateBy.getSelectedIndex();
-                int tempy, tempx;
-                double value, thresh;
-                boolean fits = true;
-
-                while (fits && counter > 0) {
-                    counter--;
-                    tempy = (int) ((double) counter / logs[0].length);
-                    tempx = counter % logs[0].length;
-                    value = Math.abs((double) logs[tempy][tempx][6 + shift] / dtis);
-                    thresh = Double.parseDouble(FilterMT.getText());
-
-                    fits = (value < thresh);
-
-                    if (InvertFilter.isSelected())
-                        fits = !fits;
-                }
-
-                if (counter >= 0) {
-                    repaint();
-                    Next.setEnabled(true);
-                }
-                if (counter == 0) {
-                    JOptionPane.showMessageDialog(LogsVisualizator.this, "You have reached the first element");
-                    Previous.setEnabled(false);
-                }
-            }
-        });
         Previous.setEnabled(false);
         //setSize(LeftImageLabel.getHeight() * 3, (int)(LeftImageLabel.getHeight() * 1.2));
-        setSize(guiImageWidth*2 + 260, 650);
+        setSize(guiImageWidth*2 + 236, 606);
         setLocation((kit.getScreenSize().width - this.getWidth()) / 2, (kit.getScreenSize().height - this.getHeight()) / 2);
         repaint();
         setVisible(true);
+
+        ConfigureAllActions();
+        ConfigureKeyBindings();
     }
 
     public int[][][] MCopy(int[][][] matrix) {
