@@ -453,7 +453,13 @@ class MainFrame extends JFrame {
     private Action copyAction;
     private Action pasteAction;
     private Action closeAction;
+    private Action helpAction;
 
+    private Action SAD_Action;
+    private Action SSD_Action;
+    private Action NCC_Action;
+    private Action SCC_Action;
+    private Action KCC_Action;
 
     char sep = File.separatorChar;
 
@@ -495,7 +501,7 @@ class MainFrame extends JFrame {
     private void LoadImage(String which){
         try {
             File file = null;
-            int ret = loadimage.showDialog(null, "Load"+which+"image");
+            int ret = loadimage.showDialog(null, "Load "+which+" image");
             if (ret == JFileChooser.APPROVE_OPTION) {
                 file = loadimage.getSelectedFile();
             }
@@ -800,6 +806,69 @@ class MainFrame extends JFrame {
             }
         };
 
+        SAD_Action = new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                sad.setSelected(true);
+            }
+        };
+        SSD_Action = new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                ssd.setSelected(true);
+            }
+        };
+        NCC_Action = new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                ncc.setSelected(true);
+            }
+        };
+        SCC_Action = new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                scc.setSelected(true);
+            }
+        };
+        KCC_Action = new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                kcc.setSelected(true);
+            }
+        };
+
+        helpAction = new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                JOptionPane.showMessageDialog(MainFrame.this, "========== Help ===========\n" +
+                        "For a program to work you need to load stereo images first\n" +
+
+                        "Depth map (DM) hotkeys:\n" +
+                        "Ctrl+A - apply chosen filter to the DM\n" +
+                        "Ctrl+Z - undoes your last DM action\n" +
+                        "Ctrl+S - saves DM to the ./Maps folder\n" +
+                        "Ctrl+C - copies DM to the clipboard.\n" +
+                        "Ctrl+V - pastes clipboard into the program as a DM\n" +
+
+                        "Load Images:\n" +
+                        "Alt+1 - load left image\n" +
+                        "Alt+2 - load right image\n" +
+
+                        "Functional windows:\n" +
+                        "Ctrl+R - run DM estimator with the current parameters\n" +
+                        "Ctrl+D - load ground-true DM for metrics calculation\n" +
+                        "Ctrl+F - calculate DM metrics\n" +
+                        "Ctrl+H - show this help window\n" +
+                        "Ctrl+Q - quit the program (or its current window)\n" +
+
+                        "Similarities:\n" +
+                        "Ctrl+1 - use SAD (Sum of absolute deviations)\n" +
+                        "Ctrl+2 - use SSD (Sum of squared deviations)\n" +
+                        "Ctrl+3 - use NCC (Pearson correlation)\n" +
+                        "Ctrl+4 - use SCC (Spearman correlation)\n" +
+                        "Ctrl+5 - use KCC (Kendall correlation)\n");
+            }
+        };
         closeAction = new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
@@ -852,11 +921,27 @@ class MainFrame extends JFrame {
         actionMap.put("Save", GenClickAction(Save));
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_DOWN_MASK), "Save");
 
+
+        actionMap.put("SAD", SAD_Action);
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_1, InputEvent.CTRL_DOWN_MASK), "SAD");
+        actionMap.put("SSD", SSD_Action);
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_2, InputEvent.CTRL_DOWN_MASK), "SSD");
+        actionMap.put("NCC", NCC_Action);
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_3, InputEvent.CTRL_DOWN_MASK), "NCC");
+        actionMap.put("SCC", SCC_Action);
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_4, InputEvent.CTRL_DOWN_MASK), "SCC");
+        actionMap.put("KCC", KCC_Action);
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_5, InputEvent.CTRL_DOWN_MASK), "KCC");
+
+
         actionMap.put("Copy", copyAction);
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.CTRL_DOWN_MASK), "Copy");
 
         actionMap.put("Paste", pasteAction);
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_V, InputEvent.CTRL_DOWN_MASK), "Paste");
+
+        actionMap.put("Help", helpAction);
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_H, InputEvent.CTRL_DOWN_MASK), "Help");
 
         actionMap.put("Close", closeAction);
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_Q, InputEvent.CTRL_DOWN_MASK), "Close");
@@ -962,12 +1047,13 @@ class MainFrame extends JFrame {
         kccb.add(kcc);
         kccb.add(Box.createHorizontalGlue());
 
-        methdsb.add(Box.createVerticalGlue());
-        methdsb.add(nccb);
+
         methdsb.add(Box.createVerticalGlue());
         methdsb.add(sadb);
         methdsb.add(Box.createVerticalGlue());
         methdsb.add(ssdb);
+        methdsb.add(Box.createVerticalGlue());
+        methdsb.add(nccb);
         methdsb.add(Box.createVerticalGlue());
         methdsb.add(sccb);
         methdsb.add(Box.createVerticalGlue());
