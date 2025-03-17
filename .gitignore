@@ -6,9 +6,5 @@
 
 # Folders #
 ######################
-/Correlations/
-/Deviations/
-/Maps/
-/Shifted_Images/
-/Thresholds/
-/WithGroundTrue/
+./Data
+./.idea

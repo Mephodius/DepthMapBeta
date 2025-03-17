@@ -1,6 +1,3 @@
-
-import com.sun.tools.javac.Main;
-
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
@@ -404,12 +401,12 @@ class MainFrame extends JFrame {
     JCheckBox ConvApprxCB = new JCheckBox("ConvApprx");
     JTextField FilterSizeTF = new JTextField("3", 3);
     JCheckBox ApprxAlgsCB = new JCheckBox("AX");
-    JCheckBox VerboseCB = new JCheckBox("VB");
+    JCheckBox AutoSaveCB = new JCheckBox("AS");
 
     JCheckBox LocDevsCB = new JCheckBox("LD");
     JTextField ECoefTF = new JTextField("2.2", 3);
     JTextField StrideTF = new JTextField("1", 3);
-    JTextField NSegmentsTF = new JTextField("5", 3);
+    JTextField NSegmentsTF = new JTextField("7", 3);
 
     JLabel text = new JLabel("Filter size");
     JButton ApplyOperation = new JButton("Apply");
@@ -463,10 +460,11 @@ class MainFrame extends JFrame {
 
     char sep = File.separatorChar;
 
-    private final String MapsPath = "Maps"+sep;
-    private final String ThresholdsPath = "Thresholds"+sep;
-    private final String ShiftedIPath = "Shifted_Images"+sep;
-    private final String DeviationsPath = "Deviations"+sep;
+    private final String DataPath = "Data"+sep;
+    private final String MapsPath = DataPath+"Maps"+sep;
+    private final String ThresholdsPath = DataPath+"Thresholds"+sep;
+    private final String ShiftedIPath = DataPath+"Shifted_Images"+sep;
+    private final String DeviationsPath = DataPath+"Deviations"+sep;
 
 
 
@@ -747,7 +745,8 @@ class MainFrame extends JFrame {
                 IterTF.setText(Long.toString(itercounter));
 
                 // Сохранение
-                SaveResults();
+                if (AutoSaveCB.isSelected())
+                    SaveResults();
                 GenState current_state = new GenState(DepthMap, logs, correlation_m, window_size, vdev);
                 LogsStack.push(current_state);
                 //BottomImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(improc.SizeChanger(DepthMap, Math.round(((double)window_size*guiImageWidth/width))), guiImageWidth, guiImageHeight)));
@@ -1097,7 +1096,7 @@ class MainFrame extends JFrame {
         third.add(Box.createHorizontalGlue());
         third.add(StrideTF);
         third.add(Box.createHorizontalGlue());
-        third.add(VerboseCB);
+        third.add(AutoSaveCB);
         third.add(Box.createHorizontalGlue());
 
         // HERE
@@ -1140,6 +1139,7 @@ class MainFrame extends JFrame {
         sixth.add(Box.createHorizontalGlue());//чуть позже вернемся к графическому интерфейсу, для начала нужно раздобыть немного информации
 
         sad.setSelected(true);
+        AutoSaveCB.setSelected(true);
         AutoScaleCB.setSelected(true);
         GoMakeSomeMagic.setEnabled(false);
         LoadDM.setEnabled(false);
@@ -1243,7 +1243,7 @@ class MainFrame extends JFrame {
 
     public void SecureAllParameters(){
         gen_params.put("AdaptiveMode", AdaptiveSizeCB.isSelected());
-        gen_params.put("VerboseMode", VerboseCB.isSelected());
+        gen_params.put("AutoSaveMode", AutoSaveCB.isSelected());
         gen_params.put("ApproximateMode", ApprxAlgsCB.isSelected());
         gen_params.put("LocalizedMode", AdaptiveSizeCB.isSelected());
 //        gen_params.put("LocalDevsMode", Local);
@@ -1312,13 +1312,13 @@ class MainFrame extends JFrame {
     }
 
     public void CreateDirectories() throws IOException {
+        Files.createDirectories(Paths.get(DataPath));
         Files.createDirectories(Paths.get(MapsPath));
         Files.createDirectories(Paths.get(DeviationsPath));
         Files.createDirectories(Paths.get(ShiftedIPath));
         Files.createDirectories(Paths.get(ThresholdsPath));
     }
     public void SaveResults(){
-
         try{
             counter4saving = 0;
             File outputfile;
@@ -1492,7 +1492,7 @@ class MainFrame extends JFrame {
         }
         return MatrixToImage(cutted_matrix);
     }
-    public double[] getDeviation(byte[][][] matrix1, byte[][][] matrix2, boolean use_approx, boolean verbose) {
+    public double[] getDeviation(byte[][][] matrix1, byte[][][] matrix2, boolean use_approx) {
         int width = matrix1.length;
         int height = matrix1[0].length;
         double best_correlation = 0;
@@ -1574,10 +1574,12 @@ class MainFrame extends JFrame {
             plot_data[(deviation - ls)/stripe] = new double[]{deviation, 100*correlation};
 //            System.out.println(" " + correlation +" "+ deviation);
         }
-        if (verbose){
-            pf = new PlotFrame(MainFrame.this, MatrixToImage(best_matrix1), MatrixToImage(best_matrix2),
-                               opt_deviation, best_correlation, plot_data);
-        }
+//        if (verbose){
+//            pf = new PlotFrame(MainFrame.this, MatrixToImage(best_matrix1), MatrixToImage(best_matrix2),
+//                               opt_deviation, best_correlation, plot_data);
+//        }
+
+
         // writing to file
 //        try{
 //            counter4saving = 0;
@@ -1893,7 +1895,7 @@ class MainFrame extends JFrame {
         int opt_deviation, corrected_width;
 
         if (!gen_params.get("LocalizedMode")) {
-            double[] devInfo = getDeviation(matrix1, matrix2, use_opt, gen_params.get("VerboseMode"));
+            double[] devInfo = getDeviation(matrix1, matrix2, use_opt);
             double light_coef = EC / devInfo[1];
             opt_deviation = (int) (devInfo[0]);
             this.max_deviation = (int) (opt_deviation * light_coef);
