@@ -3,9 +3,16 @@ import com.sun.tools.javac.Main;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.dnd.DnDConstants;
+import java.awt.dnd.DropTarget;
+import java.awt.dnd.DropTargetDropEvent;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.IOException;
+import java.util.ArrayDeque;
+import java.util.List;
 import java.util.Locale;
 import java.util.Random;
 
@@ -34,6 +41,14 @@ public class DMComparator extends JFrame {
     private Action changeAction;
     private Action closeAction;
 
+    private void LoadDM(File DM) throws IOException {
+        setEnabled(false);
+        //image1 = improc.SizeChangerLinear(ImageIO.read(LI), guiImageWidth*2, guiImageHeight*2);
+        mymap = ImageIO.read(DM);
+        metrics = getMapMetrics(improc.ImageToMatrix(truemap), improc.ImageToMatrix(mymap), use_approx);
+        repaint();
+        setEnabled(true);
+    }
     private void ConfigureAllActions(){
         changeAction = new AbstractAction() {
             @Override
@@ -42,15 +57,11 @@ public class DMComparator extends JFrame {
                     JFileChooser image_loader = mainframe.getImageLoader();
                     File DM = null;
                     int loaddmret = image_loader.showDialog(null, "Load DepthMap image");
-                    setEnabled(false);
                     if (loaddmret == JFileChooser.APPROVE_OPTION) {
                         DM = image_loader.getSelectedFile();
                     }
-                    //image1 = improc.SizeChangerLinear(ImageIO.read(LI), guiImageWidth*2, guiImageHeight*2);
-                    mymap = ImageIO.read(DM);
-                    metrics = getMapMetrics(improc.ImageToMatrix(truemap), improc.ImageToMatrix(mymap), use_approx);
-                    repaint();
-                    setEnabled(true);
+                    LoadDM(DM);
+
                 } catch (Exception ignored) {
                     JOptionPane.showMessageDialog(DMComparator.this, "Something went wrong while reading, try again");
                 }
@@ -147,6 +158,22 @@ public class DMComparator extends JFrame {
         Deviation.setAlignmentX(Component.CENTER_ALIGNMENT);
         ChangeDMButton.setAlignmentX(Component.CENTER_ALIGNMENT);
 
+        panel.setDropTarget(new DropTarget() {
+            public synchronized void drop(DropTargetDropEvent evt) {
+                try {
+                    evt.acceptDrop(DnDConstants.ACTION_COPY);
+                    java.util.List<File> droppedFiles = (List<File>)
+                            evt.getTransferable().getTransferData(DataFlavor.javaFileListFlavor);
+                    if (!droppedFiles.isEmpty()) {
+                        LoadDM(droppedFiles.get(0));
+                    }
+
+                    evt.dropComplete(true);
+                } catch (Exception ignored) {
+                    JOptionPane.showMessageDialog(DMComparator.this, "Something went wrong while reading, try again");
+                }
+            }
+        });
 
         cvBox.add(Box.createVerticalGlue());
         cvBox.add(Metrics);
@@ -272,7 +299,7 @@ public class DMComparator extends JFrame {
 //        RightImageLabel.setIcon(new ImageIcon(mymap));
         Metrics.setText("Metrics: " + String.format(Locale.US,"%.3f",metrics[1]));
         Deviation.setText("Deviation: " + (int)metrics[0]);
-        setSize((int)(1.15*twidthl+twidthr), (int)(guiImageHeight * 1.05));
+        setSize((int)(1.16*twidthl+twidthr), (int)(guiImageHeight * 1.08));
         setLocation((kit.getScreenSize().width - this.getWidth()) / 2, (kit.getScreenSize().height - this.getHeight()) / 2);
     }
 }

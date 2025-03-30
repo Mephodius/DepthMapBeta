@@ -2,6 +2,9 @@ import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.UnsupportedFlavorException;
+import java.awt.dnd.DnDConstants;
+import java.awt.dnd.DropTarget;
+import java.awt.dnd.DropTargetDropEvent;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -9,6 +12,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
@@ -320,9 +326,19 @@ class MainFrame extends JFrame {
 
     Deque<GenState> LogsStack = new ArrayDeque<>();
     BufferedImage ShiftedImage;
-    int window_size;
 
-    Map<String, Boolean> gen_params = new HashMap<String,Boolean>();
+    boolean adaptive_mode;
+    boolean autosave_mode;
+    boolean approximate_mode;
+    boolean localized_mode;
+    int window_size;
+    int filter_size;
+    int n_segments;
+    int stride;
+    double ext_coef;
+    CompareMethod method;
+
+//    Map<String, Object> gen_params = new HashMap<String, Object>();
     byte[][][] matrix1;//first image
     byte[][][] matrix2;//second image
     public double[][] matrix3;//deviation matrix
@@ -378,7 +394,6 @@ class MainFrame extends JFrame {
     ButtonGroup methods = new ButtonGroup();
     ButtonGroup filtration = new ButtonGroup();
     JFileChooser loadimage = new JFileChooser();
-    JTextField UserSize = new JTextField("10", 4);
     Box zero = Box.createHorizontalBox();
     Box first = Box.createHorizontalBox();
     Box second = Box.createHorizontalBox();
@@ -399,14 +414,23 @@ class MainFrame extends JFrame {
     JCheckBox AutoScaleCB = new JCheckBox("AutoScale");
     JCheckBox AdaptiveSizeCB = new JCheckBox("AdaptSize");
     JCheckBox ConvApprxCB = new JCheckBox("ConvApprx");
-    JTextField FilterSizeTF = new JTextField("3", 3);
     JCheckBox ApprxAlgsCB = new JCheckBox("AX");
     JCheckBox AutoSaveCB = new JCheckBox("AS");
 
     JCheckBox LocDevsCB = new JCheckBox("LD");
-    JTextField ECoefTF = new JTextField("2.2", 3);
-    JTextField StrideTF = new JTextField("1", 3);
-    JTextField NSegmentsTF = new JTextField("7", 3);
+
+    private int WS = 10;
+    private int FS = 3;
+    private final int NSEG = 9;
+    private final int STRIDE = 1;
+    private final double EC = 2.2;
+
+    JTextField WindowSizeTF = new JTextField(Integer.toString(WS), 4);
+    JTextField FilterSizeTF = new JTextField(Integer.toString(FS), 3);
+    JTextField NSegmentsTF = new JTextField(Integer.toString(NSEG), 3);
+    JTextField StrideTF = new JTextField(Integer.toString(STRIDE), 3);
+    JTextField ECoefTF = new JTextField(Double.toString(EC), 3);
+
 
     JLabel text = new JLabel("Filter size");
     JButton ApplyOperation = new JButton("Apply");
@@ -425,7 +449,6 @@ class MainFrame extends JFrame {
     private int max_deviation;
     private int vdev;
     private int counter4saving = 0;
-    private boolean use_opt = false;
 
     private int itercounter;
     public static int dtis = 10000; // scale for converting double to int and then backwards
@@ -458,7 +481,7 @@ class MainFrame extends JFrame {
     private Action SCC_Action;
     private Action KCC_Action;
 
-    char sep = File.separatorChar;
+    String sep = ""+File.separatorChar;
 
     private final String DataPath = "Data"+sep;
     private final String MapsPath = DataPath+"Maps"+sep;
@@ -466,6 +489,8 @@ class MainFrame extends JFrame {
     private final String ShiftedIPath = DataPath+"Shifted_Images"+sep;
     private final String DeviationsPath = DataPath+"Deviations"+sep;
 
+    private final Pattern floatPattern = Pattern.compile("(0|([1-9][0-9]*))(\\.[0-9]+)?");// \d+\.?\d+ //[^0-9]*
+    private final Pattern intPattern = Pattern.compile("[1-9][0-9]*");
 
 
     public int[][][] BtoIMatrix(byte[][][] matrix) {
@@ -496,6 +521,26 @@ class MainFrame extends JFrame {
         return transposed;
     }
 
+    private void LLImage(File file) throws IOException {
+        image1 = ImageIO.read(file);
+        iwidth = image1.getWidth();
+        iheight = image1.getHeight();
+        frame.getContentPane();
+        LeftImageLabel.setIcon(new ImageIcon(improc.SizeChangerS(image1, guiImageWidth, guiImageHeight, apprx_choice)));
+    }
+    private void LRImage(File file) throws IOException {
+        image2 = ImageIO.read(file);
+        iwidth = image2.getWidth();
+        iheight = image2.getHeight();
+        frame.getContentPane();
+        RightImageLabel.setIcon(new ImageIcon(improc.SizeChangerS(image2, guiImageWidth, guiImageHeight, apprx_choice)));
+    }
+
+    private void LDM(File file) throws IOException{
+        buff = ImageIO.read(file); //improc.SizeChangerS(ImageIO.read(file), iwidth, iheight, apprx_choice);
+        if (DepthMap != null)
+            GetMetrics.setEnabled(true);
+    }
     private void LoadImage(String which){
         try {
             File file = null;
@@ -503,22 +548,13 @@ class MainFrame extends JFrame {
             if (ret == JFileChooser.APPROVE_OPTION) {
                 file = loadimage.getSelectedFile();
             }
+            System.out.println(file);
             //image1 = improc.SizeChangerLinear(ImageIO.read(LI), guiImageWidth*2, guiImageHeight*2);
             if (which.equals("left")) {
-                image1 = ImageIO.read(file);
-                iwidth = image1.getWidth();
-                iheight = image1.getHeight();
-                frame.getContentPane();
-                LeftImageLabel.setIcon(new ImageIcon(improc.SizeChangerS(image1, guiImageWidth, guiImageHeight, apprx_choice)));
-
+                LLImage(file);
             }
             else{
-                image2 = ImageIO.read(file);
-                iwidth = image2.getWidth();
-                iheight = image2.getHeight();
-                frame.getContentPane();
-                RightImageLabel.setIcon(new ImageIcon(improc.SizeChangerS(image2, guiImageWidth, guiImageHeight, apprx_choice)));
-
+                LRImage(file);
             }
             System.out.println("Relation: " + iheight + " " + iwidth + " " + guiImageWidth * 2 + " " + guiImageHeight * 2 * iheight / iwidth);
 
@@ -534,10 +570,56 @@ class MainFrame extends JFrame {
             JOptionPane.showMessageDialog(MainFrame.this, "Something went wrong while reading, try again");
         }
     }
+
+    private Integer parseInt(JTextField tf, int basev){
+        String s = tf.getText();
+        Matcher m = intPattern.matcher(s);
+//        System.out.println("WAT?"+m);
+
+        int value;
+        try{
+            m.find();
+            s = m.group();
+            value = Integer.parseInt(s);
+            if (value >= 1){
+                tf.setText(Integer.toString(value));
+                return value;
+            }
+            else
+                throw new Exception();
+        }catch (Exception e){
+            tf.setText(Integer.toString(basev));
+//            JOptionPane.showMessageDialog(MainFrame.this, "Incorrect input format in the field");
+            return basev;
+        }
+
+    }
+
+    private Double parseDouble(JTextField tf, double basev){
+        String s = tf.getText();
+        Matcher m = floatPattern.matcher(s);
+        double value;
+        try{
+            m.find();
+            s = m.group();
+            value = Double.parseDouble(s);
+            if (value >= 1){
+                tf.setText(Double.toString(value));
+                return value;
+            }
+            else
+                throw new Exception();
+        }catch (Exception e){
+            tf.setText(Double.toString(basev));
+//            JOptionPane.showMessageDialog(MainFrame.this, "Incorrect input format in the param field");
+            return basev;
+        }
+
+    }
     private void ApplyFilter(){
 
         String str = Operation.getSelectedItem().toString();
-        improc.setSize((int)Double.parseDouble(FilterSizeTF.getText()));
+        improc.setSize(parseInt(FilterSizeTF, FS));
 
         switch (str) {
             case "median":
@@ -695,8 +777,7 @@ class MainFrame extends JFrame {
                     if (dmret == JFileChooser.APPROVE_OPTION) {
                         temp = loadimage.getSelectedFile();
                     }
-                    GetMetrics.setEnabled(true);
-                    buff = improc.SizeChangerS(ImageIO.read(temp), iwidth, iheight, apprx_choice);
+                    LDM(temp);
                 } catch (Exception ignored) {
                     JOptionPane.showMessageDialog(MainFrame.this, "Something went wrong while reading, try again");
                 }
@@ -758,6 +839,8 @@ class MainFrame extends JFrame {
                 }
                 ApplyOperation.setEnabled(true);
                 LoadDM.setEnabled(true);
+                if (buff != null)
+                    GetMetrics.setEnabled(true);
                 ShowLogs.setEnabled(true);
                 Save.setEnabled(true);
                 //frame.pack();
@@ -788,7 +871,7 @@ class MainFrame extends JFrame {
                         ShowLogs.setEnabled(false);
                         DepthMap_full = (BufferedImage) clipboard.getData(flavor);
                         DepthMap = MatrixToImage(Transpose(getCompressedMap(improc.BWImageToMatrix(DepthMap_full))));
-                        UserSize.setText(Integer.toString(window_size));
+                        WindowSizeTF.setText(Integer.toString(window_size));
                         BottomImageLabel.setIcon(new ImageIcon(improc.SizeChangerS(DepthMap_full,
                                 guiImageWidth, guiImageHeight, 3)));
 
@@ -842,25 +925,25 @@ class MainFrame extends JFrame {
                 JOptionPane.showMessageDialog(MainFrame.this, "========== Help ===========\n" +
                         "For a program to work you need to load stereo images first\n" +
 
-                        "Depth map (DM) hotkeys:\n" +
-                        "Ctrl+A - apply chosen filter to the DM\n" +
+                        "\nLoad Images:\n" +
+                        "Alt+1 - load left image\n" +
+                        "Alt+2 - load right image\n" +
+
+                        "\nDepth map (DM) hotkeys:\n" +
+                        "Ctrl+A - apply the chosen filter to the DM\n" +
                         "Ctrl+Z - undoes your last DM action\n" +
                         "Ctrl+S - saves DM to the ./Maps folder\n" +
                         "Ctrl+C - copies DM to the clipboard.\n" +
                         "Ctrl+V - pastes clipboard into the program as a DM\n" +
 
-                        "Load Images:\n" +
-                        "Alt+1 - load left image\n" +
-                        "Alt+2 - load right image\n" +
-
-                        "Functional windows:\n" +
+                        "\nFunctional windows:\n" +
                         "Ctrl+R - run DM estimator with the current parameters\n" +
                         "Ctrl+D - load ground-true DM for metrics calculation\n" +
                         "Ctrl+F - calculate DM metrics\n" +
                         "Ctrl+H - show this help window\n" +
                         "Ctrl+Q - quit the program (or its current window)\n" +
 
-                        "Similarities:\n" +
+                        "\nSimilarities:\n" +
                         "Ctrl+1 - use SAD (Sum of absolute deviations)\n" +
                         "Ctrl+2 - use SSD (Sum of squared deviations)\n" +
                         "Ctrl+3 - use NCC (Pearson correlation)\n" +
@@ -883,7 +966,7 @@ class MainFrame extends JFrame {
         return new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
-               but.doClick();
+                but.doClick();
             }
         };
     }
@@ -944,19 +1027,27 @@ class MainFrame extends JFrame {
 
         actionMap.put("Close", closeAction);
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_Q, InputEvent.CTRL_DOWN_MASK), "Close");
+    }
 
-//        actionMap.put("Load", loadDMAction);
-//        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_D, InputEvent.CTRL_DOWN_MASK), "Load");
-//
-//        actionMap.put("Metrics", getMetricsAction);
-//        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.CTRL_DOWN_MASK), "Metrics");
-//
-//        actionMap.put("Undo", undoAction);
-//        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_Z, InputEvent.CTRL_DOWN_MASK), "Undo");
-//
-//        actionMap.put("Save", saveAction);
-//        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_DOWN_MASK), "Save");
-//
+    public void ConfigureAllTips(){
+        GoMakeSomeMagic.setToolTipText("Click to start generation process");
+        ApplyOperation.setToolTipText("Apply the chosen filter to the depth map");
+        LoadDM.setToolTipText("Load ground-truth depth map");
+        GetMetrics.setToolTipText("Get metrics");
+        ShowLogs.setToolTipText("Show the process of generation");
+        Save.setToolTipText("Save the depth map to the ./Maps folder");
+        UndoOperation.setToolTipText("Undo your last DM action");
+        AdaptiveSizeCB.setToolTipText("Better results, slower generation");
+        NSegmentsTF.setToolTipText("Number of segments for adaptive alg");
+        ApprxAlgsCB.setToolTipText("Worse results, quicker generation");
+        StrideTF.setToolTipText("Pooling size");
+        sadb.setToolTipText("Sum of absolute deviations");
+        ssdb.setToolTipText("Sum of squared deviations");
+        nccb.setToolTipText("Normalized correlation coefficient");
+        sccb.setToolTipText("Spearman correlation coefficient");
+        kccb.setToolTipText("Kendall correlation coefficient");
+        Operation.setToolTipText("Smoothest - amedian, strongest - wmedian");
+
     }
 
     public void setEnabled(boolean state){
@@ -974,7 +1065,7 @@ class MainFrame extends JFrame {
 
         CreateDirectories();
 
-        loadimage.setCurrentDirectory(new File(path + sep + "StereoImages" + sep + "WithGroundTrue"));
+        loadimage.setCurrentDirectory(new File(path + sep + "StereoImages" + sep + "Middlebury_WithGT"));
         loadimage.setFileFilter(new FileNameExtensionFilter("Images", "jpg", "png", "gif", "bmp"));
 
         frame.setLayout(new BorderLayout());
@@ -986,7 +1077,42 @@ class MainFrame extends JFrame {
         frame.setResizable(false);
         frame.setVisible(true);
 
-        UserSize.setMaximumSize(UserSize.getPreferredSize());
+        panel.setDropTarget(new DropTarget() {
+            public synchronized void drop(DropTargetDropEvent evt) {
+                try {
+                    evt.acceptDrop(DnDConstants.ACTION_COPY);
+                    List<File> droppedFiles = (List<File>)
+                            evt.getTransferable().getTransferData(DataFlavor.javaFileListFlavor);
+
+                    for (File file: droppedFiles){
+                        String[] temp = file.toString().split(sep);
+                        String name = temp[temp.length-1].toLowerCase();
+                        System.out.println(name);
+                        if (name.contains("left") || name.contains("0"))
+                            LLImage(file);
+                        if (name.contains("right") || name.contains("1"))
+                            LRImage(file);
+                        if (name.contains("gt") || name.contains("ground") || name.contains("true") || name.contains("map"))
+                            LDM(file);
+                    }
+
+                    if (image1 != null && image2 != null){
+                        LoadDM.setEnabled(true);
+                        GoMakeSomeMagic.setEnabled(true);
+                    }
+
+                    UndoOperation.setEnabled(false);
+                    LogsStack = new ArrayDeque<>();
+                    frame.setVisible(true);
+
+                    evt.dropComplete(true);
+                } catch (Exception ignored) {
+                    JOptionPane.showMessageDialog(MainFrame.this, "Something went wrong while reading, try again");
+                }
+            }
+        });
+
+        WindowSizeTF.setMaximumSize(WindowSizeTF.getPreferredSize());
         VdevTF.setMaximumSize(VdevTF.getPreferredSize());
         FilterSizeTF.setMaximumSize(FilterSizeTF.getPreferredSize());
         TimeTF.setMaximumSize(TimeTF.getPreferredSize());
@@ -994,7 +1120,7 @@ class MainFrame extends JFrame {
         StrideTF.setMaximumSize(VdevTF.getPreferredSize());
         NSegmentsTF.setMaximumSize(NSegmentsTF.getPreferredSize());
         ECoefTF.setMaximumSize(ECoefTF.getPreferredSize());
-        UserSize.setHorizontalAlignment(JTextField.CENTER);
+        WindowSizeTF.setHorizontalAlignment(JTextField.CENTER);
         VdevTF.setHorizontalAlignment(JTextField.CENTER);
         FilterSizeTF.setHorizontalAlignment(JTextField.CENTER);
         TimeTF.setHorizontalAlignment(JTextField.CENTER);
@@ -1119,7 +1245,7 @@ class MainFrame extends JFrame {
         fifth.add(Box.createHorizontalGlue());
         fifth.add(WindowSizeLabel);
         fifth.add(Box.createHorizontalGlue());
-        fifth.add(UserSize);
+        fifth.add(WindowSizeTF);
         fifth.add(Box.createHorizontalGlue());
         fifth.add(IterLabel);
         fifth.add(Box.createHorizontalGlue());
@@ -1207,6 +1333,7 @@ class MainFrame extends JFrame {
         // link actions to corresponding buttons
         ConfigureAllActions();
         ConfigureKeyBindings();
+        ConfigureAllTips();
 
 
         //получение из матрицы смещений матрицу для карты глубины
@@ -1223,47 +1350,53 @@ class MainFrame extends JFrame {
         // !!! }
 
     }
-    public int GetCompareType(){
-        int compare_type = 0;
-        if (ncc.isSelected())
-            compare_type = 1;
+    public void SetCompareMethod(){
+        method = new SAD();
+        if (ssd.isSelected())
+            method = new SSD();
+        else if (ncc.isSelected())
+            method = new NCC();
         else if (scc.isSelected())
-            compare_type = 2;
+            method = new SCC();
         else if (kcc.isSelected())
-            compare_type = 3;
-        else if (sad.isSelected())
-            compare_type = 4;
-        else if (ssd.isSelected())
-            compare_type = 5;
-        return compare_type;
+            method = new KCC();
     }
     public JFileChooser getImageLoader(){
         return loadimage;
     }
-
+// to make them stationary
     public void SecureAllParameters(){
-        gen_params.put("AdaptiveMode", AdaptiveSizeCB.isSelected());
-        gen_params.put("AutoSaveMode", AutoSaveCB.isSelected());
-        gen_params.put("ApproximateMode", ApprxAlgsCB.isSelected());
-        gen_params.put("LocalizedMode", AdaptiveSizeCB.isSelected());
-//        gen_params.put("LocalDevsMode", Local);
+        adaptive_mode = AdaptiveSizeCB.isSelected();
+        autosave_mode = AutoSaveCB.isSelected();
+        approximate_mode = ApprxAlgsCB.isSelected();
+        localized_mode = AdaptiveSizeCB.isSelected();
+        SetCompareMethod();
+        window_size = parseInt(WindowSizeTF, WS);
+        n_segments = parseInt(NSegmentsTF, NSEG);
+        stride = parseInt(StrideTF, STRIDE);
+        ext_coef = parseDouble(ECoefTF, EC);
+        panel.repaint();
+        
+//        gen_params.put("AdaptiveMode", AdaptiveSizeCB.isSelected());
+//        gen_params.put("AutoSaveMode", AutoSaveCB.isSelected());
+//        gen_params.put("ApproximateMode", ApprxAlgsCB.isSelected());
+//        gen_params.put("LocalizedMode", AdaptiveSizeCB.isSelected());
+    }
 
-    }
-    
-    public int GetWindowSize(){
-        try {
-            return Integer.valueOf(UserSize.getText());
-        }catch(Exception e){
-            UserSize.setText("5");
-            JOptionPane.showMessageDialog(MainFrame.this, "The value in the scan_screen_size field" +
-                    "must be positive. Setting to 5");
-            return Integer.valueOf(UserSize.getText());
-        }
-    }
+//    public int GetWindowSize(){
+//        try {
+//            return Integer.valueOf(WindowSizeTF.getText());
+//        }catch(Exception e){
+//            WindowSizeTF.setText("5");
+//            JOptionPane.showMessageDialog(MainFrame.this, "The value in the scan_screen_size field" +
+//                    "must be positive. Setting to 5");
+//            return Integer.valueOf(WindowSizeTF.getText());
+//        }
+//    }
     public void GenerateDepthMap(){
         matrix1 = new byte[iwidth][iheight][3]; //матрица для первого снимка
         matrix2 = new byte[iwidth][iheight][3]; //матрица для второго снимка
-        use_opt = gen_params.get("ApproximateMode");
+        approximate_mode = approximate_mode;
         //преобразование изображения в чб, конфликтует с некоторыми цветами
         if (bw.isSelected()) {
             improc.loadFull(image1);
@@ -1287,11 +1420,9 @@ class MainFrame extends JFrame {
                 matrix2[i][j][2] = (byte)(Math.abs(new Color(image2.getRGB(i, j)).getBlue()) - 128);
             }
         }
-        window_size = GetWindowSize();
-        int compare_type = GetCompareType();
         //Пожалуй, самая трудоемкая функция в данной программе, сложность - порядка O(n^3), но т.к. число n - далеко не маленькое, зачастую приходится подождать
         start = (int) System.currentTimeMillis();
-        DepthMap_full = CalculateDepthMap(window_size, compare_type);
+        DepthMap_full = CalculateDepthMap();
         finish = (int)System.currentTimeMillis();
     }
     public void ClearWindows(){
@@ -1872,36 +2003,36 @@ class MainFrame extends JFrame {
         }
         return average_c;
     }
-    public BufferedImage CalculateDepthMap(int window_size, int compare_type) {
+    public BufferedImage CalculateDepthMap() {
         int width = matrix1.length; // 500
         int height = matrix1[0].length; // 400
 
-        int locale_c = 9;
-        try {
-            locale_c = Integer.parseInt(NSegmentsTF.getText());
-        }catch(Exception e) {
-            NSegmentsTF.setText(Integer.toString(locale_c));
-            JOptionPane.showMessageDialog(MainFrame.this, "The value in the NS field" +
-                    "must be positive. Setting to "+locale_c);
-        }
+//        n_segments = 9;
+//        try {
+//            n_segments = Integer.parseInt(NSegmentsTF.getText());
+//        }catch(Exception e) {
+//            NSegmentsTF.setText(Integer.toString(n_segments));
+//            JOptionPane.showMessageDialog(MainFrame.this, "The value in the NS field" +
+//                    "must be positive. Setting to "+n_segments);
+//        }
 
-        int locale_w = width / locale_c;
-        int locale_h = height / locale_c;
-        double[][] thresh_matrix = new double[locale_c][locale_c];
+        int locale_w = width / n_segments;
+        int locale_h = height / n_segments;
+        double[][] thresh_matrix = new double[n_segments][n_segments];
         double[][] deviations = null;
         double[][] correlations = null;
 
         double EC = Double.parseDouble(ECoefTF.getText());
         int opt_deviation, corrected_width;
 
-        if (!gen_params.get("LocalizedMode")) {
-            double[] devInfo = getDeviation(matrix1, matrix2, use_opt);
+        if (!adaptive_mode) {
+            double[] devInfo = getDeviation(matrix1, matrix2, approximate_mode);
             double light_coef = EC / devInfo[1];
             opt_deviation = (int) (devInfo[0]);
             this.max_deviation = (int) (opt_deviation * light_coef);
 
         } else {
-            double[][][] devsInfo = getDeviations(matrix1, matrix2, locale_c);
+            double[][][] devsInfo = getDeviations(matrix1, matrix2, n_segments);
             deviations = devsInfo[0];
             correlations = devsInfo[1];
 
@@ -1934,19 +2065,6 @@ class MainFrame extends JFrame {
         logs = new int[(int) Math.ceil((double) corrected_width / window_size)][(int) Math.ceil((double) height / window_size)][];
         correlation_m = new double[(int) Math.ceil((double) corrected_width / window_size)][(int) Math.ceil((double) height / window_size)][];
 
-        CompareMethod method = switch (compare_type) {
-            // Pearson (NСС)
-            case 1 -> new NCC();
-            // Spearman (SCC)
-            case 2 -> new SCC();
-            // Kendall (KCC)
-            case 3 -> new KCC();
-            // SAD
-            case 4 -> new SAD();
-            // SSD
-            case 5 -> new SSD();
-            default -> null;
-        };
         method.setStride(Integer.valueOf(StrideTF.getText()));
         double best_correlation;
         int coincidentx;
@@ -1969,15 +2087,15 @@ class MainFrame extends JFrame {
         System.out.println("W: " + w);
         double c_thresh = 0.85;
 
-        if (gen_params.get("AdaptiveMode")) {
-            for (int i = 0; i < locale_c; i++) {
-                for (int j = 0; j < locale_c; j++) {
+        if (adaptive_mode) {
+            for (int i = 0; i < n_segments; i++) {
+                for (int j = 0; j < n_segments; j++) {
                     double temp = Std(getPart(matrix1, locale_w * i, locale_h * j, Math.min(width - locale_w * i, locale_w), Math.min(height - locale_h * j, locale_h), 0));
                     thresh_matrix[i][j] = AC * Math.pow(temp, 0.5);
                 }
             }
-            for (int i = 0; i < locale_c; i++) {
-                for (int j = 0; j < locale_c; j++) {
+            for (int i = 0; i < n_segments; i++) {
+                for (int j = 0; j < n_segments; j++) {
                     System.out.print((int) thresh_matrix[j][i] + " ");
                 }
                 System.out.println();
@@ -2010,17 +2128,17 @@ class MainFrame extends JFrame {
 //                    System.out.println("NEW THRESH: " + std_thresh);
 //                }
                 //System.out.println(col_image1 + " " + row_image1 + " " +  col_image1/locale_w + " " + row_image1/locale_h);
-                std_thresh = thresh_matrix[(Math.min(col_image1/locale_w, locale_c-1))][Math.min((row_image1/locale_h), locale_c-1)];
+                std_thresh = thresh_matrix[(Math.min(col_image1/locale_w, n_segments-1))][Math.min((row_image1/locale_h), n_segments-1)];
 
-                if (gen_params.get("LocalizedMode")) {
-                    max_deviation = (int) (deviations[(Math.min(col_image1 / locale_w, locale_c - 1))][Math.min((row_image1 / locale_h), locale_c - 1)]);
+                if (adaptive_mode) { // local
+                    max_deviation = (int) (deviations[(Math.min(col_image1 / locale_w, n_segments - 1))][Math.min((row_image1 / locale_h), n_segments - 1)]);
 //                    System.out.println("Max deviation: " + max_deviation);
                 }
                 //std_thresh = (std_thresh + std1/10)/1.1;
                 //System.out.println("NEW STD THRESH: " + std_thresh);
 
 
-                if(gen_params.get("AdaptiveMode") && std1 < std_thresh && std1 > 0) {
+                if(adaptive_mode && std1 < std_thresh && std1 > 0) {
                     tempsizeadd = 0;
                     int[] eP = extendPart(col_image1, row_image1, sc_width, sc_height, tempsizeadd);
                     byte[][][] asmatrix;
@@ -2058,7 +2176,7 @@ class MainFrame extends JFrame {
                 comp_counter = 0;
                 correlation_m[(int)Math.ceil((double)(col_image1 + Math.min(opt_deviation, 0))/ window_size)][(int)Math.ceil((double)row_image1 / window_size)] = new double[Math.min(col_image1 - tempsizeadd, Math.abs(max_deviation))+1];
                 for (int deviation = 0;  deviation <= Math.min(col_image1 - tempsizeadd, Math.abs(max_deviation)); deviation++){
-                //for (int col_image2 = tempsizeadd; col_image2 < width - sc_width; col_image2++) {
+                    //for (int col_image2 = tempsizeadd; col_image2 < width - sc_width; col_image2++) {
                     for(int row_image2 = Math.max(0,row_image1-vdev); row_image2 < Math.min(height-sc_height+1,row_image1 + vdev + 1); row_image2++) {
 
                         int col_image2 = (opt_deviation <= 0)? (col_image1-deviation):(col_image1+deviation);
@@ -2085,10 +2203,10 @@ class MainFrame extends JFrame {
                                 peak_b++;
                         }
 
-                        if (use_opt && peak_b >= w && best_correlation > c_thresh)
+                        if (approximate_mode && peak_b >= w && best_correlation > c_thresh)
                             break;
                     }
-                    if (use_opt && peak_b >= w && best_correlation > c_thresh){
+                    if (approximate_mode && peak_b >= w && best_correlation > c_thresh){
                         break;
                     }
                 }
@@ -2102,8 +2220,8 @@ class MainFrame extends JFrame {
                 int id1 = (int)Math.ceil((double)(col_image1 + Math.min(opt_deviation, 0))/ window_size);
                 int id2 = (int)Math.ceil((double)row_image1 / window_size);
                 logs[id1][id2] = new int[]{eP1[0], eP1[1], eP2[0], eP2[1], eP1[2], eP1[3],
-                                    (int)(dtis*best_correlation),  (int)((dtis*disparity)/Math.hypot(max_deviation, 2*vdev)),
-                                    (int)(dtis*std1), (int)(dtis*std2), (int)(dtis*tempsizeadd/width), comp_counter, max_deviation};
+                        (int)(dtis*best_correlation),  (int)((dtis*disparity)/Math.hypot(max_deviation, 2*vdev)),
+                        (int)(dtis*std1), (int)(dtis*std2), (int)(dtis*tempsizeadd/width), comp_counter, max_deviation};
                 //System.out.println("&&&&& " + col_image1 + ' ' + sc_width);
                 matrix3[id1][id2] = disparity;
 
@@ -2119,7 +2237,7 @@ class MainFrame extends JFrame {
         }
 
         itercounter = (int)((double) itercounter/(((int) Math.ceil((double) corrected_width / window_size) *
-                                                  (int) Math.ceil((double) height / window_size))));
+                (int) Math.ceil((double) height / window_size))));
 
 
 
