@@ -305,14 +305,12 @@ class SSD extends CompareMethod {
 
         return 1 - (total[0] + total[1] + total[2])/(3*255*width*height);
     }
-
 }
 
 
-
 class MainFrame extends JFrame {
-    int guiImageWidth = 400; //540, 280
-    int guiImageHeight = 300; //360, 240
+    int guiImageWidth = 345; //360, 540, 280
+    int guiImageHeight = 260; //280, 360, 240
 
     //new File("D:\\Images\\left.jpg");
     File RI = null;
@@ -366,9 +364,7 @@ class MainFrame extends JFrame {
     JLabel StrideLabel = new JLabel("Stride");
     JLabel NSLabel = new JLabel("NS");
     JLabel ECLabel = new JLabel("EC");
-    JTextField VdevTF = new JTextField("0", 3);
-    JTextField TimeTF = new JTextField("0", 4);
-    JTextField IterTF = new JTextField("0", 4);
+
     JLabel Selections = new JLabel("");
     //JLabel TopImageLabel = new JLabel("Main image");
     JLabel LeftImageLabel = new JLabel("");
@@ -415,7 +411,7 @@ class MainFrame extends JFrame {
     JCheckBox AdaptiveSizeCB = new JCheckBox("AdaptSize");
     JCheckBox ConvApprxCB = new JCheckBox("ConvApprx");
     JCheckBox ApprxAlgsCB = new JCheckBox("AX");
-    JCheckBox AutoSaveCB = new JCheckBox("AS");
+    JCheckBox AutoSaveCB = new JCheckBox("AutoSave");
 
     JCheckBox LocDevsCB = new JCheckBox("LD");
 
@@ -423,13 +419,18 @@ class MainFrame extends JFrame {
     private int FS = 3;
     private final int NSEG = 9;
     private final int STRIDE = 1;
+    private final int VDEV = 0;
     private final double EC = 2.2;
 
-    JTextField WindowSizeTF = new JTextField(Integer.toString(WS), 4);
-    JTextField FilterSizeTF = new JTextField(Integer.toString(FS), 3);
-    JTextField NSegmentsTF = new JTextField(Integer.toString(NSEG), 3);
-    JTextField StrideTF = new JTextField(Integer.toString(STRIDE), 3);
+    JTextField WindowSizeTF = new JTextField(Integer.toString(WS), 3);
+    JTextField FilterSizeTF = new JTextField(Integer.toString(FS), 2);
+    JTextField NSegmentsTF = new JTextField(Integer.toString(NSEG), 2);
+    JTextField StrideTF = new JTextField(Integer.toString(STRIDE), 2);
     JTextField ECoefTF = new JTextField(Double.toString(EC), 3);
+
+    JTextField VdevTF = new JTextField("0", 2);
+    JTextField TimeTF = new JTextField("0", 5);
+    JTextField IterTF = new JTextField("0", 5);
 
 
     JLabel text = new JLabel("Filter size");
@@ -445,7 +446,7 @@ class MainFrame extends JFrame {
 
     ImageProcessor improc = new ImageProcessor();
     int[] size_adjustment = {0, 0};
-    int filtersize = 9;
+    int filtersize = 3;
     private int max_deviation;
     private int vdev;
     private int counter4saving = 0;
@@ -458,7 +459,7 @@ class MainFrame extends JFrame {
 
     int start, finish;
 
-    int apprx_choice = 2;
+    int interpol_choice = 2;
 
     // Declare all actions used
     private Action selectLAction;
@@ -526,14 +527,14 @@ class MainFrame extends JFrame {
         iwidth = image1.getWidth();
         iheight = image1.getHeight();
         frame.getContentPane();
-        LeftImageLabel.setIcon(new ImageIcon(improc.SizeChangerS(image1, guiImageWidth, guiImageHeight, apprx_choice)));
+        LeftImageLabel.setIcon(new ImageIcon(improc.SizeChangerS(image1, guiImageWidth, guiImageHeight, interpol_choice)));
     }
     private void LRImage(File file) throws IOException {
         image2 = ImageIO.read(file);
         iwidth = image2.getWidth();
         iheight = image2.getHeight();
         frame.getContentPane();
-        RightImageLabel.setIcon(new ImageIcon(improc.SizeChangerS(image2, guiImageWidth, guiImageHeight, apprx_choice)));
+        RightImageLabel.setIcon(new ImageIcon(improc.SizeChangerS(image2, guiImageWidth, guiImageHeight, interpol_choice)));
     }
 
     private void LDM(File file) throws IOException{
@@ -559,6 +560,8 @@ class MainFrame extends JFrame {
             System.out.println("Relation: " + iheight + " " + iwidth + " " + guiImageWidth * 2 + " " + guiImageHeight * 2 * iheight / iwidth);
 
             if (image1 != null && image2 != null){
+                WS = (int)((double)Math.min(iwidth, iheight)/100);
+                WindowSizeTF.setText(Integer.toString(WS));
                 LoadDM.setEnabled(true);
                 GoMakeSomeMagic.setEnabled(true);
             }
@@ -603,7 +606,7 @@ class MainFrame extends JFrame {
             m.find();
             s = m.group();
             value = Double.parseDouble(s);
-            if (value >= 1){
+            if (value > 0.1){
                 tf.setText(Double.toString(value));
                 return value;
             }
@@ -646,7 +649,7 @@ class MainFrame extends JFrame {
         DepthMap_full = MatrixToImage(getFullMap(improc.BWImageToMatrix(DepthMap),
                 DepthMap_full.getWidth(), DepthMap_full.getHeight()));
         BottomImageLabel.setIcon(new ImageIcon(improc.SizeChangerS(DepthMap_full,
-                guiImageWidth, guiImageHeight, 3)));
+                guiImageWidth, guiImageHeight, interpol_choice)));
         UndoOperation.setEnabled(true);
     }
 
@@ -698,7 +701,7 @@ class MainFrame extends JFrame {
             DepthMap_full = MatrixToImage(getFullMap(improc.BWImageToMatrix(DepthMap),
                     DepthMap_full.getWidth(), DepthMap_full.getHeight()));
             BottomImageLabel.setIcon(new ImageIcon(improc.SizeChangerS(DepthMap_full,
-                    guiImageWidth, guiImageHeight, 3)));
+                    guiImageWidth, guiImageHeight, interpol_choice)));
 
         }
         if (LogsStack.size() <= 1){
@@ -814,7 +817,7 @@ class MainFrame extends JFrame {
             public void actionPerformed(ActionEvent actionEvent) {
 //                GoMakeSomeMagic.setEnabled(false);
                 if (image1.getHeight() != image2.getHeight() || image1.getWidth() != image2.getWidth()){
-                    image2 = improc.SizeChangerS(image2, image1.getWidth(), image1.getHeight(), apprx_choice);
+                    image2 = improc.SizeChangerS(image2, image1.getWidth(), image1.getHeight(), interpol_choice);
                 }
 
                 ClearWindows();
@@ -832,7 +835,7 @@ class MainFrame extends JFrame {
                 LogsStack.push(current_state);
                 //BottomImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(improc.SizeChanger(DepthMap, Math.round(((double)window_size*guiImageWidth/width))), guiImageWidth, guiImageHeight)));
 //            BottomImageLabel.setIcon(new ImageIcon(improc.SizeChangerDistanceBased(improc.SizeChanger(DepthMap, Math.round(((double)window_size*guiImageWidth/ iwidth))), guiImageWidth, guiImageHeight)));
-                BottomImageLabel.setIcon(new ImageIcon(improc.SizeChangerS(DepthMap_full, guiImageWidth, guiImageHeight, apprx_choice)));
+                BottomImageLabel.setIcon(new ImageIcon(improc.SizeChangerS(DepthMap_full, guiImageWidth, guiImageHeight, interpol_choice)));
                 //GradientOfColors.setIcon(new ImageIcon(improc.SizeChangerLinear(gradientstripe, guiImageWidth, guiImageHeight)));
                 if (LogsStack.size() > 1) {
                     UndoOperation.setEnabled(true);
@@ -843,7 +846,7 @@ class MainFrame extends JFrame {
                     GetMetrics.setEnabled(true);
                 ShowLogs.setEnabled(true);
                 Save.setEnabled(true);
-                //frame.pack();
+//                frame.pack();
                 //panel.add(BottomImageLabel, SOUTH);
                 //panel.add(GradientOfColors, SOUTH);
                 //frame.add(panel);
@@ -873,7 +876,7 @@ class MainFrame extends JFrame {
                         DepthMap = MatrixToImage(Transpose(getCompressedMap(improc.BWImageToMatrix(DepthMap_full))));
                         WindowSizeTF.setText(Integer.toString(window_size));
                         BottomImageLabel.setIcon(new ImageIcon(improc.SizeChangerS(DepthMap_full,
-                                guiImageWidth, guiImageHeight, 3)));
+                                guiImageWidth, guiImageHeight, interpol_choice)));
 
                         logs = null;
                         correlation_m = null;
@@ -1039,8 +1042,11 @@ class MainFrame extends JFrame {
         UndoOperation.setToolTipText("Undo your last DM action");
         AdaptiveSizeCB.setToolTipText("Better results, slower generation");
         NSegmentsTF.setToolTipText("Number of segments for adaptive alg");
-        ApprxAlgsCB.setToolTipText("Worse results, quicker generation");
         StrideTF.setToolTipText("Pooling size");
+        VdevTF.setToolTipText("Max vertical deviation, slows generation");
+        ECoefTF.setToolTipText("Extension coefficient, scales search area");
+        ApprxAlgsCB.setToolTipText("Worse results, quicker generation");
+
         sadb.setToolTipText("Sum of absolute deviations");
         ssdb.setToolTipText("Sum of squared deviations");
         nccb.setToolTipText("Normalized correlation coefficient");
@@ -1058,6 +1064,21 @@ class MainFrame extends JFrame {
     }
     public void setVisible(boolean state){
         frame.setVisible(state);
+    }
+
+    public static void changeFont (Component component, Font font)
+    {
+
+        if (!(component instanceof JTextField)) {
+            component.setFont(font);
+            if (component instanceof Container) {
+                for (Component child : ((Container) component).getComponents()) {
+                    changeFont(child, font);
+                }
+            }
+        }else{
+            component.setFont(font.deriveFont(Font.PLAIN));
+        }
     }
 
     public MainFrame() throws IOException {
@@ -1097,6 +1118,8 @@ class MainFrame extends JFrame {
                     }
 
                     if (image1 != null && image2 != null){
+                        WS = (int)((double)Math.min(iwidth, iheight)/100);
+                        WindowSizeTF.setText(Integer.toString(WS));
                         LoadDM.setEnabled(true);
                         GoMakeSomeMagic.setEnabled(true);
                     }
@@ -1129,6 +1152,11 @@ class MainFrame extends JFrame {
         NSegmentsTF.setHorizontalAlignment(JTextField.CENTER);
         ECoefTF.setHorizontalAlignment(JTextField.CENTER);
 
+
+        AdaptiveSizeCB.setHorizontalTextPosition(SwingConstants.LEFT);
+        ApprxAlgsCB.setHorizontalTextPosition(SwingConstants.LEFT);
+        AutoScaleCB.setHorizontalTextPosition(SwingConstants.LEFT);
+        AutoSaveCB.setHorizontalTextPosition(SwingConstants.LEFT);
 
         TimeTF.setEnabled(false);
         IterTF.setEnabled(false);
@@ -1196,6 +1224,8 @@ class MainFrame extends JFrame {
         first.add(Box.createHorizontalGlue());
         first.add(ApplyOperation);
         first.add(Box.createHorizontalGlue());
+        first.add(UndoOperation);
+        first.add(Box.createHorizontalGlue());
 
         second.add(Box.createHorizontalGlue());
         second.add(text);
@@ -1204,7 +1234,7 @@ class MainFrame extends JFrame {
         second.add(Box.createHorizontalGlue());
         second.add(AutoScaleCB);
         second.add(Box.createHorizontalGlue());
-        second.add(UndoOperation);
+        second.add(AutoSaveCB);
         second.add(Box.createHorizontalGlue());
 
 
@@ -1222,8 +1252,8 @@ class MainFrame extends JFrame {
         third.add(Box.createHorizontalGlue());
         third.add(StrideTF);
         third.add(Box.createHorizontalGlue());
-        third.add(AutoSaveCB);
-        third.add(Box.createHorizontalGlue());
+//        third.add(AutoSaveCB);
+//        third.add(Box.createHorizontalGlue());
 
         // HERE
         fourth.add(Box.createHorizontalGlue());
@@ -1328,9 +1358,14 @@ class MainFrame extends JFrame {
         panel.add(deepmap);
 
         frame.add(panel);
+//        frame.setFont(new Font("TimesRoman", Font.BOLD, 22));
         frame.setVisible(true);
 
         // link actions to corresponding buttons
+        changeFont(frame, new Font("OpenSans", Font.BOLD, 14));
+//        frame.pack();
+
+
         ConfigureAllActions();
         ConfigureKeyBindings();
         ConfigureAllTips();
@@ -1370,12 +1405,15 @@ class MainFrame extends JFrame {
         autosave_mode = AutoSaveCB.isSelected();
         approximate_mode = ApprxAlgsCB.isSelected();
         localized_mode = AdaptiveSizeCB.isSelected();
-        SetCompareMethod();
+
         window_size = parseInt(WindowSizeTF, WS);
         n_segments = parseInt(NSegmentsTF, NSEG);
         stride = parseInt(StrideTF, STRIDE);
         ext_coef = parseDouble(ECoefTF, EC);
-        panel.repaint();
+        vdev = parseInt(VdevTF, VDEV);
+
+        SetCompareMethod();
+        method.setStride(stride);
         
 //        gen_params.put("AdaptiveMode", AdaptiveSizeCB.isSelected());
 //        gen_params.put("AutoSaveMode", AutoSaveCB.isSelected());
@@ -1403,8 +1441,8 @@ class MainFrame extends JFrame {
             image1 = ImageCopy(improc.BW());
             improc.loadFull(image2);
             image2 = ImageCopy(improc.BW());
-            LeftImageLabel.setIcon(new ImageIcon(improc.SizeChangerS(image1, guiImageWidth, guiImageHeight, apprx_choice)));
-            RightImageLabel.setIcon(new ImageIcon(improc.SizeChangerS(image2, guiImageWidth, guiImageHeight, apprx_choice)));
+            LeftImageLabel.setIcon(new ImageIcon(improc.SizeChangerS(image1, guiImageWidth, guiImageHeight, interpol_choice)));
+            RightImageLabel.setIcon(new ImageIcon(improc.SizeChangerS(image2, guiImageWidth, guiImageHeight, interpol_choice)));
         }
 
         for (int i = 0; i < iwidth; i++) {
@@ -1607,6 +1645,10 @@ class MainFrame extends JFrame {
             }
         }
         return tempimg;
+    }
+
+    public int getInterpChoice(){
+        return this.interpol_choice;
     }
     public BufferedImage getShiftedImage(byte[][][] matrix, int shift){
         int width = matrix.length;
@@ -2065,11 +2107,10 @@ class MainFrame extends JFrame {
         logs = new int[(int) Math.ceil((double) corrected_width / window_size)][(int) Math.ceil((double) height / window_size)][];
         correlation_m = new double[(int) Math.ceil((double) corrected_width / window_size)][(int) Math.ceil((double) height / window_size)][];
 
-        method.setStride(Integer.valueOf(StrideTF.getText()));
         double best_correlation;
         int coincidentx;
         int coincidenty;
-        vdev = Integer.valueOf(VdevTF.getText());
+
         int tempsizeadd;
         itercounter = 0;
 

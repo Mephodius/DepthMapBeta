@@ -7,6 +7,7 @@ import java.awt.image.BufferedImage;
 import java.util.Locale;
 
 public class PlotFrame extends JFrame {
+    MainFrame mainFrame;
     private Toolkit kit = Toolkit.getDefaultToolkit();
     JLabel LeftImageLabel = new JLabel("");
     JLabel RightImageLabel = new JLabel("");
@@ -20,6 +21,7 @@ public class PlotFrame extends JFrame {
 
     public PlotFrame(MainFrame mf, BufferedImage left, BufferedImage right, double hdeviation, double metrics, double[][] logs){
         setTitle("Correlation function plot");
+        mainFrame = mf;
         this.addWindowListener(new WindowListener() {
             @Override
             public void windowOpened(WindowEvent e) {
@@ -70,11 +72,13 @@ public class PlotFrame extends JFrame {
         cvBox.add(Box.createVerticalGlue());
 
         fhBox.add(Box.createHorizontalGlue());
+        fhBox.add(Box.createHorizontalStrut(5));
         fhBox.add(LeftImageLabel);
         fhBox.add(Box.createHorizontalGlue());
         fhBox.add(cvBox);
         fhBox.add(Box.createHorizontalGlue());
         fhBox.add(RightImageLabel);
+        fhBox.add(Box.createHorizontalStrut(5));
         fhBox.add(Box.createHorizontalGlue());
 
         fvBox.add(Box.createVerticalGlue());
@@ -88,7 +92,7 @@ public class PlotFrame extends JFrame {
         int guiImageWidth = right.getWidth();
         int guiImageHeight = right.getHeight();
 
-        LeftImageLabel.setIcon(new ImageIcon(improc.SizeChangerDistanceBased(left, guiImageWidth, guiImageHeight)));
+        LeftImageLabel.setIcon(new ImageIcon(improc.SizeChangerS(left, guiImageWidth, guiImageHeight, mf.getInterpChoice())));
         RightImageLabel.setIcon(new ImageIcon(right));
         Metrics.setText("Best correlation: " + String.format(Locale.US,"%.3f",metrics));
         Deviation.setText("Optimal deviation: " + (int)hdeviation);

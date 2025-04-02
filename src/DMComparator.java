@@ -19,6 +19,7 @@ import java.util.Random;
 public class DMComparator extends JFrame {
 
     MainFrame mainframe;
+    private int interpol_choice;
     JPanel panel = new JPanel();
     private Toolkit kit = Toolkit.getDefaultToolkit();
     JLabel LeftImageLabel = new JLabel("");
@@ -108,6 +109,7 @@ public class DMComparator extends JFrame {
 
     public DMComparator(MainFrame mf, BufferedImage truemap, BufferedImage mymap, boolean use_approx){
         mainframe = mf;
+        interpol_choice = mainframe.getInterpChoice();
         setTitle("Depth Map Comparator");
         this.addWindowListener(new WindowListener() {
             @Override
@@ -284,7 +286,7 @@ public class DMComparator extends JFrame {
         int guiImageHeight = 560;
         double aspect_ratio = (double)guiImageHeight/truemap.getHeight();
         int twidthl = (int)((double)truemap.getWidth()*aspect_ratio);
-        BufferedImage vtmap = improc.SizeChangerDistanceBased(truemap, twidthl, guiImageHeight);
+        BufferedImage vtmap = improc.SizeChangerS(truemap, twidthl, guiImageHeight, interpol_choice);
         if (metrics[0] > 0) {
             for (int i = 0; i < guiImageHeight; i += 2) {
 //            System.out.println(i);
@@ -295,11 +297,12 @@ public class DMComparator extends JFrame {
         }
         LeftImageLabel.setIcon(new ImageIcon(vtmap));
         int twidthr = guiImageWidth*guiImageHeight/truemap.getHeight();
-        RightImageLabel.setIcon(new ImageIcon(improc.SizeChangerDistanceBased(mymap, twidthr, guiImageHeight)));
+        RightImageLabel.setIcon(new ImageIcon(improc.SizeChangerS(mymap, twidthr, guiImageHeight, interpol_choice)));
 //        RightImageLabel.setIcon(new ImageIcon(mymap));
         Metrics.setText("Metrics: " + String.format(Locale.US,"%.3f",metrics[1]));
         Deviation.setText("Deviation: " + (int)metrics[0]);
-        setSize((int)(1.16*twidthl+twidthr), (int)(guiImageHeight * 1.08));
+//        setSize((int)(1.2*twidthl+twidthr), (int)(guiImageHeight * 1.08));
+        pack();
         setLocation((kit.getScreenSize().width - this.getWidth()) / 2, (kit.getScreenSize().height - this.getHeight()) / 2);
     }
 }

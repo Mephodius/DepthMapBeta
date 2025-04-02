@@ -2,8 +2,8 @@
 <launch4jConfig>
   <dontWrapJar>false</dontWrapJar>
   <headerType>gui</headerType>
-  <jar>C:\Users\10376\Programming\IdeaProjects\DepthMap\out\artifacts\DepthMap_jar\DepthMap.jar</jar>
-  <outfile>C:\Users\10376\Programming\IdeaProjects\DepthMap\out\artifacts\DepthMap_jar\DepthMap.exe</outfile>
+  <jar>/home/mephodius/Programming/IdeaProjects/DepthMap/out/artifacts/DepthMap_jar/DepthMap.jar</jar>
+  <outfile>/home/mephodius/Programming/IdeaProjects/DepthMap/out/artifacts/DepthMap_jar/DepthMapGen.exe</outfile>
   <errTitle></errTitle>
   <cmdLine></cmdLine>
   <chdir>.</chdir>
@@ -13,9 +13,9 @@
   <stayAlive>false</stayAlive>
   <restartOnCrash>false</restartOnCrash>
   <manifest></manifest>
-  <icon>C:\Users\10376\Programming\IdeaProjects\DepthMap\out\artifacts\DepthMap_jar\my.ico</icon>
+  <icon>/home/mephodius/Programming/IdeaProjects/DepthMap/out/artifacts/DepthMap_jar/my.ico</icon>
   <jre>
-    <path>C:\Program Files\Java\jdk-18\bin</path>
+    <path>jre</path>
     <requiresJdk>false</requiresJdk>
     <requires64Bit>false</requires64Bit>
     <minVersion></minVersion>
