@@ -11,7 +11,7 @@ import java.util.Collections;
 public class ImageProcessor {
     private MainFrame mf;
     private final double e = Math.pow(10,-6);
-    private final int L = 256; //квантование по яркости
+    private final int L = 256; // max pixel value
     private Double[][] mask;
     private Integer[][][] tempMat;
     private Integer size;
@@ -319,8 +319,8 @@ public class ImageProcessor {
      */
     //method is correcting out of limit elements
     private Double elementCorrect(Double value) {
-        if (value > (L - 1))
-            return (double) (L - 1);
+        if (value > (L-1))
+            return (double) (L-1);
         if (value < 0)
             return 0.0;
         return value;
@@ -342,7 +342,7 @@ public class ImageProcessor {
         for (int i = 0; i < width; i++) {
             for (int j = 0; j < height; j++) {
                 for (int k = 0; k < 3; k++) {
-                    tempMat[i][j][k]=(tempMat[i][j][k]-min[k])*255/(max[k]-min[k]);
+                    tempMat[i][j][k]=(tempMat[i][j][k]-min[k])*(L-1)/(max[k]-min[k]);
                 }
             }
         }
@@ -640,7 +640,7 @@ public class ImageProcessor {
                     Grad[k] = Math.hypot(Gx[k], Gy[k]);
                     if (Grad[k] > limit[k]) {
                         //белый цвет для краевых точек
-                        Grad[k] = (double) (L - 1);
+                        Grad[k] = (double) (L-1);
 
                     } else {
                         //черный для внутренних
@@ -734,7 +734,7 @@ public class ImageProcessor {
         syncMatrix();
         Double[][] BrightnessDensity = new Double[3][L];
         for (int i = 0; i < 3; i++) {
-            for (int j = 0; j <= (L - 1); j++) {
+            for (int j = 0; j < L; j++) {
                 BrightnessDensity[i][j] = 0.0;
             }
         }
@@ -747,7 +747,7 @@ public class ImageProcessor {
         }
         Double[][] BrightnessDistribution = new Double[3][L];
         for (int i = 0; i < 3; i++) {
-            for (int j = 0; j <= (L - 1); j++) {
+            for (int j = 0; j < L; j++) {
                 BrightnessDensity[i][j] /= Result.getHeight() * Result.getWidth();
                 if (j > 0)
                     BrightnessDistribution[i][j] = BrightnessDensity[i][j] + BrightnessDistribution[i][j - 1];
@@ -757,9 +757,9 @@ public class ImageProcessor {
         }
         for (int i = 0; i < width; i++) {
             for (int j = 0; j < height; j++) {
-                Integer red = (int) ((L - 1) * BrightnessDistribution[0][tempMat[i][j][0]]);
-                Integer green = (int) ((L - 1) * BrightnessDistribution[1][tempMat[i][j][1]]);
-                Integer blue = (int) ((L - 1) * BrightnessDistribution[2][tempMat[i][j][2]]);
+                Integer red = (int) ((L-1) * BrightnessDistribution[0][tempMat[i][j][0]]);
+                Integer green = (int) ((L-1) * BrightnessDistribution[1][tempMat[i][j][1]]);
+                Integer blue = (int) ((L-1) * BrightnessDistribution[2][tempMat[i][j][2]]);
                 Result.setRGB(i, j, new Color(red, green, blue).getRGB());
             }
         }
@@ -786,7 +786,7 @@ public class ImageProcessor {
             for (int m = 0; m < width; m += length) {
                 for (int n = 0; n < height; n += length) {
                     for (int i = 0; i < 3; i++) {
-                        for (int j = 0; j <= (L - 1); j++) {
+                        for (int j = 0; j <= (L-1); j++) {
                             BrightnessDensity[i][j] = 0.0;
                         }
                     }
@@ -799,7 +799,7 @@ public class ImageProcessor {
                     }
                     Double[][] BrightnessDistribution = new Double[3][L];
                     for (int i = 0; i < 3; i++) {
-                        for (int j = 0; j <= (L - 1); j++) {
+                        for (int j = 0; j <= (L-1); j++) {
                             BrightnessDensity[i][j] /= Math.pow(length, 2);
                             if (j > 0)
                                 BrightnessDistribution[i][j] = BrightnessDensity[i][j] + BrightnessDistribution[i][j - 1];
@@ -810,9 +810,9 @@ public class ImageProcessor {
                     }
                     for (int i = 0; i < length; i++) {
                         for (int j = 0; j < length; j++) {
-                            Integer red = (int) ((L - 1) * BrightnessDistribution[0][tempMat[m + i][n + j][0]]);
-                            Integer green = (int) ((L - 1) * BrightnessDistribution[1][tempMat[m + i][n + j][1]]);
-                            Integer blue = (int) ((L - 1) * BrightnessDistribution[2][tempMat[m + i][n + j][2]]);
+                            int red = (int) ((L-1) * BrightnessDistribution[0][tempMat[m + i][n + j][0]]);
+                            int green = (int) ((L-1) * BrightnessDistribution[1][tempMat[m + i][n + j][1]]);
+                            int blue = (int) ((L-1) * BrightnessDistribution[2][tempMat[m + i][n + j][2]]);
                             Result.setRGB(m + i, n + j, new Color(red, green, blue).getRGB());
                         }
                     }
@@ -1141,7 +1141,7 @@ public class ImageProcessor {
                         if (i < newWidth - 1 && j >= newHeight - 1) {
                             coefx = 1;
                         }
-                        temprgb[k] = Math.min(255, Math.max(0, (int) (coefx * temprgbx + coefy * temprgby + coefxy * temprgbxy)));
+                        temprgb[k] = Math.min((L-1), Math.max(0, (int) (coefx * temprgbx + coefy * temprgby + coefxy * temprgbxy)));
                     }
                     Result.setRGB(i, j, new Color(temprgb[0], temprgb[1], temprgb[2]).getRGB());
                 }
@@ -1346,14 +1346,14 @@ public class ImageProcessor {
                 }
             }
         }
-        psnr = 10*Math.log10((double)255*255*mat1.length*mat1[0].length/(Math.sqrt(temp)));
+        psnr = 10*Math.log10((double)(L-1)*(L-1)*mat1.length*mat1[0].length/(Math.sqrt(temp)));
         return psnr;
     }
     public BufferedImage ImageScaler(BufferedImage image) {
         int height = image.getHeight();
         int width = image.getWidth();
 
-        int max=0, min=255;
+        int max=0, min=(L-1);
 
         BufferedImage Result = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
 
@@ -1363,13 +1363,13 @@ public class ImageProcessor {
                 int tempr = color.getRed();
                 int tempg = color.getGreen();
                 int tempb = color.getBlue();
-                max = max > tempr ? max : tempr;
-                max = max > tempg ? max : tempg;
-                max = max > tempb ? max : tempb;
+                max = Math.max(max, tempr);
+                max = Math.max(max, tempg);
+                max = Math.max(max, tempb);
 
-                min = min < tempr ? min : tempr;
-                min = min < tempg ? min : tempg;
-                min = min < tempb ? min : tempb;
+                min = Math.min(min, tempr);
+                min = Math.min(min, tempg);
+                min = Math.min(min, tempb);
             }
         }
         System.out.println("Min: " + min + " Max: " + max);
@@ -1377,9 +1377,9 @@ public class ImageProcessor {
         for(int i = 0; i<width; i++) {
             for (int j = 0; j < height; j++) {
                 Color color = new Color(image.getRGB(i,j));
-                int newred = (int)((double)(color.getRed()-min)*255/(max-min));
-                int newgreen = (int)((double)(color.getGreen()-min)*255/(max-min));
-                int newblue = (int)((double)(color.getBlue()-min)*255/(max-min));
+                int newred = (int)((double)(color.getRed()-min)*(L-1)/(max-min));
+                int newgreen = (int)((double)(color.getGreen()-min)*(L-1)/(max-min));
+                int newblue = (int)((double)(color.getBlue()-min)*(L-1)/(max-min));
                 Color newcolor = new Color(newred, newgreen, newblue);
                 Result.setRGB(i, j, newcolor.getRGB());
             }
@@ -1395,6 +1395,19 @@ public class ImageProcessor {
                 matrix[i][j][0] = color.getRed();
                 matrix[i][j][1] = color.getGreen();
                 matrix[i][j][2] = color.getBlue();
+            }
+        }
+        return matrix;
+    }
+
+    public byte[][][] ImageToBMatrix(BufferedImage image){
+        byte[][][] matrix = new byte[image.getHeight()][image.getWidth()][3];
+        for(int i = 0; i< image.getHeight(); i++) {
+            for (int j = 0; j < image.getWidth(); j++) {
+                Color color = new Color(image.getRGB(j,i));
+                matrix[i][j][0] = (byte)(Math.abs(color.getRed()) - 128);
+                matrix[i][j][1] = (byte)(Math.abs(color.getGreen()) - 128);
+                matrix[i][j][2] = (byte)(Math.abs(color.getBlue()) - 128);
             }
         }
         return matrix;
@@ -1438,6 +1451,16 @@ public class ImageProcessor {
 //        return tempimg;
 //    }
 
+    public BufferedImage ImageCopy(BufferedImage img) {
+        BufferedImage temp = new BufferedImage(img.getWidth(), img.getHeight(), BufferedImage.TYPE_INT_RGB);
+        for (int i = 0; i < img.getWidth(); i++) {
+            for (int j = 0; j < img.getHeight(); j++) {
+                temp.setRGB(i, j, img.getRGB(i, j));
+            }
+        }
+        return temp;
+    }
+
     public BufferedImage MatrixToImage(int[][][] matrix){
         int width = matrix.length;
         int height = matrix[0].length;
@@ -1455,7 +1478,7 @@ public class ImageProcessor {
 
     public double[][] MinMaxScaling(double[][] matrix){
         double max = 0;
-        double min = 1;
+        double min = (L-1);
         int width = matrix.length;
         int height = matrix[0].length;
         for (int i = 0; i < width; i++) {
@@ -1484,7 +1507,7 @@ public class ImageProcessor {
         for (int i = 0; i < width; i++) {
             for (int j = 0; j < height; j++)
             {
-                int tempc = (int)(Math.max(0, matrix[i][j])*255);
+                int tempc = (int)(Math.max(0, matrix[i][j])*(L-1));
                 Color MyColor = new Color(tempc, tempc, tempc);
                 tempimg.setRGB(i, j, MyColor.getRGB());
             }
@@ -1553,6 +1576,25 @@ public class ImageProcessor {
         return metrics;
     }
 
+    // TODO: Different criterion
+    public BufferedImage AutoFiltration(){
+        String[] filters = new String[]{"min", "max", "median", "amedian"};
+        double best_std = this.Std(this.ImageToMatrix(Result));
+        String best_filter = "none";
+        BufferedImage BestResult = ImageCopy(Result);
+        for (String filter: filters){
+            BufferedImage temp = OrderStatFiltration(filter);
+            double std = this.Std(this.ImageToMatrix(temp));
+//            System.out.println(filter+" "+std);
+            if (std < best_std){
+                best_std = std;
+                best_filter = filter;
+                BestResult = ImageCopy(temp);
+            }
+        }
+        System.out.println("Filter "+best_filter+" was applied");
+        return BestResult;
+    }
     public BufferedImage OrderStatFiltration(String type) {
         ImageExtension();
         syncMatrix();
@@ -1561,17 +1603,51 @@ public class ImageProcessor {
         for (int i = size; i < width - size; i++) {
             for (int j = size; j < height - size; j++) {
                 for (int k = 0; k < 3; k++) {
+                    if (type.equals("amedian")) {
+                        int adaptive_size = 1;
+                        while (true) {
+                            sorted = new int[(int) Math.pow(2 * adaptive_size + 1, 2)];
+                            for (int m = -adaptive_size; m <= adaptive_size; m++) {
+                                for (int n = -adaptive_size; n <= adaptive_size; n++) {
+                                    sorted[n + adaptive_size + (m + adaptive_size) * (2 * adaptive_size + 1)] = tempMat[i + m][j + n][k];
+                                }
+                            }
+                            Arrays.sort(sorted);
+                            int A1 = sorted[sorted.length / 2] - sorted[0];
+                            int A2 = sorted[sorted.length / 2] - sorted[sorted.length - 1];
+                            if (A1 > 0 && A2 < 0) {
+                                int B1 = tempMat[i][j][k] - sorted[0];
+                                int B2 = tempMat[i][j][k] - sorted[sorted.length - 1];
+                                if (B1 > 0 && B2 < 0) {
+                                    temprgb[k] = tempMat[i][j][k];
+                                } else {
+                                    temprgb[k] = sorted[sorted.length / 2];
+                                }
+                                break;
+                            } else {
+                                adaptive_size += 1;
+                                if (adaptive_size > size) {
+                                    temprgb[k] = sorted[sorted.length / 2];
+                                    break;
+                                }
+                            }
+
+                        }
+                        continue;
+                    }
+
                     for (int m = -size; m <= size; m++) {
                         for (int n = -size; n <= size; n++) {
                             sorted[n + size + (m + size) * (2 * size + 1)] = tempMat[i + m][j + n][k];
                         }
                     }
                     Arrays.sort(sorted);
-                    if (type.equals("min")) {
-                        temprgb[k] = sorted[0];
+                    if (type.equals("min")) { // erosion
+//                        System.out.println(sorted.length/3 + " " + sorted.length*3/4);
+                        temprgb[k] = sorted[sorted.length/3];
                     }
-                    if (type.equals("max")) {
-                        temprgb[k] = sorted[sorted.length - 1];
+                    if (type.equals("max")) { // dilatation
+                        temprgb[k] = sorted[sorted.length*2/3];
                     }
                     if (type.equals("avg")) {
                         temprgb[k] = (sorted[0] + sorted[sorted.length - 1]) / 2;
@@ -1579,6 +1655,7 @@ public class ImageProcessor {
                     if (type.equals("median")) {
                         temprgb[k] = sorted[sorted.length / 2];
                     }
+
 
 
                 }
@@ -1622,7 +1699,6 @@ public class ImageProcessor {
                                 temprgb[k] = sorted[sorted.length / 2];
                                 break;
                             }
-                            continue;
                         }
                     }
                 }

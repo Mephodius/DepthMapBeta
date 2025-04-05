@@ -416,7 +416,7 @@ class MainFrame extends JFrame {
     JCheckBox LocDevsCB = new JCheckBox("LD");
 
     private int WS = 10;
-    private int FS = 3;
+    private int FS = 1;
     private final int NSEG = 9;
     private final int STRIDE = 1;
     private final int VDEV = 0;
@@ -433,11 +433,11 @@ class MainFrame extends JFrame {
     JTextField IterTF = new JTextField("0", 5);
 
 
-    JLabel text = new JLabel("Filter size");
+    JLabel text = new JLabel("Filter order");
     JButton ApplyOperation = new JButton("Apply");
     JButton UndoOperation = new JButton("Undo");
     //JComboBox Function = new JComboBox(new String[]{"amedian", "wmedian","prewitt","sobel","median", "avg", "min", "max", "gamma", "clarity", "equalize"});
-    JComboBox Operation = new JComboBox(new String[]{"amedian", "median", "wmedian", "equalize"});
+    JComboBox Operation = new JComboBox(new String[]{"auto", "amedian", "median", "avg", "min", "max", "equalize"});
 
     private Toolkit kit = Toolkit.getDefaultToolkit();
     private Clipboard clipboard = kit.getSystemClipboard();
@@ -446,7 +446,6 @@ class MainFrame extends JFrame {
 
     ImageProcessor improc = new ImageProcessor();
     int[] size_adjustment = {0, 0};
-    int filtersize = 3;
     private int max_deviation;
     private int vdev;
     private int counter4saving = 0;
@@ -622,34 +621,73 @@ class MainFrame extends JFrame {
     private void ApplyFilter(){
 
         String str = Operation.getSelectedItem().toString();
-        improc.setSize(parseInt(FilterSizeTF, FS));
+        filter_size = parseInt(FilterSizeTF, FS);
+        improc.setSize(filter_size);
 
         switch (str) {
+            case "auto":
+//                improc.setSize(FS);
+//                for (int i=0; i<filter_size; i++) {
+//                    improc.loadFull(DepthMap);
+//                    DepthMap = improc.AutoFiltration();
+//                }
+                double similarity;
+                BufferedImage last;
+                CompareMethod cm = new SAD();
+                int counter = 0;
+                do{
+                    last = improc.ImageCopy(DepthMap);
+                    improc.loadFull(DepthMap);
+                    DepthMap = improc.OrderStatFiltration("amedian");
+                    similarity = cm.get_similarity(improc.ImageToBMatrix(DepthMap), improc.ImageToBMatrix(last));
+                    counter++;
+                    System.out.println("Amedian " + counter + " was applied " + similarity);
+                }while(similarity < 0.998 && counter < 10);
+                break;
+
             case "median":
                 improc.loadFull(DepthMap);
-                DepthMap = ImageCopy(improc.OrderStatFiltration("median"));
+                DepthMap = improc.OrderStatFiltration("median");
                 break;
+
+            case "min":
+                improc.loadFull(DepthMap);
+                DepthMap = improc.OrderStatFiltration("min");
+                break;
+
+            case "max":
+                improc.loadFull(DepthMap);
+                DepthMap = improc.OrderStatFiltration("max");
+                break;
+
+            case "avg":
+                improc.loadFull(DepthMap);
+                DepthMap = improc.OrderStatFiltration("avg");
+                break;
+
             case "amedian":
                 improc.loadFull(DepthMap);
-                DepthMap = ImageCopy(improc.AdaptiveMedianFiltration());
+                DepthMap = improc.OrderStatFiltration("amedian");
                 break;
-            case "wmedian":
-                improc.loadFull(DepthMap);
-                DepthMap = ImageCopy(improc.WeightedMedian());
 
             case "equalize":
                 improc.loadFull(DepthMap);
                 DepthMap = improc.ImageContrastIncrease();
                 break;
+
+//            case "wmedian":
+//                improc.loadFull(DepthMap);
+//                DepthMap = improc.WeightedMedian();
+
         }
         if (AutoScaleCB.isSelected())
-            DepthMap = ImageCopy(improc.ImageScaler(DepthMap));
+            DepthMap = improc.ImageCopy(improc.ImageScaler(DepthMap));
         GenState current_state = new GenState(DepthMap, logs, correlation_m, window_size, vdev);
         LogsStack.push(current_state);
         DepthMap_full = MatrixToImage(getFullMap(improc.BWImageToMatrix(DepthMap),
-                DepthMap_full.getWidth(), DepthMap_full.getHeight()));
+                                      DepthMap_full.getWidth(), DepthMap_full.getHeight()));
         BottomImageLabel.setIcon(new ImageIcon(improc.SizeChangerS(DepthMap_full,
-                guiImageWidth, guiImageHeight, interpol_choice)));
+                                               guiImageWidth, guiImageHeight, interpol_choice)));
         UndoOperation.setEnabled(true);
     }
 
@@ -660,7 +698,7 @@ class MainFrame extends JFrame {
         private int window_size;
         private int vdev;
         public GenState(BufferedImage DM, int[][][] logs, double[][][] correlation_m, int window_size, int vdev){
-            this.DM = ImageCopy(DM);
+            this.DM = improc.ImageCopy(DM);
             this.logs = logs;
             this.correlation_m = correlation_m;
             this.window_size = window_size;
@@ -1105,15 +1143,26 @@ class MainFrame extends JFrame {
                     List<File> droppedFiles = (List<File>)
                             evt.getTransferable().getTransferData(DataFlavor.javaFileListFlavor);
 
-                    for (File file: droppedFiles){
+                    for (File file: droppedFiles) {
                         String[] temp = file.toString().split(sep);
-                        String name = temp[temp.length-1].toLowerCase();
+                        String name = temp[temp.length - 1].toLowerCase();
                         System.out.println(name);
-                        if (name.contains("left") || name.contains("0"))
-                            LLImage(file);
-                        if (name.contains("right") || name.contains("1"))
-                            LRImage(file);
-                        if (name.contains("gt") || name.contains("ground") || name.contains("true") || name.contains("map"))
+                        boolean ll = name.contains("left") || name.contains("0"); // check if there is a left image
+                        boolean lr = name.contains("right") || name.contains("1"); // check if there is a right image
+                        boolean ldm = name.contains("gt") || name.contains("ground") ||
+                                      name.contains("true") || name.contains("map"); // check if there is a depth map
+                        if (ll || lr){
+                            if (ll)
+                                LLImage(file);
+
+                            if (lr)
+                                LRImage(file);
+
+                            UndoOperation.setEnabled(false);
+                            LogsStack = new ArrayDeque<>();
+                            frame.setVisible(true);
+                        }
+                        if (ldm)
                             LDM(file);
                     }
 
@@ -1124,9 +1173,6 @@ class MainFrame extends JFrame {
                         GoMakeSomeMagic.setEnabled(true);
                     }
 
-                    UndoOperation.setEnabled(false);
-                    LogsStack = new ArrayDeque<>();
-                    frame.setVisible(true);
 
                     evt.dropComplete(true);
                 } catch (Exception ignored) {
@@ -1438,9 +1484,9 @@ class MainFrame extends JFrame {
         //преобразование изображения в чб, конфликтует с некоторыми цветами
         if (bw.isSelected()) {
             improc.loadFull(image1);
-            image1 = ImageCopy(improc.BW());
+            image1 = improc.ImageCopy(improc.BW());
             improc.loadFull(image2);
-            image2 = ImageCopy(improc.BW());
+            image2 = improc.ImageCopy(improc.BW());
             LeftImageLabel.setIcon(new ImageIcon(improc.SizeChangerS(image1, guiImageWidth, guiImageHeight, interpol_choice)));
             RightImageLabel.setIcon(new ImageIcon(improc.SizeChangerS(image2, guiImageWidth, guiImageHeight, interpol_choice)));
         }
