@@ -25,6 +25,8 @@ public class DMComparator extends JFrame {
     JLabel LeftImageLabel = new JLabel("");
     JLabel RightImageLabel = new JLabel("");
     JLabel Metrics = new JLabel();
+    JLabel Correlation = new JLabel();
+    JLabel STD = new JLabel();
     JLabel Deviation = new JLabel();
     ImageProcessor improc = new ImageProcessor();
 
@@ -38,6 +40,8 @@ public class DMComparator extends JFrame {
     private BufferedImage truemap;
     private boolean use_approx = false;
     private double[] metrics;
+    private double std1;
+    private double std2;
 
     private Action changeAction;
     private Action closeAction;
@@ -157,6 +161,8 @@ public class DMComparator extends JFrame {
         this.metrics = getMapMetrics(improc.ImageToMatrix(this.truemap), improc.ImageToMatrix(this.mymap), this.use_approx);
 
         Metrics.setAlignmentX(Component.CENTER_ALIGNMENT);
+        Correlation.setAlignmentX(Component.CENTER_ALIGNMENT);
+        STD.setAlignmentX(Component.CENTER_ALIGNMENT);
         Deviation.setAlignmentX(Component.CENTER_ALIGNMENT);
         ChangeDMButton.setAlignmentX(Component.CENTER_ALIGNMENT);
 
@@ -179,6 +185,10 @@ public class DMComparator extends JFrame {
 
         cvBox.add(Box.createVerticalGlue());
         cvBox.add(Metrics);
+        cvBox.add(Box.createVerticalGlue());
+        cvBox.add(Correlation);
+        cvBox.add(Box.createVerticalGlue());
+        cvBox.add(STD);
         cvBox.add(Box.createVerticalGlue());
         cvBox.add(Deviation);
         cvBox.add(Box.createVerticalGlue());
@@ -208,9 +218,12 @@ public class DMComparator extends JFrame {
     }
     public double[] getMapMetrics(int[][][] matrix1, int[][][] matrix2, boolean use_approx) {
         // matrix2 is our map and is smaller
+        std1 = improc.Std(matrix1);
+        std2 = improc.Std(matrix2);
         int width = matrix2[0].length;
 
         int height = matrix2.length;
+        double best_metric = 0;
         double best_correlation = 0;
         int opt_deviation = width / 4;
         int[][][] temp_matrix1, temp_matrix2;
@@ -218,9 +231,11 @@ public class DMComparator extends JFrame {
         int n_rnd = width / 15;
         int size = width / 15;
 
+        CompareMethod comp_method = new SAD();
+        CompareMethod corr_method = new NCC();
         //double area = width/3.5;
         //int stripe = Math.max((int)area/75, 1);
-        int drange = 3;
+        int drange = 1;
         System.out.println("Metrics calculation");
         for (int deviation = Math.max(0,matrix1[0].length - matrix2[0].length - drange); deviation <= matrix1[0].length - matrix2[0].length; deviation += 1) {
             temp_matrix1 = new int[height][width][3];
@@ -235,6 +250,7 @@ public class DMComparator extends JFrame {
                 }
             }
             double correlation = 0;
+            double metric = 0;
             double counter = 0;
             if (use_approx) {
                 Random rand = new Random();
@@ -251,26 +267,31 @@ public class DMComparator extends JFrame {
                             }
                         }
                     }
-                    double temp = NCC.get_similarity(rbatch1, rbatch2);
+                    double temp = comp_method.get_similarity(rbatch1, rbatch2);
+                    double temp1 = corr_method.get_similarity(rbatch1, rbatch2);
                     //double temp = improc.PSNR(rbatch1, rbatch2);
                     if (!Double.isNaN(temp)) {
-                        correlation += temp;
+                        metric += temp;
+                        correlation += temp1;
                         counter++;
                     }
                 }
+                metric /= counter;
                 correlation /= counter;
             } else {
-                correlation = NCC.get_similarity(temp_matrix1, temp_matrix2);
+                metric = comp_method.get_similarity(temp_matrix1, temp_matrix2);
+                correlation = corr_method.get_similarity(temp_matrix1, temp_matrix2);
                 //correlation = improc.PSNR(temp_matrix1, temp_matrix2);
             }
-            if (correlation > best_correlation) {
+            if (metric > best_metric) {
+                best_metric = metric;
                 best_correlation = correlation;
                 opt_deviation = deviation;
             }
 
-            System.out.println(" " + correlation + " " + deviation);
+            System.out.println(metric + " " + correlation + " " + deviation);
         }
-        return new double[]{opt_deviation, best_correlation};
+        return new double[]{opt_deviation, best_metric, best_correlation};
     }
     public BufferedImage ImageCopy(BufferedImage img) {
         BufferedImage temp = new BufferedImage(img.getWidth(), img.getHeight(), BufferedImage.TYPE_INT_RGB);
@@ -299,7 +320,9 @@ public class DMComparator extends JFrame {
         int twidthr = guiImageWidth*guiImageHeight/truemap.getHeight();
         RightImageLabel.setIcon(new ImageIcon(improc.SizeChangerS(mymap, twidthr, guiImageHeight, interpol_choice)));
 //        RightImageLabel.setIcon(new ImageIcon(mymap));
-        Metrics.setText("Metrics: " + String.format(Locale.US,"%.3f",metrics[1]));
+        Metrics.setText("1-NMAE: " + String.format(Locale.US,"%.3f",metrics[1]));
+        Correlation.setText("Correlation: " + String.format(Locale.US,"%.3f",metrics[2]));
+        STD.setText("STD: " + String.format(Locale.US,"%.1f",std1) + " vs " + String.format(Locale.US,"%.1f",std2));
         Deviation.setText("Deviation: " + (int)metrics[0]);
 //        setSize((int)(1.2*twidthl+twidthr), (int)(guiImageHeight * 1.08));
         pack();

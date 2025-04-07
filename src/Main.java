@@ -73,6 +73,7 @@ abstract class CompareMethod {
         return ranks;
     }
     public double get_similarity(byte[][][] scanim1, byte[][][] scanim2){ return 0;}
+    public double get_similarity(int[][][] scanim1, int[][][] scanim2){ return 0;}
 }
 
 class NCC extends CompareMethod {
@@ -112,7 +113,8 @@ class NCC extends CompareMethod {
         }
         return (total[0] + total[1] + total[2])/3;
     }
-    public static double get_similarity(int[][][] scanim1, int[][][] scanim2){
+
+    public double get_similarity(int[][][] scanim1, int[][][] scanim2){
         int width = scanim1.length;
         int height = scanim1[0].length;
         double[] averageim1 = {0, 0, 0};
@@ -178,7 +180,7 @@ class SCC extends CompareMethod {
         return (total[0] + total[1] + total[2])/3;
     }
 
-    public static double get_similarity(int[][][] scanim1, int[][][] scanim2) {
+    public double get_similarity(int[][][] scanim1, int[][][] scanim2) {
         int width = scanim1.length;
         int height = scanim1[0].length;
         int N = width * height;
@@ -239,6 +241,36 @@ class KCC extends CompareMethod {
         return (total[0] + total[1] + total[2])/3;
     }
 
+    public double get_similarity(int[][][] scanim1, int[][][] scanim2) {
+        int width = scanim1.length;
+        int height = scanim1[0].length;
+        int N = width*height;
+        int[] array1 = new int[N];
+        int[] array2 = new int[N];
+        int[] ranks1;
+        int[] ranks2;
+        double[] t = {0,0,0};
+        double[] total = {0, 0, 0};
+        for (int k = 0; k < 3; k++) {
+            for (int i = 0; i < width; i++) {
+                for (int j = 0; j < height; j++) {
+                    array1[height*i+j] = scanim1[i][j][k];
+                    array2[height*i+j] = scanim2[i][j][k];
+                }
+            }
+            ranks1 = arrayRankTransform(array1);
+            ranks2 = arrayRankTransform(array2);
+            for (int i = 0; i < N; i++) {
+                for(int j = i+1; j < N; j++){
+                    t[k] += Integer.signum(ranks1[i] - ranks1[j])*Integer.signum(ranks2[i] - ranks2[j]);
+                }
+            }
+            total[k] = ((double)2*t[k]/N)/(N - 1);
+            //System.out.println("CB: "+ c[k] +" "+ b[k]+" "+total[k]);
+        }
+        return (total[0] + total[1] + total[2])/3;
+    }
+
 }
 
 
@@ -246,6 +278,7 @@ class SAD extends CompareMethod {
     public double get_similarity(byte[][][] scanim1, byte[][][] scanim2) {
         int width = scanim1.length;
         int height = scanim1[0].length;
+        int N = ((width+1)/this.stride)*((height+1)/this.stride);
         double[] total = {0, 0, 0};
         for (int i = 0; i < width; i+=this.stride) {
             for (int j = 0; j < height; j+=this.stride) {
@@ -255,12 +288,13 @@ class SAD extends CompareMethod {
             }
         }
 
-        return 1 - (total[0] + total[1] + total[2])/(3*255*((width+1)/this.stride)*((height+1)/this.stride));
+        return 1 - (total[0] + total[1] + total[2])/(3*255*N);
     }
 
-    public static double get_similarity(int[][][] scanim1, int[][][] scanim2) {
+    public double get_similarity(int[][][] scanim1, int[][][] scanim2) {
         int width = scanim1.length;
         int height = scanim1[0].length;
+        int N = width*height;
         double[] total = {0, 0, 0};
         for (int i = 0; i < width; i++) {
             for (int j = 0; j < height; j++) {
@@ -270,7 +304,7 @@ class SAD extends CompareMethod {
             }
         }
 
-        return 1 - (total[0] + total[1] + total[2])/(3*255*width*height);
+        return 1 - (total[0] + total[1] + total[2])/(3*255*N);
     }
 }
 
@@ -280,6 +314,7 @@ class SSD extends CompareMethod {
     public double get_similarity(byte[][][] scanim1, byte[][][] scanim2) {
         int width = scanim1.length;
         int height = scanim1[0].length;
+        int N = ((width+1)/this.stride)*((height+1)/this.stride);
         double[] total = {0, 0, 0};
         for (int i = 0; i < width; i++) {
             for (int j = 0; j < height; j+=this.stride) {
@@ -288,12 +323,13 @@ class SSD extends CompareMethod {
                 }
             }
         }
-        return 1 - (total[0] + total[1] + total[2])/(3*255*255*((width+1)/this.stride)*((height+1)/this.stride));
+        return 1 - (total[0] + total[1] + total[2])/(3*255*255*N);
     }
 
-    public static double get_similarity(int[][][] scanim1, int[][][] scanim2) {
+    public double get_similarity(int[][][] scanim1, int[][][] scanim2) {
         int width = scanim1.length;
         int height = scanim1[0].length;
+        int N = width*height;
         double[] total = {0, 0, 0};
         for (int i = 0; i < width; i++) {
             for (int j = 0; j < height; j++) {
@@ -303,7 +339,7 @@ class SSD extends CompareMethod {
             }
         }
 
-        return 1 - (total[0] + total[1] + total[2])/(3*255*width*height);
+        return 1 - (total[0] + total[1] + total[2])/(3*255*N);
     }
 }
 
@@ -437,7 +473,7 @@ class MainFrame extends JFrame {
     JButton ApplyOperation = new JButton("Apply");
     JButton UndoOperation = new JButton("Undo");
     //JComboBox Function = new JComboBox(new String[]{"amedian", "wmedian","prewitt","sobel","median", "avg", "min", "max", "gamma", "clarity", "equalize"});
-    JComboBox Operation = new JComboBox(new String[]{"auto", "amedian", "median", "avg", "min", "max", "equalize"});
+    JComboBox Operation = new JComboBox(new String[]{"auto", "amedian", "median", "min", "max", "equalize"});
 
     private Toolkit kit = Toolkit.getDefaultToolkit();
     private Clipboard clipboard = kit.getSystemClipboard();
@@ -660,10 +696,10 @@ class MainFrame extends JFrame {
                 DepthMap = improc.OrderStatFiltration("max");
                 break;
 
-            case "avg":
-                improc.loadFull(DepthMap);
-                DepthMap = improc.OrderStatFiltration("avg");
-                break;
+//            case "avg":
+//                improc.loadFull(DepthMap);
+//                DepthMap = improc.OrderStatFiltration("avg");
+//                break;
 
             case "amedian":
                 improc.loadFull(DepthMap);
@@ -1967,65 +2003,65 @@ class MainFrame extends JFrame {
         }
         return new double[][][]{d_matrix,c_matrix};
     }
-    public double[] getMapPSNR(int[][][] matrix1, int[][][] matrix2, boolean use_approx){
-        // matrix2 is our map and is smaller
-        int width = matrix2[0].length;
-
-        int height = matrix2.length;
-        double best_metrics = 1000;
-        int opt_deviation = width/5;
-        int[][][] temp_matrix1, temp_matrix2;
-
-        int n_rnd = width/15;
-        int size = width/15;
-        for (int deviation = 0; deviation <= matrix1[0].length - matrix2[0].length; deviation += 1) {
-            temp_matrix1 = new int[height][width][3];
-            temp_matrix2 = new int[height][width][3];
-            for (int i = 0; i < width; i++) {
-                for (int j = 0; j < height; j++) {
-                    for (int k = 0; k < 3; k++) {
-                        temp_matrix1[j][i][k] = matrix1[j][i + deviation][k];
-                        temp_matrix2[j][i][k] = matrix2[j][i][k];
-                    }
-                }
-            }
-            double metrics = 0;
-            double counter = 0;
-            if (use_approx){
-                Random rand = new Random();
-                for (int i = 0; i < n_rnd; i++){
-                    int[][][] rbatch1 = new int[size][size][3];
-                    int[][][] rbatch2 = new int[size][size][3];
-                    int y_r = rand.nextInt(width - size + 1);
-                    int x_r = rand.nextInt(height - size + 1);
-                    for (int n = 0; n < size; n++){
-                        for (int m = 0; m < size; m++){
-                            for (int k = 0; k < 3; k++){
-                                rbatch1[n][m][k] = temp_matrix1[x_r + n][y_r + m][k];
-                                rbatch2[n][m][k] = temp_matrix2[x_r + n][y_r + m][k];
-                            }
-                        }
-                    }
-                    double temp = SCC.get_similarity(rbatch1, rbatch2);
-                    if(!Double.isNaN(temp)) {
-                        metrics += temp;
-                        counter++;
-                    }
-                }
-                metrics /= counter;
-            }
-            else {
-                metrics = SCC.get_similarity(temp_matrix1, temp_matrix2);
-            }
-            if (metrics < best_metrics) {
-                best_metrics = metrics;
-                opt_deviation = deviation;
-            }
-
-            System.out.println(" " + metrics +" "+ deviation);
-        }
-        return new double[]{opt_deviation, best_metrics};
-    }
+//    public double[] getMapPSNR(int[][][] matrix1, int[][][] matrix2, boolean use_approx){
+//        // matrix2 is our map and is smaller
+//        int width = matrix2[0].length;
+//
+//        int height = matrix2.length;
+//        double best_metrics = 1000;
+//        int opt_deviation = width/5;
+//        int[][][] temp_matrix1, temp_matrix2;
+//
+//        int n_rnd = width/15;
+//        int size = width/15;
+//        for (int deviation = 0; deviation <= matrix1[0].length - matrix2[0].length; deviation += 1) {
+//            temp_matrix1 = new int[height][width][3];
+//            temp_matrix2 = new int[height][width][3];
+//            for (int i = 0; i < width; i++) {
+//                for (int j = 0; j < height; j++) {
+//                    for (int k = 0; k < 3; k++) {
+//                        temp_matrix1[j][i][k] = matrix1[j][i + deviation][k];
+//                        temp_matrix2[j][i][k] = matrix2[j][i][k];
+//                    }
+//                }
+//            }
+//            double metrics = 0;
+//            double counter = 0;
+//            if (use_approx){
+//                Random rand = new Random();
+//                for (int i = 0; i < n_rnd; i++){
+//                    int[][][] rbatch1 = new int[size][size][3];
+//                    int[][][] rbatch2 = new int[size][size][3];
+//                    int y_r = rand.nextInt(width - size + 1);
+//                    int x_r = rand.nextInt(height - size + 1);
+//                    for (int n = 0; n < size; n++){
+//                        for (int m = 0; m < size; m++){
+//                            for (int k = 0; k < 3; k++){
+//                                rbatch1[n][m][k] = temp_matrix1[x_r + n][y_r + m][k];
+//                                rbatch2[n][m][k] = temp_matrix2[x_r + n][y_r + m][k];
+//                            }
+//                        }
+//                    }
+//                    double temp = SCC.get_similarity(rbatch1, rbatch2);
+//                    if(!Double.isNaN(temp)) {
+//                        metrics += temp;
+//                        counter++;
+//                    }
+//                }
+//                metrics /= counter;
+//            }
+//            else {
+//                metrics = SCC.get_similarity(temp_matrix1, temp_matrix2);
+//            }
+//            if (metrics < best_metrics) {
+//                best_metrics = metrics;
+//                opt_deviation = deviation;
+//            }
+//
+//            System.out.println(" " + metrics +" "+ deviation);
+//        }
+//        return new double[]{opt_deviation, best_metrics};
+//    }
     public int[][] getCompressedMap(int[][] map){
         int height = map.length;
         int width = map[0].length;
