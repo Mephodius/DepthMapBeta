@@ -244,7 +244,7 @@ public class ImageProcessor {
      * Method to calculate an average RGB color of whole image
      * @used in borderline methods
      */
-    public double[] Average(int[][][] matrix) {
+    public double[] AverageK(int[][][] matrix) {
         double[] average_c = {0,0,0};
         for (int k = 0; k < 3; k++) {
             for (int i = 0; i < matrix.length; i++) {
@@ -257,10 +257,23 @@ public class ImageProcessor {
         return average_c;
     }
 
+    public double Average(int[][][] matrix) {
+        double[] average_c = {0,0,0};
+        for (int k = 0; k < 3; k++) {
+            for (int i = 0; i < matrix.length; i++) {
+                for (int j = 0; j < matrix[0].length; j++) {
+                    average_c[k] += matrix[i][j][k];
+                }
+            }
+            average_c[k] = average_c[k] / (matrix.length*matrix[0].length);
+        }
+        return (average_c[0]+average_c[1]+average_c[2])/3;
+    }
+
 
     public double Std(int[][][] matrix) {
         double[] std = {0,0,0};
-        double[] avg = Average(matrix);
+        double[] avg = AverageK(matrix);
         for (int k = 0; k < 3; k++) {
             for (int i = 0; i < matrix.length; i++) {
                 for (int j = 0; j < matrix[0].length; j++) {

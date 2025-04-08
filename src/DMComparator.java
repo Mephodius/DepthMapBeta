@@ -183,10 +183,11 @@ public class DMComparator extends JFrame {
             }
         });
 
-        cvBox.add(Box.createVerticalGlue());
-        cvBox.add(Metrics);
+
         cvBox.add(Box.createVerticalGlue());
         cvBox.add(Correlation);
+//        cvBox.add(Box.createVerticalGlue());
+//        cvBox.add(Metrics);
         cvBox.add(Box.createVerticalGlue());
         cvBox.add(STD);
         cvBox.add(Box.createVerticalGlue());

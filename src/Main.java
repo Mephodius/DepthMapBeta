@@ -19,6 +19,8 @@ import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
+import static java.awt.datatransfer.DataFlavor.javaFileListFlavor;
+
 
 abstract class CompareMethod {
     protected int stride = 3;
@@ -305,6 +307,39 @@ class SAD extends CompareMethod {
         }
 
         return 1 - (total[0] + total[1] + total[2])/(3*255*N);
+    }
+
+    // TODO: Fix metrics
+    public double get_similarity_norm(int[][][] scanim1, int[][][] scanim2) {
+        ImageProcessor impr = new ImageProcessor();
+        int width = scanim1.length;
+        int height = scanim1[0].length;
+        int N = width*height;
+
+        double mean1 = impr.Average(scanim1);
+        double mean2 = impr.Average(scanim2);
+
+        double std1 = impr.Std(scanim1);
+        double std2 = impr.Std(scanim2);
+
+        double min = 255;
+        double max = 0;
+        double[] total = {0, 0, 0};
+        for (int i = 0; i < width; i++) {
+            for (int j = 0; j < height; j++) {
+                for (int k = 0; k < 3; k++) {
+                    double temp1 = (scanim1[i][j][k]-mean1)/std1;
+                    double temp2 = (scanim2[i][j][k]-mean2)/std2;
+                    total[k] += Math.abs((temp1 - temp2));
+                    min = Math.min(min, temp1);
+                    min = Math.min(min, temp2);
+                    max = Math.max(max, temp1);
+                    max = Math.max(max, temp2);
+                }
+            }
+        }
+
+        return 1 - (total[0] + total[1] + total[2])/(3*((max-min)*N));
     }
 }
 
@@ -621,6 +656,7 @@ class MainFrame extends JFrame {
             value = Integer.parseInt(s);
             if (value >= 1){
                 tf.setText(Integer.toString(value));
+                repaint();
                 return value;
             }
             else
@@ -643,6 +679,7 @@ class MainFrame extends JFrame {
             value = Double.parseDouble(s);
             if (value > 0.1){
                 tf.setText(Double.toString(value));
+                repaint();
                 return value;
             }
             else
@@ -889,6 +926,7 @@ class MainFrame extends JFrame {
         runAction = new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
+                
 //                GoMakeSomeMagic.setEnabled(false);
                 if (image1.getHeight() != image2.getHeight() || image1.getWidth() != image2.getWidth()){
                     image2 = improc.SizeChangerS(image2, image1.getWidth(), image1.getHeight(), interpol_choice);
@@ -1164,7 +1202,7 @@ class MainFrame extends JFrame {
         loadimage.setFileFilter(new FileNameExtensionFilter("Images", "jpg", "png", "gif", "bmp"));
 
         frame.setLayout(new BorderLayout());
-        frame.setSize(guiImageWidth * 2 + 10, guiImageHeight * 2 + 35); //размер фрейма 35 70
+        frame.setSize(guiImageWidth * 2 + 10, guiImageHeight * 2 + 36); //размер фрейма 35 70
         frame.setTitle("DMGen by Kirill Kolesnikov, inspired by Oleg Kovalev & Mikalai Yatskou");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
@@ -1177,23 +1215,21 @@ class MainFrame extends JFrame {
                 try {
                     evt.acceptDrop(DnDConstants.ACTION_COPY);
                     List<File> droppedFiles = (List<File>)
-                            evt.getTransferable().getTransferData(DataFlavor.javaFileListFlavor);
+                            evt.getTransferable().getTransferData(javaFileListFlavor);
 
                     for (File file: droppedFiles) {
                         String[] temp = file.toString().split(sep);
                         String name = temp[temp.length - 1].toLowerCase();
                         System.out.println(name);
-                        boolean ll = name.contains("left") || name.contains("0"); // check if there is a left image
-                        boolean lr = name.contains("right") || name.contains("1"); // check if there is a right image
-                        boolean ldm = name.contains("gt") || name.contains("ground") ||
-                                      name.contains("true") || name.contains("map"); // check if there is a depth map
+                        boolean ll = name.contains("left") || name.contains("0."); // check if there is a left image
+                        boolean lr = name.contains("right") || name.contains("1."); // check if there is a right image
+                        boolean ldm = name.contains("gt") || name.contains("ground") || name.contains("true");  // check if there is a depth map
                         if (ll || lr){
                             if (ll)
                                 LLImage(file);
 
                             if (lr)
                                 LRImage(file);
-
                             UndoOperation.setEnabled(false);
                             LogsStack = new ArrayDeque<>();
                             frame.setVisible(true);
@@ -1427,6 +1463,7 @@ class MainFrame extends JFrame {
         deepmap.add(Box.createHorizontalGlue());
         frame.getContentPane();
         panel.setLayout(new GridLayout(2, 2, 2, 2));
+        panel.setBorder(BorderFactory.createEmptyBorder(2,2,2,2));
         //image1 = ImageIO.read(LI);
         LeftImageLabel.setIcon(null /*new ImageIcon(ichange.SizeDecreaser(image1,2))*/);
         panel.add(LeftImageLabel);
