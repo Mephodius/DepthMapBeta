@@ -13,6 +13,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -911,7 +912,10 @@ class MainFrame extends JFrame {
         getMetricsAction = new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
-                dmc = new DMComparator(MainFrame.this, buff, DepthMap_full, false);
+                if ((buff != null) && (buff.getWidth() >= DepthMap_full.getWidth()) && (buff.getHeight() == DepthMap_full.getHeight()))
+                    dmc = new DMComparator(MainFrame.this, buff, DepthMap_full, false);
+                else
+                    GetMetrics.setEnabled(false);
             }
         };
         GetMetrics.addActionListener(getMetricsAction);
@@ -1039,6 +1043,7 @@ class MainFrame extends JFrame {
         closeAction = new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
+                DMGen.cancel(true);
                 ClearWindows();
                 frame.setVisible(false);
                 frame.dispose();
@@ -1193,7 +1198,8 @@ class MainFrame extends JFrame {
                         System.out.println(name);
                         boolean ll = name.contains("left") || name.contains("0."); // check if there is a left image
                         boolean lr = name.contains("right") || name.contains("1."); // check if there is a right image
-                        boolean ldm = name.contains("gt") || name.contains("ground") || name.contains("true");  // check if there is a depth map
+                        boolean ldm = name.contains("gt") || name.contains("ground") ||
+                                      name.contains("true") || name.contains("truth");  // check if there is a depth map
                         if (ll || lr){
                             if (ll)
                                 LLImage(file);
@@ -1554,6 +1560,7 @@ class MainFrame extends JFrame {
 
         @Override
         protected Void doInBackground() throws Exception {
+            publish();
             start = (int) System.currentTimeMillis();
             GenerateDepthMap();
             finish = (int)System.currentTimeMillis();
@@ -1595,8 +1602,8 @@ class MainFrame extends JFrame {
                 GoMakeSomeMagic.setEnabled(true);
                 frame.setVisible(true);
                 frame.setEnabled(true);
-            } catch (ExecutionException | InterruptedException e) {
-                e.printStackTrace();
+            } catch (Exception ignored) {
+//                e.printStackTrace();
             }
         }
 
@@ -1799,6 +1806,9 @@ class MainFrame extends JFrame {
                         //for (int col_image2 = tempsizeadd; col_image2 < width - sc_width; col_image2++) {
                         for(int row_image2 = Math.max(0,row_image1-vdev); row_image2 < Math.min(height-sc_height+1,row_image1 + vdev + 1); row_image2++) {
 
+                            if (this.isCancelled())
+                                return null;
+
                             int col_image2 = (opt_deviation <= 0)? (col_image1-deviation):(col_image1+deviation);
                             tempmatrix2 = getPart(matrix2, col_image2, row_image2, sc_width, sc_height, tempsizeadd);
 
@@ -1913,6 +1923,8 @@ class MainFrame extends JFrame {
             int iterations_total = (int)((double)(rs-ls)/stripe);
 
             for (int deviation = ls; deviation < rs; deviation += stripe) {
+                if (this.isCancelled())
+                    return null;
                 temp_matrix1 = new byte[width - Math.abs(deviation)][height][3];
                 temp_matrix2 = new byte[width - Math.abs(deviation)][height][3];
                 for (int i = 0; i < width - Math.abs(deviation); i++) {
@@ -2018,6 +2030,8 @@ class MainFrame extends JFrame {
             int iterations_total = (int)((double)(rs-ls)/stripe);
             itercounter = 0;
             for (int deviation = ls; deviation < rs; deviation += stripe) {
+                if (this.isCancelled())
+                    return null;
                 seg_w = (width-Math.abs(deviation))/n_segments;
                 seg_h = height/n_segments;
                 for (int i = 0; i < n_segments; i++) {
