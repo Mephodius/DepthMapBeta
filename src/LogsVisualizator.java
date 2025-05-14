@@ -55,10 +55,12 @@ public class LogsVisualizator extends JFrame {
     private int width;
     private int height;
     private int vdeviation;
+    private int opt_dev;
     private int dtis;
 
     private double scalex, scaley;
 
+    private MouseHandler mouseHandler;
 
     private Action closeAction;
     private Action previousAction;
@@ -176,7 +178,7 @@ public class LogsVisualizator extends JFrame {
 
     }
 
-    public LogsVisualizator(MainFrame mf, BufferedImage image1, BufferedImage image2, int[][][] logs, double[][][] correlation_m, int vdeviation, int dtis) {
+    public LogsVisualizator(MainFrame mf, BufferedImage image1, BufferedImage image2, int[][][] logs, double[][][] correlation_m, int vdeviation, int opt_deviation, int dtis) {
         mainframe = mf;
         interpol_choice = mainframe.getInterpChoice();
         setTitle("Result Analyzer");
@@ -254,6 +256,7 @@ public class LogsVisualizator extends JFrame {
         this.width = matrix1sc.length;
         this.height = matrix1sc[0].length;
         this.vdeviation = vdeviation;
+        this.opt_dev = opt_deviation;
         this.dtis = dtis;
 
         CenterImageLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -351,6 +354,9 @@ public class LogsVisualizator extends JFrame {
 
         ConfigureAllActions();
         ConfigureKeyBindings();
+
+        mouseHandler = new MouseHandler();
+        this.addMouseListener(mouseHandler);
     }
 
     public int[][][] MCopy(int[][][] matrix) {
@@ -364,23 +370,79 @@ public class LogsVisualizator extends JFrame {
         return temp;
     }
 
+    public class MouseHandler extends MouseAdapter {
+        Boolean enabled = true;
+        public MouseHandler() {
+        }
+
+        public void setEnabled(Boolean enabled) {
+            this.enabled = enabled;
+        }
+
+        public void mouseClicked(MouseEvent ev) {
+            if (enabled) {
+                if (ev.getButton() == 1) {
+                }
+            }
+
+        }
+
+        public void mousePressed(MouseEvent ev) {
+            if (enabled) {
+                if (ev.getButton() == 1) {
+
+                }
+            }
+        }
+
+        public void mouseReleased(MouseEvent ev) {
+            if (enabled) {
+                if (ev.getButton() == 1) {
+                    Point p = MouseInfo.getPointerInfo().getLocation();
+                    SwingUtilities.convertPointFromScreen(p, LeftImageLabel);
+//                    System.out.println(p);
+
+                    int tempx, tempy;
+                    int height = LeftImageLabel.getHeight();
+                    int width = LeftImageLabel.getWidth();
+                    System.out.println(width+" "+height);
+                    int shift = (int)(Math.abs(opt_dev)*scalex);
+                    if (p.x >= shift && p.x < width && p.y >= 0 && p.y < height) {
+
+                        p.x-=shift;
+                        tempx = (int)((double)p.x*logs.length/(width-shift));
+                        tempy = (int)((double)p.y*logs[0].length/height);
+
+
+                        counter = (tempx*logs[0].length + tempy);//(tempy + tempx*logs[0].length);
+                        System.out.println(tempx  +" "+shift+" "+logs.length +" "+tempy+" "+logs[0].length+" "+counter);
+                        LogsVisualizator.this.repaint();
+                    }
+                }
+            }
+        }
+    }
+
     @Override
     public void repaint() {
+//        Point p = MouseInfo.getPointerInfo().getLocation();
+//        SwingUtilities.convertPointFromScreen(p, RightImageLabel);
+//        System.out.println(p);
         //col_image1, row_image1, coincidentx, coincidenty, sc_width, sc_height, metrics, (int)distance, (int)std1, (int)std2, extension_len, counter
         int[][][] tempmatrix1 = MCopy(matrix1sc);
         int[][][] tempmatrix2 = MCopy(matrix2sc);
-
+        // tempx for width axis tempy for height axis
         int tempx, tempy;
-        tempy = (int) ((double) counter / logs[0].length);
-        tempx = counter % logs[0].length;
+        tempx = (int) ((double) counter / logs[0].length);
+        tempy = counter % logs[0].length;
 
 
-        int y1 = logs[tempy][tempx][0];
-        int x1 = logs[tempy][tempx][1];
-        int y2 = logs[tempy][tempx][2];
-        int x2 = logs[tempy][tempx][3];
-        int winw = logs[tempy][tempx][4];
-        int winh = logs[tempy][tempx][5];
+        int y1 = logs[tempx][tempy][0];
+        int x1 = logs[tempx][tempy][1];
+        int y2 = logs[tempx][tempy][2];
+        int x2 = logs[tempx][tempy][3];
+        int winw = logs[tempx][tempy][4];
+        int winh = logs[tempx][tempy][5];
 
 
         int y1sc = (int)(y1 * scalex);
@@ -389,7 +451,7 @@ public class LogsVisualizator extends JFrame {
         int x2sc = (int)(x2 * scaley);
         int winwsc = (int)(winw * scalex);
         int winhsc = (int)(winh * scaley);
-        int hdeviation = (int)(logs[tempy][tempx][12] * scalex);
+        int hdeviation = (int)(logs[tempx][tempy][12] * scalex);
 
         int[][][] win1 = new int[winw][winh][3];
         int[][][] win2 = new int[winw][winh][3];
@@ -502,14 +564,14 @@ public class LogsVisualizator extends JFrame {
         CRightImageLabel.setIcon(new ImageIcon(improc.SizeChangerS(improc.MatrixToImage(win2), simsize, simsize, interpol_choice)));
         CenterImageLabel.setIcon(new ImageIcon(improc.SizeChangerS(improc.MatrixToImage(residualw), 2 * simsize, 2 * simsize, interpol_choice)));
         int nd = 2;
-        int len = correlation_m[tempy][tempx].length;
+        int len = correlation_m[tempx][tempy].length;
         double[][] corr_mat = new double[len][nd];
         for (int i = 0; i < len; i++) {
             for (int j = 0; j < nd; j++) {
                 if (hdeviation > 0) {
-                    corr_mat[i][j] = correlation_m[tempy][tempx][i];
+                    corr_mat[i][j] = correlation_m[tempx][tempy][i];
                 } else {
-                    corr_mat[i][j] = correlation_m[tempy][tempx][len - 1 - i];
+                    corr_mat[i][j] = correlation_m[tempx][tempy][len - 1 - i];
                 }
             }
         }
@@ -522,10 +584,10 @@ public class LogsVisualizator extends JFrame {
 
         // ИСПРАВИТЬ УВЕЛИЧЕННЫЕ ПОДОБЛАСТИ!!!!
         CorrImageLabel.setIcon(new ImageIcon(improc.SizeChangerS(improc.MatrixToImage(corr_mat),2*simsize, simsize/5, interpol_choice)));
-        STD.setText("STD: " + (double)logs[tempy][tempx][8]/dtis +  " and " + (double)logs[tempy][tempx][9]/dtis);
-        Metrics.setText("Metrics: " + (double)logs[tempy][tempx][6]/dtis);
-        Deviation.setText("Deviation: " + String.format(Locale.US,"%.3f", Math.abs((double)logs[tempy][tempx][7]/dtis)));
-        CCounter.setText("Comparisons: " + logs[tempy][tempx][11]);
+        STD.setText("STD: " + (double)logs[tempx][tempy][8]/dtis +  " and " + (double)logs[tempx][tempy][9]/dtis);
+        Metrics.setText("Metrics: " + (double)logs[tempx][tempy][6]/dtis);
+        Deviation.setText("Deviation: " + String.format(Locale.US,"%.3f", Math.abs((double)logs[tempx][tempy][7]/dtis)));
+        CCounter.setText("Comparisons: " + logs[tempx][tempy][11]);
         Counter.setText("Window counter: " + counter);
         super.repaint();
 

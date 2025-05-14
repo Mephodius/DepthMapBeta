@@ -529,6 +529,8 @@ class MainFrame extends JFrame {
     private int vdev;
     private int counter4saving = 0;
 
+    int opt_deviation, corrected_width;
+
     private int itercounter;
     private double progress;
     public static int dtis = 10000; // scale for converting double to int and then backwards
@@ -923,7 +925,7 @@ class MainFrame extends JFrame {
         showLogsAction = new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
-                lv = new LogsVisualizator(MainFrame.this, image1, image2, logs, correlation_m, vdev, dtis);
+                lv = new LogsVisualizator(MainFrame.this, image1, image2, logs, correlation_m, vdev, opt_deviation, dtis);
             }
         };
         ShowLogs.addActionListener(showLogsAction);
@@ -1120,7 +1122,7 @@ class MainFrame extends JFrame {
     }
 
     public void ConfigureAllTips(){
-        GoMakeSomeMagic.setToolTipText("Click to start generation process");
+        GoMakeSomeMagic.setToolTipText("Click to start the generation process");
         ApplyOperation.setToolTipText("Apply the chosen filter to the depth map");
         LoadDM.setToolTipText("Load ground-truth depth map");
         GetMetrics.setToolTipText("Get metrics");
@@ -1648,7 +1650,7 @@ class MainFrame extends JFrame {
             double[][] correlations = null;
 
 //        double EC = Double.parseDouble(ECoefTF.getText());
-            int opt_deviation, corrected_width;
+
 
             if (!adaptive_mode) {
                 double[] devInfo = getDeviation(matrix1, matrix2, approximate_mode);
@@ -1765,8 +1767,7 @@ class MainFrame extends JFrame {
                     //System.out.println("NEW STD THRESH: " + std_thresh);
 
 
-                    if(adaptive_mode && std1 < std_thresh && std1 > 0) {
-                        tempsizeadd = 0;
+                    if(adaptive_mode && std1 < std_thresh) { // std1 > 0 ???
                         int[] eP = extendPart(col_image1, row_image1, sc_width, sc_height, tempsizeadd);
                         byte[][][] asmatrix;
                         //System.out.println("STD " + improc.Std(tempmatrix1));
@@ -1802,8 +1803,10 @@ class MainFrame extends JFrame {
 
                     comp_counter = 0;
                     correlation_m[(int)Math.ceil((double)(col_image1 + Math.min(opt_deviation, 0))/ window_size)][(int)Math.ceil((double)row_image1 / window_size)] = new double[Math.min(col_image1 - tempsizeadd, Math.abs(max_deviation))+1];
-                    for (int deviation = 0;  deviation <= Math.min(col_image1 - tempsizeadd, Math.abs(max_deviation)); deviation++){
-                        //for (int col_image2 = tempsizeadd; col_image2 < width - sc_width; col_image2++) {
+                    for (int deviation = Math.min(col_image1 - tempsizeadd, Math.abs(max_deviation));  deviation >= 0; deviation--){
+//                        for (int deviation = 0;  deviation <= Math.min(col_image1 - tempsizeadd, Math.abs(max_deviation)); deviation++){
+
+                            //for (int col_image2 = tempsizeadd; col_image2 < width - sc_width; col_image2++) {
                         for(int row_image2 = Math.max(0,row_image1-vdev); row_image2 < Math.min(height-sc_height+1,row_image1 + vdev + 1); row_image2++) {
 
                             if (this.isCancelled())
@@ -1871,14 +1874,14 @@ class MainFrame extends JFrame {
 
 
 
-            gradientstripe = new BufferedImage(20, height, BufferedImage.TYPE_INT_RGB);
-            Color mycolor;
-            for (int i = 0; i < height; i++) {
-                for (int j = 0; j < 20; j++) {
-                    mycolor = new Color(255 * i / height, 255 * i / height, 255 * i / height);
-                    gradientstripe.setRGB(j, height - i - 1, mycolor.getRGB());
-                }
-            }
+//            gradientstripe = new BufferedImage(20, height, BufferedImage.TYPE_INT_RGB);
+//            Color mycolor;
+//            for (int i = 0; i < height; i++) {
+//                for (int j = 0; j < 20; j++) {
+//                    mycolor = new Color(255 * i / height, 255 * i / height, 255 * i / height);
+//                    gradientstripe.setRGB(j, height - i - 1, mycolor.getRGB());
+//                }
+//            }
 
             // Low value (near 0) - distant object, high value (up to 255) - close one
             DepthMap = MatrixToImage(matrix3);
@@ -1905,7 +1908,7 @@ class MainFrame extends JFrame {
 
             int ls, rs;
             ls = (int) (-area / 2);
-            rs = -5; // (int) (area / 2)
+            rs = 0; // (int) (area / 2)
 
             double[][] plot_data = new double[(rs-ls)/stripe+1][2];
 
@@ -2015,7 +2018,7 @@ class MainFrame extends JFrame {
 
             int ls, rs;
             ls = (int) (-area / 2);
-            rs = -5; // (int) (area / 2)
+            rs = 0; // (int) (area / 2)
 
             CompareMethod ncccm = new NCC();
             double[][] d_matrix = new double[n_segments][n_segments];

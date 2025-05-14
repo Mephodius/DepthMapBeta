@@ -303,6 +303,9 @@ public class DMComparator extends JFrame {
         }
         return temp;
     }
+
+
+
     public void repaint(){
         int guiImageWidth = mymap.getWidth();
         int guiImageHeight = 560;
