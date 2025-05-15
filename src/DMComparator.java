@@ -115,6 +115,11 @@ public class DMComparator extends JFrame {
         mainframe = mf;
         interpol_choice = mainframe.getInterpChoice();
         setTitle("Depth Map Comparator");
+
+        if (mainframe.icon != null){
+            this.setIconImage(mainframe.icon);
+        }
+
         this.addWindowListener(new WindowListener() {
             @Override
             public void windowOpened(WindowEvent e) {
