@@ -87,8 +87,10 @@ abstract class CompareMethod {
 class NCC extends CompareMethod {
 
     public double get_similarity(byte[][][] scanim1, byte[][][] scanim2){
-        int width = scanim1.length;
+        int depth = scanim1.length;
         int height = scanim1[0].length;
+        int width = scanim1[0][0].length;
+
         double[] averageim1 = {0, 0, 0};
         double[] averageim2 = {0, 0, 0};
         double numerator;
@@ -96,11 +98,11 @@ class NCC extends CompareMethod {
         double temp;
         double[] total = {0, 0, 0};
         int N = ((width+1)/this.stride)*((height+1)/this.stride);
-        for (int k = 0; k < 3; k++) {
-            for (int i = 0; i < width; i+=this.stride) {
-                for (int j = 0; j < height; j+=this.stride) {
-                    averageim1[k] += scanim1[i][j][k];
-                    averageim2[k] += scanim2[i][j][k];
+        for (int k = 0; k < depth; k++) {
+            for (int i = 0; i < height; i+=this.stride) {
+                for (int j = 0; j < width; j+=this.stride) {
+                    averageim1[k] += scanim1[k][i][j];
+                    averageim2[k] += scanim2[k][i][j];
                 }
             }
             averageim1[k] /= N;
@@ -108,11 +110,11 @@ class NCC extends CompareMethod {
             numerator = 0;
             denominator = 0;
             temp = 0;
-            for (int i = 0; i < width; i+=this.stride) {
-                for (int j = 0; j < height; j+=this.stride) {
-                    numerator += (scanim1[i][j][k] - averageim1[k]) * (scanim2[i][j][k] - averageim2[k]);
-                    denominator += Math.pow((scanim1[i][j][k] - averageim1[k]), 2);
-                    temp += Math.pow((scanim2[i][j][k] - averageim2[k]), 2);
+            for (int i = 0; i < height; i+=this.stride) {
+                for (int j = 0; j < width; j+=this.stride) {
+                    numerator += (scanim1[k][i][j] - averageim1[k]) * (scanim2[k][i][j] - averageim2[k]);
+                    denominator += Math.pow((scanim1[k][i][j] - averageim1[k]), 2);
+                    temp += Math.pow((scanim2[k][i][j] - averageim2[k]), 2);
                 }
             }
             denominator = Math.sqrt(denominator) * Math.sqrt(temp);
@@ -123,19 +125,21 @@ class NCC extends CompareMethod {
     }
 
     public double get_similarity(int[][][] scanim1, int[][][] scanim2){
-        int width = scanim1.length;
+        int depth = scanim1.length;
         int height = scanim1[0].length;
+        int width = scanim1[0][0].length;
+
         double[] averageim1 = {0, 0, 0};
         double[] averageim2 = {0, 0, 0};
         double numerator;
         double denominator;
         double temp;
         double[] total = {0, 0, 0};
-        for (int k = 0; k < 3; k++) {
-            for (int i = 0; i < width; i++) {
-                for (int j = 0; j < height; j++) {
-                    averageim1[k] += scanim1[i][j][k];
-                    averageim2[k] += scanim2[i][j][k];
+        for (int k = 0; k < depth; k++) {
+            for (int i = 0; i < height; i++) {
+                for (int j = 0; j < width; j++) {
+                    averageim1[k] += scanim1[k][i][j];
+                    averageim2[k] += scanim2[k][i][j];
                 }
             }
             averageim1[k] /= width*height;
@@ -143,11 +147,11 @@ class NCC extends CompareMethod {
             numerator = 0;
             denominator = 0;
             temp = 0;
-            for (int i = 0; i < width; i++) {
-                for (int j = 0; j < height; j++) {
-                    numerator += (scanim1[i][j][k] - averageim1[k]) * (scanim2[i][j][k] - averageim2[k]);
-                    denominator += Math.pow((scanim1[i][j][k] - averageim1[k]), 2);
-                    temp += Math.pow((scanim2[i][j][k] - averageim2[k]), 2);
+            for (int i = 0; i < height; i++) {
+                for (int j = 0; j < width; j++) {
+                    numerator += (scanim1[k][i][j] - averageim1[k]) * (scanim2[k][i][j] - averageim2[k]);
+                    denominator += Math.pow((scanim1[k][i][j] - averageim1[k]), 2);
+                    temp += Math.pow((scanim2[k][i][j] - averageim2[k]), 2);
                 }
             }
             denominator = Math.sqrt(denominator) * Math.sqrt(temp);
@@ -162,8 +166,10 @@ class NCC extends CompareMethod {
 class SCC extends CompareMethod {
 
     public double get_similarity(byte[][][] scanim1, byte[][][] scanim2){
-        int width = scanim1.length;
+        int depth = scanim1.length;
         int height = scanim1[0].length;
+        int width = scanim1[0][0].length;
+
         int N = ((width+1)/this.stride)*((height+1)/this.stride);
         byte[] array1 = new byte[N];
         byte[] array2 = new byte[N];
@@ -171,17 +177,17 @@ class SCC extends CompareMethod {
         int[] ranks2;
         long[] d = {0,0,0};
         double[] total = {0, 0, 0};
-        for (int k = 0; k < 3; k++) {
-            for (int i = 0; i < width; i+=this.stride) {
-                for (int j = 0; j < height; j+=this.stride) {
-                    array1[height*i+j] = scanim1[i][j][k];
-                    array2[height*i+j] = scanim2[i][j][k];
+        for (int k = 0; k < depth; k++) {
+            for (int i = 0; i < height; i+=this.stride) {
+                for (int j = 0; j < width; j+=this.stride) {
+                    array1[width*i+j] = scanim1[k][i][j];
+                    array2[width*i+j] = scanim2[k][i][j];
                 }
             }
             ranks1 = arrayRankTransform(array1);
             ranks2 = arrayRankTransform(array2);
             for (int i = 0; i < N; i++) {
-                d[k] += Math.pow(ranks1[i]-ranks2[i],2);
+                d[k] += (long) Math.pow(ranks1[i]-ranks2[i],2);
             }
             total[k] = (1 - (((double) d[k] / N) * 6) / (Math.pow(N,2) - 1));
         }
@@ -189,8 +195,10 @@ class SCC extends CompareMethod {
     }
 
     public double get_similarity(int[][][] scanim1, int[][][] scanim2) {
-        int width = scanim1.length;
+        int depth = scanim1.length;
         int height = scanim1[0].length;
+        int width = scanim1[0][0].length;
+
         int N = width * height;
         int[] array1 = new int[N];
         int[] array2 = new int[N];
@@ -198,17 +206,17 @@ class SCC extends CompareMethod {
         int[] ranks2;
         long[] d = {0, 0, 0};
         double[] total = {0, 0, 0};
-        for (int k = 0; k < 3; k++) {
-            for (int i = 0; i < width; i++) {
-                for (int j = 0; j < height; j++) {
-                    array1[height * i + j] = scanim1[i][j][k];
-                    array2[height * i + j] = scanim2[i][j][k];
+        for (int k = 0; k < depth; k++) {
+            for (int i = 0; i < height; i++) {
+                for (int j = 0; j < width; j++) {
+                    array1[width*i+j] = scanim1[k][i][j];
+                    array2[width*i+j] = scanim2[k][i][j];
                 }
             }
             ranks1 = arrayRankTransform(array1);
             ranks2 = arrayRankTransform(array2);
             for (int i = 0; i < N; i++) {
-                d[k] += Math.pow(ranks1[i] - ranks2[i], 2);
+                d[k] += (long) Math.pow(ranks1[i] - ranks2[i], 2);
             }
             total[k] = (1 - (((double) d[k] / N) * 6) / (Math.pow(N, 2) - 1));
         }
@@ -220,8 +228,10 @@ class SCC extends CompareMethod {
 class KCC extends CompareMethod {
 
     public double get_similarity(byte[][][] scanim1, byte[][][] scanim2) {
-        int width = scanim1.length;
+        int depth = scanim1.length;
         int height = scanim1[0].length;
+        int width = scanim1[0][0].length;
+
         int N = ((width+1)/this.stride)*((height+1)/this.stride);
         byte[] array1 = new byte[N];
         byte[] array2 = new byte[N];
@@ -229,11 +239,11 @@ class KCC extends CompareMethod {
         int[] ranks2;
         double[] t = {0,0,0};
         double[] total = {0, 0, 0};
-        for (int k = 0; k < 3; k++) {
-            for (int i = 0; i < width; i+=this.stride) {
-                for (int j = 0; j < height; j+=this.stride) {
-                    array1[height*i+j] = scanim1[i][j][k];
-                    array2[height*i+j] = scanim2[i][j][k];
+        for (int k = 0; k < depth; k++) {
+            for (int i = 0; i < height; i+=this.stride) {
+                for (int j = 0; j < width; j+=this.stride) {
+                    array1[width*i+j] = scanim1[k][i][j];
+                    array2[width*i+j] = scanim2[k][i][j];
                 }
             }
             ranks1 = arrayRankTransform(array1);
@@ -250,8 +260,10 @@ class KCC extends CompareMethod {
     }
 
     public double get_similarity(int[][][] scanim1, int[][][] scanim2) {
-        int width = scanim1.length;
+        int depth = scanim1.length;
         int height = scanim1[0].length;
+        int width = scanim1[0][0].length;
+
         int N = width*height;
         int[] array1 = new int[N];
         int[] array2 = new int[N];
@@ -259,11 +271,11 @@ class KCC extends CompareMethod {
         int[] ranks2;
         double[] t = {0,0,0};
         double[] total = {0, 0, 0};
-        for (int k = 0; k < 3; k++) {
-            for (int i = 0; i < width; i++) {
-                for (int j = 0; j < height; j++) {
-                    array1[height*i+j] = scanim1[i][j][k];
-                    array2[height*i+j] = scanim2[i][j][k];
+        for (int k = 0; k < depth; k++) {
+            for (int i = 0; i < height; i+=this.stride) {
+                for (int j = 0; j < width; j+=this.stride) {
+                    array1[width*i+j] = scanim1[k][i][j];
+                    array2[width*i+j] = scanim2[k][i][j];
                 }
             }
             ranks1 = arrayRankTransform(array1);
@@ -284,14 +296,16 @@ class KCC extends CompareMethod {
 
 class SAD extends CompareMethod {
     public double get_similarity(byte[][][] scanim1, byte[][][] scanim2) {
-        int width = scanim1.length;
+        int depth = scanim1.length;
         int height = scanim1[0].length;
+        int width = scanim1[0][0].length;
+
         int N = ((width+1)/this.stride)*((height+1)/this.stride);
         double[] total = {0, 0, 0};
-        for (int i = 0; i < width; i+=this.stride) {
-            for (int j = 0; j < height; j+=this.stride) {
-                for (int k = 0; k < 3; k++) {
-                    total[k] += Math.abs(scanim1[i][j][k] - scanim2[i][j][k]);
+        for (int k = 0; k < depth; k++) {
+            for (int i = 0; i < height; i+=this.stride) {
+                for (int j = 0; j < width; j+=this.stride) {
+                    total[k] += Math.abs(scanim1[k][i][j] - scanim2[k][i][j]);
                 }
             }
         }
@@ -300,8 +314,10 @@ class SAD extends CompareMethod {
     }
 
     public double get_similarity(int[][][] scanim1, int[][][] scanim2) {
-        int width = scanim1.length;
+        int depth = scanim1.length;
         int height = scanim1[0].length;
+        int width = scanim1[0][0].length;
+
         int N = width*height;
         double[] total = {0, 0, 0};
         for (int i = 0; i < width; i++) {
@@ -318,8 +334,10 @@ class SAD extends CompareMethod {
     // TODO: Fix metrics
     public double get_similarity_norm(int[][][] scanim1, int[][][] scanim2) {
         ImageProcessor impr = new ImageProcessor();
-        int width = scanim1.length;
+        int depth = scanim1.length;
         int height = scanim1[0].length;
+        int width = scanim1[0][0].length;
+
         int N = width*height;
 
         double mean1 = impr.Average(scanim1);
@@ -331,11 +349,11 @@ class SAD extends CompareMethod {
         double min = 255;
         double max = 0;
         double[] total = {0, 0, 0};
-        for (int i = 0; i < width; i++) {
-            for (int j = 0; j < height; j++) {
-                for (int k = 0; k < 3; k++) {
-                    double temp1 = (scanim1[i][j][k]-mean1)/std1;
-                    double temp2 = (scanim2[i][j][k]-mean2)/std2;
+        for (int k = 0; k < depth; k++) {
+            for (int i = 0; i < height; i++) {
+                for (int j = 0; j < width; j++) {
+                    double temp1 = (scanim1[k][i][j]-mean1)/std1;
+                    double temp2 = (scanim2[k][i][j]-mean2)/std2;
                     total[k] += Math.abs((temp1 - temp2));
                     min = Math.min(min, temp1);
                     min = Math.min(min, temp2);
@@ -353,14 +371,17 @@ class SAD extends CompareMethod {
 class SSD extends CompareMethod {
 
     public double get_similarity(byte[][][] scanim1, byte[][][] scanim2) {
-        int width = scanim1.length;
+        int depth = scanim1.length;
         int height = scanim1[0].length;
+        int width = scanim1[0][0].length;
+
         int N = ((width+1)/this.stride)*((height+1)/this.stride);
         double[] total = {0, 0, 0};
-        for (int i = 0; i < width; i++) {
-            for (int j = 0; j < height; j+=this.stride) {
-                for (int k = 0; k < 3; k+=this.stride) {
-                    total[k] += Math.pow(scanim1[i][j][k] - scanim2[i][j][k], 2);
+        for (int k = 0; k < depth; k++) {
+            for (int i = 0; i < height; i+=this.stride) {
+                for (int j = 0; j < width; j+=this.stride) {
+
+                    total[k] += Math.pow(scanim1[k][i][j] - scanim2[k][i][j], 2);
                 }
             }
         }
@@ -368,14 +389,16 @@ class SSD extends CompareMethod {
     }
 
     public double get_similarity(int[][][] scanim1, int[][][] scanim2) {
-        int width = scanim1.length;
+        int depth = scanim1.length;
         int height = scanim1[0].length;
+        int width = scanim1[0][0].length;
+
         int N = width*height;
         double[] total = {0, 0, 0};
-        for (int i = 0; i < width; i++) {
-            for (int j = 0; j < height; j++) {
-                for (int k = 0; k < 3; k++) {
-                    total[k] += Math.pow(scanim1[i][j][k] - scanim2[i][j][k], 2);
+        for (int k = 0; k < depth; k++) {
+            for (int i = 0; i < height; i++) {
+                for (int j = 0; j < width; j++) {
+                    total[k] += Math.pow(scanim1[k][i][j] - scanim2[k][i][j], 2);
                 }
             }
         }
@@ -502,6 +525,8 @@ class MainFrame extends JFrame {
     private final int VDEV = 0;
     private final double EC = 2.2;
 
+    public final int C = 3; // color channels
+
     JTextField WindowSizeTF = new JTextField(Integer.toString(WS), 3);
     JTextField FilterSizeTF = new JTextField(Integer.toString(FS), 2);
     JTextField NSegmentsTF = new JTextField(Integer.toString(NSEG), 2);
@@ -570,7 +595,8 @@ class MainFrame extends JFrame {
 
     private DMGenerator DMGen;
 
-    String sep = ""+File.separatorChar;
+    final String[] image_formats = new String[]{"jpg", "png", "gif", "bmp", "tiff", "jpeg"};
+    final String sep = ""+File.separatorChar;
 
     private final String DataPath = "Data"+sep;
     private final String MapsPath = DataPath+"Maps"+sep;
@@ -842,7 +868,7 @@ class MainFrame extends JFrame {
         GenState new_state = new GenState(DepthMap, current_state.logs, current_state.correlation_m, current_state.window_size, current_state.vdev);
         LogsStack.push(new_state);
         DepthMap_full = MatrixToImage(getFullMap(improc.BWImageToMatrix(DepthMap),
-                DepthMap_full.getWidth(), DepthMap_full.getHeight()));
+                DepthMap_full.getHeight(), DepthMap_full.getWidth()));
         BottomImageLabel.setIcon(new ImageIcon(improc.SizeChangerS(DepthMap_full,
                 guiImageWidth, guiImageHeight, interpol_choice)));
         UndoOperation.setEnabled(true);
@@ -893,8 +919,8 @@ class MainFrame extends JFrame {
             correlation_m = current_state.getCorrelation_m();
             window_size = current_state.getWindow_size();
             vdev = current_state.getVdev();
-            DepthMap_full = MatrixToImage(getFullMap(improc.BWImageToMatrix(DepthMap),
-                    DepthMap_full.getWidth(), DepthMap_full.getHeight()));
+            DepthMap_full = MatrixToImage(getFullMap(improc.BWImageToMatrix(DepthMap), DepthMap_full.getHeight(),
+                    DepthMap_full.getWidth()));
             BottomImageLabel.setIcon(new ImageIcon(improc.SizeChangerS(DepthMap_full,
                     guiImageWidth, guiImageHeight, interpol_choice)));
 
@@ -1036,7 +1062,7 @@ class MainFrame extends JFrame {
                     try {
                         ShowLogs.setEnabled(false);
                         DepthMap_full = (BufferedImage) clipboard.getData(flavor);
-                        DepthMap = MatrixToImage(Transpose(getCompressedMap(improc.BWImageToMatrix(DepthMap_full))));
+                        DepthMap = MatrixToImage(getCompressedMap(improc.BWImageToMatrix(DepthMap_full))); // MatrixToImage(Transpose(getCompressedMap(improc.BWImageToMatrix(DepthMap_full))));
                         WindowSizeTF.setText(Integer.toString(window_size));
                         BottomImageLabel.setIcon(new ImageIcon(improc.SizeChangerS(DepthMap_full,
                                 guiImageWidth, guiImageHeight, interpol_choice)));
@@ -1089,21 +1115,21 @@ class MainFrame extends JFrame {
                         "For a program to work you need to load stereo images first\n" +
 
                         "\nLoad Images:\n" +
-                        "Alt+1 - load left image\n" +
-                        "Alt+2 - load right image\n" +
+                        "Alt+1 - load a left image\n" +
+                        "Alt+2 - load a right image\n" +
 
-                        "\nDepth map (DM) hotkeys:\n" +
+                        "\nDepth map (DM) interaction hotkeys:\n" +
                         "Ctrl+A - apply the chosen filter to the DM\n" +
                         "Ctrl+Z - undoes your last DM action\n" +
-                        "Ctrl+S - saves DM to the ./Maps folder\n" +
+                        "Ctrl+S - saves DM to the ./Data/Maps/ folder\n" +
                         "Ctrl+C - copies DM to the clipboard.\n" +
-                        "Ctrl+V - pastes clipboard into the program as a DM\n" +
+                        "Ctrl+V - pastes clipboard DM into the program\n" +
 
-                        "\nFunctional windows:\n" +
-                        "Ctrl+R - run DM estimator with the current parameters\n" +
-                        "Ctrl+D - load ground-true DM for metrics calculation\n" +
-                        "Ctrl+F - calculate DM metrics\n" +
-                        "Ctrl+H - show this help window\n" +
+                        "\nFunctional hotkeys:\n" +
+                        "Ctrl+R - run the DM estimator with the current parameters\n" +
+                        "Ctrl+D - load the ground-truth DM for metrics calculation\n" +
+                        "Ctrl+F - calculate the DM metrics\n" +
+                        "Ctrl+H - show the help window\n" +
                         "Ctrl+Q - quit the program (or its current window)\n" +
 
                         "\nSimilarities:\n" +
@@ -1259,7 +1285,7 @@ class MainFrame extends JFrame {
         }
 
         loadimage.setCurrentDirectory(new File(path + sep + "StereoImages" + sep + "Middlebury_WithGT"));
-        loadimage.setFileFilter(new FileNameExtensionFilter("Images", "jpg", "png", "gif", "bmp"));
+        loadimage.setFileFilter(new FileNameExtensionFilter("Images", image_formats));
 
         frame.setLayout(new BorderLayout());
         frame.setSize(guiImageWidth * 2 + 10, guiImageHeight * 2 + 36); //размер фрейма 35 70
@@ -1270,6 +1296,7 @@ class MainFrame extends JFrame {
         frame.setResizable(false);
         frame.setVisible(true);
 
+        // TODO: Drop not working on windows
         panel.setDropTarget(new DropTarget() {
             public synchronized void drop(DropTargetDropEvent evt) {
                 try {
@@ -1281,10 +1308,15 @@ class MainFrame extends JFrame {
                         String[] temp = file.toString().split(sep);
                         String name = temp[temp.length - 1].toLowerCase();
                         System.out.println(name);
+                        boolean is_image = false;
+                        for (String format : image_formats)
+                            is_image = (is_image || name.contains(format));
+                        if (!is_image)
+                            continue;
                         boolean ll = name.contains("left") || name.contains("0."); // check if there is a left image
                         boolean lr = name.contains("right") || name.contains("1."); // check if there is a right image
                         boolean ldm = name.contains("gt") || name.contains("ground") ||
-                                      name.contains("true") || name.contains("truth");  // check if there is a depth map
+                                name.contains("true") || name.contains("truth") || name.contains("target");  // check if there is a depth map
                         if (ll || lr){
                             if (ll)
                                 LLImage(file);
@@ -1592,7 +1624,10 @@ class MainFrame extends JFrame {
         localized_mode = AdaptiveSizeCB.isSelected();
 
         window_size = parseInt(WindowSizeTF, WS);
-        n_segments = parseInt(NSegmentsTF, NSEG);
+        if (localized_mode)
+            n_segments = parseInt(NSegmentsTF, NSEG);
+        else
+            n_segments = 1;
         stride = parseInt(StrideTF, STRIDE);
         ext_coef = parseDouble(ECoefTF, EC);
         vdev = parseInt(VdevTF, VDEV);
@@ -1687,14 +1722,14 @@ class MainFrame extends JFrame {
                 GoMakeSomeMagic.setEnabled(true);
                 frame.setVisible(true);
                 frame.setEnabled(true);
-            } catch (Exception ignored) {
-//                e.printStackTrace();
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         }
 
         public void GenerateDepthMap(){
-            matrix1 = new byte[iwidth][iheight][3]; //матрица для первого снимка
-            matrix2 = new byte[iwidth][iheight][3]; //матрица для второго снимка
+            matrix1 = new byte[3][iheight][iwidth]; //матрица для первого снимка
+            matrix2 = new byte[3][iheight][iwidth]; //матрица для второго снимка
             //преобразование изображения в чб, конфликтует с некоторыми цветами
 //        if (bw.isSelected()) {
 //            improc.loadFull(image1);
@@ -1705,17 +1740,17 @@ class MainFrame extends JFrame {
 //            RightImageLabel.setIcon(new ImageIcon(improc.SizeChangerS(image2, guiImageWidth, guiImageHeight, interpol_choice)));
 //        }
 
-            for (int i = 0; i < iwidth; i++) {
-                for (int j = 0; j < iheight; j++) {
+            for (int i = 0; i < iheight; i++) {
+                for (int j = 0; j < iwidth; j++) {
                     // matrix1[i][j] = Math.abs(image1.getRGB(i, j));
-                    matrix1[i][j][0] = (byte)(Math.abs(new Color(image1.getRGB(i, j)).getRed()) - 128);
-                    matrix1[i][j][1] = (byte)(Math.abs(new Color(image1.getRGB(i, j)).getGreen()) - 128);
-                    matrix1[i][j][2] = (byte)(Math.abs(new Color(image1.getRGB(i, j)).getBlue()) - 128);
-                    //System.out.print(matrix1[i][j] + " ");
+                    matrix1[0][i][j] = (byte)(Math.abs(new Color(image1.getRGB(j, i)).getRed()) - 128);
+                    matrix1[1][i][j] = (byte)(Math.abs(new Color(image1.getRGB(j, i)).getGreen()) - 128);
+                    matrix1[2][i][j] = (byte)(Math.abs(new Color(image1.getRGB(j, i)).getBlue()) - 128);
+                    //System.out.print(mactrix1[i][j] + " ");
                     // matrix2[i][j] = Math.abs(image2.getRGB(i, j));
-                    matrix2[i][j][0] = (byte)(Math.abs(new Color(image2.getRGB(i, j)).getRed()) - 128);
-                    matrix2[i][j][1] = (byte)(Math.abs(new Color(image2.getRGB(i, j)).getGreen()) - 128);
-                    matrix2[i][j][2] = (byte)(Math.abs(new Color(image2.getRGB(i, j)).getBlue()) - 128);
+                    matrix2[0][i][j] = (byte)(Math.abs(new Color(image2.getRGB(j, i)).getRed()) - 128);
+                    matrix2[1][i][j] = (byte)(Math.abs(new Color(image2.getRGB(j, i)).getGreen()) - 128);
+                    matrix2[2][i][j] = (byte)(Math.abs(new Color(image2.getRGB(j, i)).getBlue()) - 128);
                 }
             }
             //Пожалуй, самая трудоемкая функция в данной программе, сложность - порядка O(n^3), но т.к. число n - далеко не маленькое, зачастую приходится подождать
@@ -1723,8 +1758,11 @@ class MainFrame extends JFrame {
         }
 
         public BufferedImage CalculateDepthMap() {
-            int width = matrix1.length; // 500
+            System.out.println("Resolution: "+matrix1[0].length+"x"+matrix1[0][0].length);
+
             int height = matrix1[0].length; // 400
+            int width = matrix1[0][0].length; // 500
+
 
             int locale_w = width / n_segments;
             int locale_h = height / n_segments;
@@ -1770,16 +1808,16 @@ class MainFrame extends JFrame {
             System.out.println("\nMAX DEVIATION: " + max_deviation + " pixels");
             //max_deviation = -100;
             System.out.println("\nMatrix size: " + (int) Math.ceil((double) corrected_width / window_size) + ' ' + (int) Math.ceil((double) height / window_size) + " pixels");
-            matrix3 = new double[(int) Math.ceil((double) corrected_width / window_size)][(int) Math.ceil((double) height / window_size)]; //матрица смещений
-            double[][] m3_upd = new double[corrected_width][height];
-            logs = new int[(int) Math.ceil((double) corrected_width / window_size)][(int) Math.ceil((double) height / window_size)][];
-            correlation_m = new double[(int) Math.ceil((double) corrected_width / window_size)][(int) Math.ceil((double) height / window_size)][];
+            matrix3 = new double[(int) Math.ceil((double) height / window_size)][(int) Math.ceil((double) corrected_width / window_size)]; // disparity map
+            double[][] m3_upd = new double[height][corrected_width];
+            logs = new int[(int) Math.ceil((double) height / window_size)][(int) Math.ceil((double) corrected_width / window_size)][]; // transposed
+            correlation_m = new double[(int) Math.ceil((double) height / window_size)][(int) Math.ceil((double) corrected_width / window_size)][]; // transposed
 
             double best_correlation;
             int coincidentx;
             int coincidenty;
 
-            int tempsizeadd;
+            int tempsizeadd = 0;
             itercounter = 0;
             progress = 0;
 
@@ -1800,15 +1838,16 @@ class MainFrame extends JFrame {
             if (adaptive_mode) {
                 for (int i = 0; i < n_segments; i++) {
                     for (int j = 0; j < n_segments; j++) {
-                        double temp = Std(getPart(matrix1, locale_w*i, locale_h*j,
-                                                  Math.min(width-locale_w*i, locale_w),
-                                                  Math.min(height-locale_h*j, locale_h), 0));
+                        double temp = Std(getPart(matrix1, locale_h*i, locale_w*j,
+                                Math.min(height-locale_h*i, locale_h),
+                                Math.min(width-locale_w*j, locale_w),
+                                tempsizeadd));
                         thresh_matrix[i][j] = AC * Math.pow(temp, 0.5);
                     }
                 }
                 for (int i = 0; i < n_segments; i++) {
                     for (int j = 0; j < n_segments; j++) {
-                        System.out.print((int) thresh_matrix[j][i] + " ");
+                        System.out.print((int) thresh_matrix[i][j] + " ");
                     }
                     System.out.println();
                 }
@@ -1817,24 +1856,25 @@ class MainFrame extends JFrame {
             }
 
 
-            double[][] devs_upd = new double[corrected_width][height];
+            double[][] devs_upd = new double[height][corrected_width];
 
             //double [][] thresh_matrix = new double[(int)Math.ceil((double)corrected_width / window_size)][(int)Math.ceil((double)height / window_size)];
-            double[][] tm_upd = new double[corrected_width][height];
+            double[][] tm_upd = new double[height][corrected_width];
 
             int iterations_total = ((int) Math.ceil((double) corrected_width / window_size) * (int) Math.ceil((double) height / window_size));
             //System.out.println("START STD THRESH: " + std_thresh);
-            for (int col_image1 = -Math.min(opt_deviation, 0); col_image1 < width - Math.max(opt_deviation, 0) - 1; col_image1 += window_size) {
-                sc_width = window_size - Math.max((col_image1 + window_size) - (width - Math.max(opt_deviation, 0)) + 1, 0);
-                //System.out.println("###1#### " + col_image1 + ' '+ width +' '+sc_width);
-                for (int row_image1 = 0; row_image1 < height; row_image1 += window_size) {
+            for (int row_image1 = 0; row_image1 < height; row_image1 += window_size) {
+                for (int col_image1 = -Math.min(opt_deviation, 0); col_image1 < width - Math.max(opt_deviation, 0) - 1; col_image1 += window_size) {
+                    sc_width = window_size - Math.max((col_image1 + window_size) - (width - Math.max(opt_deviation, 0)) + 1, 0);
+                    //System.out.println("###1#### " + col_image1 + ' '+ width +' '+sc_width);
+
 
                     sc_height = window_size - Math.max((row_image1 + window_size) - height + 1, 0);
                     //System.out.println("###2#### " + row_image1 + ' '+ height +' '+sc_height);
                     tempsizeadd = 0;
                     //System.out.println("!!!!!!!!!!!!!!!!!!!" + col_image1 + " "+ row_image1 + " "+width+"");
                     best_correlation  = 0;
-                    tempmatrix1 = getPart(matrix1, col_image1, row_image1, sc_width, sc_height, tempsizeadd);
+                    tempmatrix1 = getPart(matrix1, row_image1, col_image1, sc_height, sc_width, tempsizeadd);
                     std1 = Std(tempmatrix1);
 //                if ((col_image1 % locale_w < sc_width) && (row_image1 % locale_h < sc_height)) {
 //                    System.out.println("IS THE START OF AREA: " + col_image1 + " " + row_image1);
@@ -1842,10 +1882,10 @@ class MainFrame extends JFrame {
 //                    System.out.println("NEW THRESH: " + std_thresh);
 //                }
                     //System.out.println(col_image1 + " " + row_image1 + " " +  col_image1/locale_w + " " + row_image1/locale_h);
-                    std_thresh = thresh_matrix[(Math.min(col_image1/locale_w, n_segments-1))][Math.min((row_image1/locale_h), n_segments-1)];
+                    std_thresh = thresh_matrix[Math.min((row_image1/locale_h), n_segments-1)][(Math.min(col_image1/locale_w, n_segments-1))];
 
                     if (adaptive_mode) { // local
-                        max_deviation = (int) (deviations[(Math.min(col_image1 / locale_w, n_segments - 1))][Math.min((row_image1 / locale_h), n_segments - 1)]);
+                        max_deviation = (int) (deviations[Math.min((row_image1 / locale_h), n_segments - 1)][(Math.min(col_image1 / locale_w, n_segments - 1))]);
 //                    System.out.println("Max deviation: " + max_deviation);
                     }
                     //std_thresh = (std_thresh + std1/10)/1.1;
@@ -1853,20 +1893,20 @@ class MainFrame extends JFrame {
 
 
                     if(adaptive_mode && std1 < std_thresh) { // std1 > 0 ???
-                        int[] eP = extendPart(col_image1, row_image1, sc_width, sc_height, tempsizeadd);
+                        int[] eP = extendPart(row_image1, col_image1, sc_height, sc_width, tempsizeadd);
                         byte[][][] asmatrix;
                         //System.out.println("STD " + improc.Std(tempmatrix1));
                         // && tempsizeadd < 2*sc_width
                         double start_std = std1;
-                        if(eP[0] >= -max_deviation && (width - eP[2] - eP[0]) > 0 && eP[1] >= 0 && (height - eP[3] - eP[1]) > 0) {
+                        if(eP[0] >= -max_deviation && (width - eP[3] - eP[1]) > 0 && eP[0] >= 0 && (height - eP[2] - eP[0]) > 0) { // ????
                             while (std1 <= Math.min(std_thresh, AC*start_std) && eP[0] >= -max_deviation && (width - eP[2] - eP[0]) > 0 && eP[1] >= 0 && (height - eP[3] - eP[2]) > 0) {
-                                asmatrix = getPart(matrix1, col_image1, row_image1, sc_width, sc_height, tempsizeadd);
+                                asmatrix = getPart(matrix1, row_image1, col_image1, sc_height, sc_width, tempsizeadd);
                                 //System.out.println("&&&&&&&&&&&&&&&&& " + tempsizeadd + " " + col_image1 + " " + row_image1);
                                 std1 = Std(asmatrix);
                                 if (std1 < Math.min(std_thresh, AC*start_std))
                                     tempmatrix1 = asmatrix;
                                 tempsizeadd += 1;
-                                eP = extendPart(col_image1, row_image1, sc_width, sc_height, tempsizeadd);
+                                eP = extendPart(row_image1, col_image1, sc_height, sc_width, tempsizeadd);
                             }
                             tempsizeadd -= 1;
                         }
@@ -1887,21 +1927,21 @@ class MainFrame extends JFrame {
                     //for (int deviation = 0; (col_image1 - deviation) >= tempsizeadd && deviation <= Math.abs(max_deviation); deviation++){
 
                     comp_counter = 0;
-                    correlation_m[(int)Math.ceil((double)(col_image1 + Math.min(opt_deviation, 0))/ window_size)][(int)Math.ceil((double)row_image1 / window_size)] = new double[Math.min(col_image1 - tempsizeadd, Math.abs(max_deviation))+1];
-                    for (int deviation = Math.min(col_image1 - tempsizeadd, Math.abs(max_deviation));  deviation >= 0; deviation--){
+                    correlation_m[(int)Math.ceil((double)row_image1 / window_size)][(int)Math.ceil((double)(col_image1 + Math.min(opt_deviation, 0))/ window_size)] = new double[Math.min(col_image1 - tempsizeadd, Math.abs(max_deviation))+1];
+                    for(int row_image2 = Math.max(0,row_image1-vdev); row_image2 < Math.min(height-sc_height+1,row_image1 + vdev + 1); row_image2++) {
+                        for (int deviation = Math.min(col_image1 - tempsizeadd, Math.abs(max_deviation)); deviation >= 0; deviation--){
 //                        for (int deviation = 0;  deviation <= Math.min(col_image1 - tempsizeadd, Math.abs(max_deviation)); deviation++){
 
                             //for (int col_image2 = tempsizeadd; col_image2 < width - sc_width; col_image2++) {
-                        for(int row_image2 = Math.max(0,row_image1-vdev); row_image2 < Math.min(height-sc_height+1,row_image1 + vdev + 1); row_image2++) {
 
                             if (this.isCancelled())
                                 return null;
 
                             int col_image2 = (opt_deviation <= 0)? (col_image1-deviation):(col_image1+deviation);
-                            tempmatrix2 = getPart(matrix2, col_image2, row_image2, sc_width, sc_height, tempsizeadd);
+                            tempmatrix2 = getPart(matrix2, row_image2, col_image2, sc_height, sc_width, tempsizeadd);
 
                             double correlation = Compare(method, tempmatrix1, tempmatrix2, ConvApprxCB.isSelected());
-                            correlation_m[(int)Math.ceil((double)(col_image1 + Math.min(opt_deviation, 0))/ window_size)][(int)Math.ceil((double)row_image1 / window_size)][deviation] = correlation;
+                            correlation_m[(int)Math.ceil((double)row_image1 / window_size)][(int)Math.ceil((double)(col_image1 + Math.min(opt_deviation, 0))/ window_size)][deviation] = correlation;
                             comp_counter++;
 
                             if (correlation > best_correlation) {
@@ -1930,23 +1970,24 @@ class MainFrame extends JFrame {
                     //hdprob += Math.abs(coincidenty - row_image1);
                     double disparity = Math.hypot(coincidentx - col_image1, coincidenty - row_image1);
                     //System.out.println("DIST: " + distance);
-                    int[] eP1 = extendPart(col_image1, row_image1, sc_width, sc_height, tempsizeadd);
-                    int[] eP2 = extendPart(coincidentx, coincidenty, sc_width, sc_height, tempsizeadd);
+                    int[] eP1 = extendPart(row_image1, col_image1, sc_height, sc_width, tempsizeadd);
+                    int[] eP2 = extendPart(coincidenty, coincidentx,  sc_height, sc_width, tempsizeadd);
                     //System.out.println(tempsizeadd);
                     //col_image1, row_image1, coincidentx, coincidenty, sc_width, sc_height, metrics, (int)distance, std1, std2
-                    int id1 = (int)Math.ceil((double)(col_image1 + Math.min(opt_deviation, 0))/ window_size);
-                    int id2 = (int)Math.ceil((double)row_image1 / window_size);
-                    logs[id1][id2] = new int[]{eP1[0], eP1[1], eP2[0], eP2[1], eP1[2], eP1[3],
+                    int id1 = (int)Math.ceil((double)row_image1 / window_size);
+                    int id2 = (int)Math.ceil((double)(col_image1 + Math.min(opt_deviation, 0))/ window_size);
+                    // ep: row, col - tempsizeadd,  height, width + tempsizeadd}
+                    logs[id1][id2] = new int[]{eP1[1], eP1[0], eP2[1], eP2[0], eP1[3], eP1[2],
                             (int)(dtis*best_correlation),  (int)((dtis*disparity)/Math.hypot(max_deviation, 2*vdev)),
                             (int)(dtis*std1), (int)(dtis*std2), (dtis*tempsizeadd/width), comp_counter, max_deviation};
                     //System.out.println("&&&&& " + col_image1 + ' ' + sc_width);
                     matrix3[id1][id2] = disparity;
 
-                    for (int i = 0; i < sc_width; i++) {
-                        for (int j = 0; j < sc_height; j++) {
-                            m3_upd[col_image1 + Math.min(opt_deviation, 0) + i][row_image1 + j] = disparity;
-                            tm_upd[col_image1 + Math.min(opt_deviation, 0) + i][row_image1 + j] = std_thresh;
-                            devs_upd[col_image1 + Math.min(opt_deviation, 0) + i][row_image1 + j] = max_deviation;
+                    for (int i = 0; i < sc_height; i++) {
+                        for (int j = 0; j < sc_width; j++) {
+                            m3_upd[row_image1 + i][col_image1 + Math.min(opt_deviation, 0) + j] = disparity;
+                            tm_upd[row_image1 + i][col_image1 + Math.min(opt_deviation, 0) + j] = std_thresh;
+                            devs_upd[row_image1 + i][col_image1 + Math.min(opt_deviation, 0) + j] = max_deviation;
                         }
                     }
                     itercounter++;
@@ -1977,18 +2018,18 @@ class MainFrame extends JFrame {
             return DepthMap_full;
         }
 
+
         public double[] getDeviation(byte[][][] matrix1, byte[][][] matrix2, boolean use_approx) {
-            int width = matrix1.length;
+            int dstart = (int) System.currentTimeMillis();
             int height = matrix1[0].length;
+            int width = matrix1[0][0].length;
             double best_correlation = 0;
             int opt_deviation = width/5;
-            double area = width/4;
+            double area = (double) width/4;
             int stripe = Math.max((int)area/75, 1);
             byte[][][] temp_matrix1, temp_matrix2, best_matrix1 = null, best_matrix2 = null;
 
-            //int n_rnd = width/5;
-            //int size = width/20;
-            int n_rnd = width / 18;
+
             int size = width / 16;
 
             int ls, rs;
@@ -1999,6 +2040,7 @@ class MainFrame extends JFrame {
 
             CompareMethod ncccm = new NCC();
 
+            int n_rnd = width / 18;
             double[][] c_r = new double[n_rnd][];
             if (use_approx) {
                 Random rand = new Random();
@@ -2010,37 +2052,45 @@ class MainFrame extends JFrame {
 
             int iterations_total = (int)((double)(rs-ls)/stripe);
 
+
+            int copyt = 0;
             for (int deviation = ls; deviation < rs; deviation += stripe) {
                 if (this.isCancelled())
                     return null;
-                temp_matrix1 = new byte[width - Math.abs(deviation)][height][3];
-                temp_matrix2 = new byte[width - Math.abs(deviation)][height][3];
-                for (int i = 0; i < width - Math.abs(deviation); i++) {
-                    for (int j = 0; j < height; j++) {
-                        for (int k = 0; k < 3; k++) {
-                            if (deviation < 0) {
-                                temp_matrix1[i][j][k] = matrix1[i - deviation][j][k];
-                                temp_matrix2[i][j][k] = matrix2[i][j][k];
-                            } else {
-                                temp_matrix1[i][j][k] = matrix1[i][j][k];
-                                temp_matrix2[i][j][k] = matrix2[i + deviation][j][k];
-                            }
+                int cs = (int) System.currentTimeMillis();
+                temp_matrix1 = new byte[C][height][width - Math.abs(deviation)];
+                temp_matrix2 = new byte[C][height][width - Math.abs(deviation)];
+                for (int k = 0; k < C; k++) {
+                    for (int i = 0; i < height; i++) {
+                        for (int j = 0; j < width - Math.abs(deviation); j++) {
+
+//                            if (deviation < 0) {
+                            temp_matrix1[k][i][j] = matrix1[k][i][j-deviation];
+                            temp_matrix2[k][i][j] = matrix2[k][i][j];
+//                            } else {
+//                                temp_matrix1[i][j][k] = matrix1[i][j][k];
+//                                temp_matrix2[i][j][k] = matrix2[i + deviation][j][k];
+//                            }
                         }
                     }
                 }
+                int ce = (int) System.currentTimeMillis();
+                copyt += (ce-cs);
                 double correlation = 0;
                 double counter = 0;
                 if (use_approx){
                     for (int i = 0; i < n_rnd; i++){
-                        byte[][][] rbatch1 = new byte[size][size][3];
-                        byte[][][] rbatch2 = new byte[size][size][3];
-                        int x_r = (int)(c_r[i][0] * (width - Math.abs(deviation) - size + 1));
+                        byte[][][] rbatch1 = new byte[C][size][size];
+                        byte[][][] rbatch2 = new byte[C][size][size];
+
                         int y_r = (int)(c_r[i][1] * (height - size + 1));
-                        for (int n = 0; n < size; n++){
-                            for (int m = 0; m < size; m++){
-                                for (int k = 0; k < 3; k++){
-                                    rbatch1[n][m][k] = temp_matrix1[x_r + n][y_r + m][k];
-                                    rbatch2[n][m][k] = temp_matrix2[x_r + n][y_r + m][k];
+                        int x_r = (int)(c_r[i][0] * (width - Math.abs(deviation) - size + 1));
+
+                        for (int k = 0; k < C; k++){
+                            for (int n = 0; n < size; n++){
+                                for (int m = 0; m < size; m++){
+                                    rbatch1[k][n][m] = temp_matrix1[k][y_r + n][x_r + m];
+                                    rbatch2[k][n][m] = temp_matrix2[k][y_r + n][x_r + m];
                                 }
                             }
                         }
@@ -2053,8 +2103,10 @@ class MainFrame extends JFrame {
                     correlation /= counter;
                 }
                 else {
+                    System.out.println(deviation +" "+ls+" "+rs+" "+stripe);
                     correlation = ncccm.get_similarity(temp_matrix1, temp_matrix2);
                 }
+
                 if (correlation > best_correlation) {
 //                    best_matrix1 = MCopy(temp_matrix1);
 //                    best_matrix2 = MCopy(temp_matrix2);
@@ -2064,6 +2116,8 @@ class MainFrame extends JFrame {
                 plot_data[(deviation - ls)/stripe] = new double[]{deviation, 100*correlation};
                 itercounter++;
                 progress = (double)itercounter/(iterations_total*2);
+                int dend = (int) System.currentTimeMillis();
+                System.out.println("Copy is "+((double)copyt/(dend-dstart)) + " of all time");
                 publish();
 //            System.out.println(" " + correlation +" "+ deviation);
             }
@@ -2093,11 +2147,11 @@ class MainFrame extends JFrame {
         }
 
         public double[][][] getDeviations(byte[][][] matrix1, byte[][][] matrix2, int n_segments) {
-            int width = matrix1.length;
             int height = matrix1[0].length;
+            int width = matrix1[0][0].length;
             double best_correlation = 0;
             int opt_deviation = width/5;
-            double area = width/4;
+            double area = (double) width /4;
             int stripe = Math.max((int)area/75, 1);
             byte[][][] temp_matrix1, temp_matrix2;
 
@@ -2127,13 +2181,13 @@ class MainFrame extends JFrame {
                         int temph = Math.min(height - seg_h * j, seg_h);
                         int tempw = Math.min(width - Math.abs(deviation) - seg_w * i, seg_w);
                         //System.out.println(i + " "+ j +" " + deviation + " "+ tempw + " "+ temph);
-                        if (deviation < 0) {
-                            temp_matrix1 = getPart(matrix1, seg_w * i - deviation, seg_h * j, tempw, temph, 0);
-                            temp_matrix2 = getPart(matrix2, seg_w * i, seg_h * j, tempw, temph, 0);
-                        } else {
-                            temp_matrix1 = getPart(matrix1, seg_w * i, seg_h * j, tempw, temph, 0);
-                            temp_matrix2 = getPart(matrix2, seg_w * i + deviation, seg_h * j, tempw, temph, 0);
-                        }
+//                        if (deviation < 0) {
+                        temp_matrix1 = getPart(matrix1, seg_h * i, seg_w * j - deviation, temph, tempw, 0);
+                        temp_matrix2 = getPart(matrix2, seg_h * i, seg_w * j, temph, tempw, 0);
+//                        } else {
+//                            temp_matrix1 = getPart(matrix1, seg_h * j, seg_w * i, temph, tempw,0);
+//                            temp_matrix2 = getPart(matrix2, seg_h * j, seg_w * i + deviation, temph, tempw, 0);
+//                        }
                         correlation = ncccm.get_similarity(temp_matrix1, temp_matrix2);
                         if (correlation > c_matrix[i][j]) {
                             c_matrix[i][j] = correlation;
@@ -2218,7 +2272,7 @@ class MainFrame extends JFrame {
                 counter4saving++;
                 outputfile = new File(MapsPath+"DepthMap"+counter4saving+".png");
             } while (outputfile.exists());
-        }catch (Exception e){}
+        }catch (Exception e){e.printStackTrace();}
 
         try {
             if (DepthMap == null) {
@@ -2322,25 +2376,27 @@ class MainFrame extends JFrame {
             System.out.println();
         }
     }
-    public int[] extendPart(int col, int row, int width, int height, int tempsizeadd){
-        return new int[]{col - tempsizeadd, row, width + tempsizeadd, height};
+    public int[] extendPart(int row, int col, int height, int width, int tempsizeadd){
+        return new int[]{row, col - tempsizeadd,  height, width + tempsizeadd};
     }
-    public byte[][][] getPart(byte[][][] matrix, int col, int row, int width, int height, int tempsizeadd){
+    public byte[][][] getPart(byte[][][] matrix, int row, int col, int height, int width, int tempsizeadd){
         if (tempsizeadd != 0) {
-            int[] eP = extendPart(col, row, width, height, tempsizeadd);
-            col = eP[0];
-            row = eP[1];
-            width = eP[2];
-            height = eP[3];
+            int[] eP = extendPart(row, col, height, width, tempsizeadd);
+
+            row = eP[0];
+            col = eP[1];
+            height = eP[2];
+            width = eP[3];
+
         }
-        byte[][][] part = new byte[width][height][3];
+        byte[][][] part = new byte[C][height][width];
         // 500 rows and 400 columns
 
-        for (int i = 0; i < width; i++) {
-            for (int j = 0; j < height; j++) {
-                for (int k = 0; k < 3; k++) {
+        for (int k = 0; k < C; k++) {
+            for (int i = 0; i < height; i++) {
+                for (int j = 0; j < width; j++) {
                     //System.out.println("Height: " + matrix.length  + ' ' + (col+i) + " Width: " + matrix[0].length + ' '+ (row+j));
-                    part[i][j][k] = (byte) matrix[col + i][row + j][k];
+                    part[k][i][j] = matrix[k][row + i][col + j];
                 }
             }
         }
@@ -2374,14 +2430,28 @@ class MainFrame extends JFrame {
     }
 
     public BufferedImage MatrixToImage(byte[][][] matrix){
-        int width = matrix.length;
         int height = matrix[0].length;
+        int width = matrix[0][0].length;
         BufferedImage tempimg = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-        for (int i = 0; i < width; i++) {
-            for (int j = 0; j < height; j++)
+        for (int i = 0; i < height; i++) {
+            for (int j = 0; j < width; j++)
             {
-                Color MyColor = new Color(matrix[i][j][0] + 128, matrix[i][j][1] + 128, matrix[i][j][2] + 128);
-                tempimg.setRGB(i, j, MyColor.getRGB());
+                Color MyColor = new Color(matrix[0][i][j] + 128, matrix[1][i][j] + 128, matrix[2][i][j] + 128);
+                tempimg.setRGB(j, i, MyColor.getRGB());
+            }
+        }
+        return tempimg;
+    }
+
+    public BufferedImage MatrixToImage(int[][][] matrix){
+        int height = matrix[0].length;
+        int width = matrix[0][0].length;
+        BufferedImage tempimg = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+        for (int i = 0; i < height; i++) {
+            for (int j = 0; j < width; j++)
+            {
+                Color MyColor = new Color(matrix[0][i][j], matrix[1][i][j], matrix[2][i][j]);
+                tempimg.setRGB(j, i, MyColor.getRGB());
             }
         }
         return tempimg;
@@ -2391,15 +2461,15 @@ class MainFrame extends JFrame {
         return this.interpol_choice;
     }
     public BufferedImage getShiftedImage(byte[][][] matrix, int shift){
-        int width = matrix.length;
         int height = matrix[0].length;
+        int width = matrix[0][0].length;
         int corrected_width = width - shift;
-        byte[][][] cutted_matrix = new byte[corrected_width][height][3];
-        for (int i = 0; i < corrected_width; i++) {
-            for (int j = 0; j < height; j++) {
-                for (int k = 0; k < 3; k++) {
+        byte[][][] cutted_matrix = new byte[C][height][corrected_width];
+        for (int k = 0; k < C; k++) {
+            for (int i = 0; i < height; i++) {
+                for (int j = 0; j < corrected_width; j++) {
                     //System.out.println(j + " " + (i + deviation) + " "+ matrix1.length + " " + matrix1[0].length);
-                    cutted_matrix[i][j][k] = matrix[i+shift][j][k];
+                    cutted_matrix[k][i][j] = matrix[k][i][j+shift];
                 }
             }
         }
@@ -2542,8 +2612,8 @@ class MainFrame extends JFrame {
 //        System.out.println("WDYM???" + width +" "+ height);
         int ws = 1;
         boolean stop=false;
-        for(int i=1; i < width; i++) {
-            for (int j = 0; j < height; j++) {
+        for(int i=1; i < height; i++) {
+            for (int j = 0; j < width; j++) {
                 if (map[i][j] != map[0][j]) {
                     stop = true;
                     break;
@@ -2565,12 +2635,12 @@ class MainFrame extends JFrame {
         }
         return tempmap;
     }
-    public double[][] getFullMap(int[][] map, int width, int height){
-        double[][] tempmap = new double[width][height];
-        for(int i=0; i < width; i++){
-            for(int j=0; j < height; j++){
+    public double[][] getFullMap(int[][] map, int height, int width){
+        double[][] tempmap = new double[height][width];
+        for(int i=0; i < height; i++){
+            for(int j=0; j < width; j++){
                 //System.out.println("********** " + ((int)Math.ceil((double)(i+1)/window_size) - 1) + " " + ((int)Math.ceil((double)(j+1)/window_size) - 1) + " " + i + " " + j);
-                tempmap[i][j] = map[(int)Math.ceil((double)(j+1)/current_state.window_size) - 1][(int)Math.ceil((double)(i+1)/current_state.window_size) - 1];
+                tempmap[i][j] = map[(int)Math.ceil((double)(i+1)/current_state.window_size) - 1][(int)Math.ceil((double)(j+1)/current_state.window_size) - 1];
             }
         }
         return tempmap;
@@ -2578,25 +2648,33 @@ class MainFrame extends JFrame {
     public double Std(byte[][][] matrix) {
         double[] std = {0,0,0};
         double[] avg = Average(matrix);
-        for (int k = 0; k < 3; k++) {
-            for (int i = 0; i < matrix.length; i++) {
-                for (int j = 0; j < matrix[0].length; j++) {
-                    std[k] += Math.pow((matrix[i][j][k]-avg[k]),2);
+        int depth = matrix.length;
+        int height = matrix[0].length;
+        int width = matrix[0][0].length;
+        int area = height*width;
+        for (int k = 0; k < depth; k++) {
+            for (int i = 0; i < height; i++) {
+                for (int j = 0; j < width; j++) {
+                    std[k] += Math.pow((matrix[k][i][j]-avg[k]),2);
                 }
             }
-            std[k] = Math.pow(std[k] / (matrix.length*matrix[0].length-1), 0.5);
+            std[k] = Math.pow(std[k]/(area-1), 0.5);
         }
         return (std[0]+std[1]+std[2])/3;
     }
     public double[] Average(byte[][][] matrix) {
         double[] average_c = {0,0,0};
-        for (int k = 0; k < 3; k++) {
-            for (int i = 0; i < matrix.length; i++) {
-                for (int j = 0; j < matrix[0].length; j++) {
-                    average_c[k] += matrix[i][j][k];
+        int depth = matrix.length;
+        int height = matrix[0].length;
+        int width = matrix[0][0].length;
+        int area = height*width;
+        for (int k = 0; k < depth; k++) {
+            for (int i = 0; i < height; i++) {
+                for (int j = 0; j < width; j++) {
+                    average_c[k] += matrix[k][i][j];
                 }
             }
-            average_c[k] = average_c[k] / (matrix.length*matrix[0].length);
+            average_c[k] = average_c[k] / area;
         }
         return average_c;
     }
@@ -2614,46 +2692,46 @@ class MainFrame extends JFrame {
         return Result;
     }
     public BufferedImage MatrixToImage(double[][] matrix){
-        int width = matrix.length;
-        int height = matrix[0].length;
+        int height = matrix.length;
+        int width = matrix[0].length;
         double max = 0;
-        for (int i = 0; i < width; i++)
-            for (int j = 0; j < height; j++) {
+        for (int i = 0; i < height; i++)
+            for (int j = 0; j < width; j++) {
                 if (Math.abs(matrix[i][j]) > Math.abs(max)) {
                     max = matrix[i][j];
                 }
 
             }
         BufferedImage Result = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-        for (int i = 0; i < width; i++) {
-            for (int j = 0; j < height; j++)
+        for (int i = 0; i < height; i++) {
+            for (int j = 0; j < width; j++)
             {
                 int v = Math.max(0, (int)((matrix[i][j] / max) * 255));
                 Color MyColor = new Color(v, v, v);
-                Result.setRGB(i, j, MyColor.getRGB());
+                Result.setRGB(j, i, MyColor.getRGB());
             }
         }
         return Result;
     }
 
     public BufferedImage MatrixToImage(int[][] matrix){
-        int width = matrix.length;
-        int height = matrix[0].length;
+        int height = matrix.length;
+        int width = matrix[0].length;
         double max = 0;
-        for (int i = 0; i < width; i++)
-            for (int j = 0; j < height; j++) {
+        for (int i = 0; i < height; i++)
+            for (int j = 0; j < width; j++) {
                 if (Math.abs(matrix[i][j]) > Math.abs(max)) {
                     max = matrix[i][j];
                 }
 
             }
         BufferedImage Result = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-        for (int i = 0; i < width; i++) {
-            for (int j = 0; j < height; j++)
+        for (int i = 0; i < height; i++) {
+            for (int j = 0; j < width; j++)
             {
                 int v = Math.max(0, (int)((matrix[i][j] / max) * 255));
                 Color MyColor = new Color(v, v, v);
-                Result.setRGB(i, j, MyColor.getRGB());
+                Result.setRGB(j, i, MyColor.getRGB());
             }
         }
         return Result;

@@ -1,14 +1,7 @@
-import com.sun.tools.javac.Main;
-
-import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
-import java.awt.datatransfer.DataFlavor;
-import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Locale;
 
@@ -247,17 +240,17 @@ public class LogsVisualizator extends JFrame {
         System.out.println("GUI" + " " + guiImageWidth + " " + guiImageHeight);
         System.out.println("Scales" + " " + scalex + " " + scaley);
 
-        this.matrix1 = improc.ImageToMatrixT(image1);
-        this.matrix2 = improc.ImageToMatrixT(image2);
+        this.matrix1 = improc.ImageToMatrix(image1);
+        this.matrix2 = improc.ImageToMatrix(image2);
 
         BufferedImage limagesc = improc.SizeChangerS(image1, guiImageWidth, guiImageHeight, interpol_choice);
         BufferedImage rimagesc = improc.SizeChangerS(image2, guiImageWidth, guiImageHeight, interpol_choice);
-        this.matrix1sc = improc.ImageToMatrixT(limagesc);
-        this.matrix2sc = improc.ImageToMatrixT(rimagesc);
+        this.matrix1sc = improc.ImageToMatrix(limagesc);
+        this.matrix2sc = improc.ImageToMatrix(rimagesc);
         this.logs = logs;
         this.correlation_m = correlation_m;
         this.counter = 0;
-        this.width = matrix1sc.length;
+        this.width = matrix1sc[0][0].length;
         this.height = matrix1sc[0].length;
         this.vdeviation = vdeviation;
         this.opt_dev = opt_deviation;
@@ -343,8 +336,8 @@ public class LogsVisualizator extends JFrame {
         panel.add(fhBox);
         add(panel);
 
-        LeftImageLabel.setIcon(new ImageIcon(improc.MatrixToImage(matrix1sc)));
-        RightImageLabel.setIcon(new ImageIcon(improc.MatrixToImage(matrix2sc)));
+        LeftImageLabel.setIcon(new ImageIcon(mainframe.MatrixToImage(matrix1sc)));
+        RightImageLabel.setIcon(new ImageIcon(mainframe.MatrixToImage(matrix2sc)));
 
 
 
@@ -364,17 +357,17 @@ public class LogsVisualizator extends JFrame {
     }
 
     public int[][][] MCopy(int[][][] matrix) {
-//        int[][][] temp = new int[matrix.length][matrix[0].length][matrix[0][0].length];
-//        for (int i = 0; i < matrix.length; i++) {
-//            for (int j = 0; j < matrix[0].length; j++) {
-//
-////                for (int k = 0; k < matrix[0][0].length; k++)
-////                    temp[i][j][k] = matrix[i][j][k];
-//                System.arraycopy(matrix[i][j], 0, temp[i][j], 0, matrix[0][0].length);
-//            }
-//        }
-//        return temp;
-        return Arrays.stream(matrix).map(int[][]::clone).toArray(int[][][]::new);
+        int[][][] temp = new int[matrix.length][matrix[0].length][matrix[0][0].length];
+        for (int i = 0; i < matrix.length; i++) {
+            for (int j = 0; j < matrix[0].length; j++) {
+
+//                for (int k = 0; k < matrix[0][0].length; k++)
+//                    temp[i][j][k] = matrix[i][j][k];
+                System.arraycopy(matrix[i][j], 0, temp[i][j], 0, matrix[0][0].length);
+            }
+        }
+        return temp;
+//        return Arrays.stream(matrix).map(int[][]::clone).toArray(int[][][]::new);
     }
 
     public class MouseHandler extends MouseAdapter {
@@ -428,17 +421,28 @@ public class LogsVisualizator extends JFrame {
                         tempx = (double)(p.x-shift)/(win * scalex);
                         tempy = (double)p.y/(win * scaley);
 
-                        counter = ((int)Math.floor(tempx)*logs[0].length + (int)Math.floor(tempy));//(tempy + tempx*logs[0].length);
+                        counter = ((int)Math.floor(tempy)*logs[0].length + (int)Math.floor(tempx));//(tempy + tempx*logs[0].length);
 
                         Previous.setEnabled(counter > 0);
                         Next.setEnabled(counter < (logs[0].length*logs.length-1));
 
-                        System.out.println(tempx  +" "+shift+" "+logs.length +" "+tempy+" "+logs[0].length+" "+counter);
+                        System.out.println(tempx+" "+logs[0].length+" "+tempy+" "+logs.length+" "+counter);
                         LogsVisualizator.this.repaint();
                     }
                 }
             }
         }
+    }
+
+    public void setWhite(int[][][] matrix, int i, int j){
+        matrix[0][i][j] = 255;
+        matrix[1][i][j] = 255;
+        matrix[2][i][j] = 255;
+    }
+    public void setRed(int[][][] matrix, int i, int j){
+        matrix[0][i][j] = 255;
+        matrix[1][i][j] = 0;
+        matrix[2][i][j] = 0;
     }
 
     @Override
@@ -453,16 +457,16 @@ public class LogsVisualizator extends JFrame {
 
         // tempX for width axis tempY for height axis
         int tempx, tempy;
-        tempx = (int) ((double) counter / logs[0].length);
-        tempy = counter % logs[0].length;
+        tempx = counter % logs[0].length;
+        tempy = (int) ((double) counter / logs[0].length);
 
 
-        int x1 = logs[tempx][tempy][0];
-        int y1 = logs[tempx][tempy][1];
-        int x2 = logs[tempx][tempy][2];
-        int y2 = logs[tempx][tempy][3];
-        int winw = logs[tempx][tempy][4];
-        int winh = logs[tempx][tempy][5];
+        int x1 = logs[tempy][tempx][0];
+        int y1 = logs[tempy][tempx][1];
+        int x2 = logs[tempy][tempx][2];
+        int y2 = logs[tempy][tempx][3];
+        int winw = logs[tempy][tempx][4];
+        int winh = logs[tempy][tempx][5];
 
 
         int x1sc = (int)(x1 * scalex);
@@ -471,20 +475,21 @@ public class LogsVisualizator extends JFrame {
         int y2sc = (int)(y2 * scaley);
         int winwsc = (int)(winw * scalex);
         int winhsc = (int)(winh * scaley);
-        int hdeviation = (int)(logs[tempx][tempy][12] * scalex);
+        int hdeviation = (int)(logs[tempy][tempx][12] * scalex);
 
-        int[][][] win1 = new int[winw][winh][3];
-        int[][][] win2 = new int[winw][winh][3];
-        int[][][] residualw = new int[winw][winh][3];
-        //System.out.println("WTF????" + winw + " " + winh);
+        int[][][] win1 = new int[mainframe.C][winh][winw];
+        int[][][] win2 = new int[mainframe.C][winh][winw];
+        int[][][] residualw = new int[mainframe.C][winh][winw];
+
 
         int simsize = 100;
-        double heightsc = (double) tempmatrix1[0].length / tempmatrix1.length;
-        int fw = 4 * (matrix1sc.length + matrix1sc[0].length) / (4 * simsize + (int) (4 * simsize * heightsc));
-        while (fw > winhsc /4 && fw > 3) {
+        double heightsc = (double) tempmatrix1[0][0].length / tempmatrix1[0].length;
+        int fw = 4 * (matrix1sc[0].length + matrix1sc[0][0].length) / (4 * simsize + (int) (4 * simsize * heightsc));
+        while (fw > winhsc/4 && fw > 3) {
             fw /= 2;
         }
-        //System.out.println("FW: " + fw);
+//        System.out.println("WTF????" + winwsc + " " + winhsc);
+//        System.out.println("FW: " + fw);
         for (int i = 0; i < width; i++) {
             for (int j = 0; j < height; j++) {
 
@@ -495,81 +500,106 @@ public class LogsVisualizator extends JFrame {
                 if (hdeviation > 0) {
                     // left
                     if ((i - x1sc) < 0 && (i - x1sc) > -fw && j >= y1sc - vdeviation && j <= y1sc + winhsc + vdeviation) {
-                        tempmatrix1[i][j] = new int[]{255, 255, 255};
-                        tempmatrix2[i][j] = new int[]{255, 255, 255};
+                        setWhite(tempmatrix1, j, i);
+                        setWhite(tempmatrix2, j, i);
+//                        tempmatrix1[j][i] = new int[]{255, 255, 255};
+//                        tempmatrix2[j][i] = new int[]{255, 255, 255};
+
                     }
                     // right
                     if ((i - x1sc) > Math.abs(hdeviation) + winwsc && (i - x1sc) < Math.abs(hdeviation) + winwsc + fw && j >= y1sc - vdeviation && j <= y1sc + winhsc + vdeviation) {
-                        tempmatrix1[i][j] = new int[]{255, 255, 255};
-                        tempmatrix2[i][j] = new int[]{255, 255, 255};
+                        setWhite(tempmatrix1, j, i);
+                        setWhite(tempmatrix2, j, i);
+//                        tempmatrix1[j][i] = new int[]{255, 255, 255};
+//                        tempmatrix2[j][i] = new int[]{255, 255, 255};
                     }
                     // top
                     if (((j - y1sc) < -vdeviation && (j - y1sc) > -fw - vdeviation) && i > x1sc - fw && i < x1sc + Math.abs(hdeviation) + winwsc + fw) {
-                        tempmatrix1[i][j] = new int[]{255, 255, 255};
-                        tempmatrix2[i][j] = new int[]{255, 255, 255};
+                        setWhite(tempmatrix1, j, i);
+                        setWhite(tempmatrix2, j, i);
+//                        tempmatrix1[j][i] = new int[]{255, 255, 255};
+//                        tempmatrix2[j][i] = new int[]{255, 255, 255};
                     }
                     //bottom
                     if ((j - y1sc) > vdeviation + winhsc && (j - y1sc) < vdeviation + winhsc + fw && i > x1sc - fw && i < x1sc + Math.abs(hdeviation) + winwsc + fw) {
-                        tempmatrix1[i][j] = new int[]{255, 255, 255};
-                        tempmatrix2[i][j] = new int[]{255, 255, 255};
+                        setWhite(tempmatrix1, j, i);
+                        setWhite(tempmatrix2, j, i);
+//                        tempmatrix1[j][i] = new int[]{255, 255, 255};
+//                        tempmatrix2[j][i] = new int[]{255, 255, 255};
                     }
                 } else {
                     // left
-                    if ((i - x1sc) < hdeviation && (i - x1sc) > -fw + hdeviation && j >= y1sc - vdeviation && j <= y1sc + winhsc + vdeviation) {
-                        tempmatrix1[i][j] = new int[]{255, 255, 255};
-                        tempmatrix2[i][j] = new int[]{255, 255, 255};
+                    if ((i - x1sc) < hdeviation && (i - x1sc) >  hdeviation - fw && j >= y1sc - vdeviation && j <= y1sc + winhsc + vdeviation) {
+                        setWhite(tempmatrix1, j, i);
+                        setWhite(tempmatrix2, j, i);
+//                        tempmatrix1[j][i] = new int[]{255, 255, 255};
+//                        tempmatrix2[j][i] = new int[]{255, 255, 255};
                     }
                     // right
                     if ((i - x1sc) > winwsc && (i - x1sc) < winwsc + fw && j >= y1sc - vdeviation && j <= y1sc + winhsc + vdeviation) {
-                        tempmatrix1[i][j] = new int[]{255, 255, 255};
-                        tempmatrix2[i][j] = new int[]{255, 255, 255};
+                        setWhite(tempmatrix1, j, i);
+                        setWhite(tempmatrix2, j, i);
+//                        tempmatrix1[j][i] = new int[]{255, 255, 255};
+//                        tempmatrix2[j][i] = new int[]{255, 255, 255};
                     }
                     // top
                     if (((j - y1sc) < -vdeviation && (j - y1sc) > -fw - vdeviation) && i > x1sc - fw + hdeviation && i < x1sc + winwsc + fw) {
-                        tempmatrix1[i][j] = new int[]{255, 255, 255};
-                        tempmatrix2[i][j] = new int[]{255, 255, 255};
+                        setWhite(tempmatrix1, j, i);
+                        setWhite(tempmatrix2, j, i);
+//                        tempmatrix1[j][i] = new int[]{255, 255, 255};
+//                        tempmatrix2[j][i] = new int[]{255, 255, 255};
                     }
                     //bottom
                     if ((j - y1sc) > vdeviation + winhsc && (j - y1sc) < vdeviation + winhsc + fw && i > x1sc - fw + hdeviation && i < x1sc + winwsc + fw) {
-                        tempmatrix1[i][j] = new int[]{255, 255, 255};
-                        tempmatrix2[i][j] = new int[]{255, 255, 255};
+                        setWhite(tempmatrix1, j, i);
+                        setWhite(tempmatrix2, j, i);
+//                        tempmatrix1[j][i] = new int[]{255, 255, 255};
+//                        tempmatrix2[j][i] = new int[]{255, 255, 255};
                     }
                 }
 
                 if ((i - x1sc) < 0 && (i - x1sc) > -fw && j >= y1sc && j <= y1sc + winhsc) {
-                    tempmatrix1[i][j] = new int[]{255, 0, 0};
+                    setRed(tempmatrix1, j, i);
+//                    tempmatrix1[j][i] = new int[]{255, 0, 0};
                 }
                 if ((i - x1sc) > winwsc && (i - x1sc) < winwsc + fw && j >= y1sc && j <= y1sc + winhsc) {
-                    tempmatrix1[i][j] = new int[]{255, 0, 0};
+                    setRed(tempmatrix1, j, i);
+//                    tempmatrix1[j][i] = new int[]{255, 0, 0};
                 }
                 if (((j - y1sc) < 0 && (j - y1sc) > -fw) && i > x1sc - fw && i < x1sc + winwsc + fw) {
-                    tempmatrix1[i][j] = new int[]{255, 0, 0};
+                    setRed(tempmatrix1, j, i);
+//                    tempmatrix1[j][i] = new int[]{255, 0, 0};
                 }
                 if ((j - y1sc) > winhsc && (j - y1sc) < winhsc + fw && i > x1sc - fw && i < x1sc + winwsc + fw) {
-                    tempmatrix1[i][j] = new int[]{255, 0, 0};
+                    setRed(tempmatrix1, j, i);
+//                    tempmatrix1[j][i] = new int[]{255, 0, 0};
                 }
 
                 if ((i - x2sc) < 0 && (i - x2sc) > -fw && j >= y2sc && j <= y2sc + winhsc) {
-                    tempmatrix2[i][j] = new int[]{255, 0, 0};
+                    setRed(tempmatrix2, j, i);
+//                    tempmatrix2[j][i] = new int[]{255, 0, 0};
                 }
                 if ((i - x2sc) > winwsc && (i - x2sc) < winwsc + fw && j >= y2sc && j <= y2sc + winhsc) {
-                    tempmatrix2[i][j] = new int[]{255, 0, 0};
+                    setRed(tempmatrix2, j, i);
+//                    tempmatrix2[j][i] = new int[]{255, 0, 0};
                 }
                 if (((j - y2sc) < 0 && (j - y2sc) > -fw) && i > x2sc - fw && i < x2sc + winwsc + fw) {
-                    tempmatrix2[i][j] = new int[]{255, 0, 0};
+                    setRed(tempmatrix2, j, i);
+//                    tempmatrix2[j][i] = new int[]{255, 0, 0};
                 }
                 if ((j - y2sc) > winhsc && (j - y2sc) < winhsc + fw && i > x2sc - fw && i < x2sc + winwsc + fw) {
-                    tempmatrix2[i][j] = new int[]{255, 0, 0};
+                    setRed(tempmatrix2, j, i);
+//                    tempmatrix2[j][i] = new int[]{255, 0, 0};
                 }
             }
         }
-        for (int k = 0; k < 3; k++) {
-            for (int i = 0; i < winw; i++) {
-                for (int j = 0; j < winh; j++) {
-                    win1[i][j][k] = matrix1[i + x1][j + y1][k];
-                    win2[i][j][k] = matrix2[i + x2][j + y2][k];
+        for (int k = 0; k < mainframe.C; k++) {
+            for (int i = 0; i < winh; i++) {
+                for (int j = 0; j < winw; j++) {
+                    win1[k][i][j] = matrix1[k][i + y1][j + x1];
+                    win2[k][i][j] = matrix2[k][i + y2][j + x2];
                     //System.out.println(win1[i][j][k] + " " + win2[i][j][k]);
-                    residualw[i][j][k] = Math.min(Math.abs(win1[i][j][k] - win2[i][j][k]) * 3, 255);
+                    residualw[k][i][j] = Math.min(Math.abs(win1[k][i][j] - win2[k][i][j]) * 3, 255);
                 }
             }
             //System.out.println("\n\nNEXT K\n\n");
@@ -577,21 +607,21 @@ public class LogsVisualizator extends JFrame {
 
 //        LeftImageLabel.setIcon(new ImageIcon(improc.SizeChangerDistanceBased(improc.MatrixToImage(tempmatrix1), 4 * simsize, (int) (6 * simsize * heightsc))));
 //        RightImageLabel.setIcon(new ImageIcon(improc.SizeChangerDistanceBased(improc.MatrixToImage(tempmatrix2), 4 * simsize, (int) (6 * simsize * heightsc))));
-        LeftImageLabel.setIcon(new ImageIcon(improc.MatrixToImage(tempmatrix1)));
-        RightImageLabel.setIcon(new ImageIcon(improc.MatrixToImage(tempmatrix2)));
+        LeftImageLabel.setIcon(new ImageIcon(mainframe.MatrixToImage(tempmatrix1)));
+        RightImageLabel.setIcon(new ImageIcon(mainframe.MatrixToImage(tempmatrix2)));
 
-        CLeftImageLabel.setIcon(new ImageIcon(improc.SizeChangerS(improc.MatrixToImage(win1), simsize, simsize, interpol_choice)));
-        CRightImageLabel.setIcon(new ImageIcon(improc.SizeChangerS(improc.MatrixToImage(win2), simsize, simsize, interpol_choice)));
-        CenterImageLabel.setIcon(new ImageIcon(improc.SizeChangerS(improc.MatrixToImage(residualw), 2 * simsize, 2 * simsize, interpol_choice)));
+        CLeftImageLabel.setIcon(new ImageIcon(improc.SizeChangerS(mainframe.MatrixToImage(win1), simsize, simsize, interpol_choice)));
+        CRightImageLabel.setIcon(new ImageIcon(improc.SizeChangerS(mainframe.MatrixToImage(win2), simsize, simsize, interpol_choice)));
+        CenterImageLabel.setIcon(new ImageIcon(improc.SizeChangerS(mainframe.MatrixToImage(residualw), 2 * simsize, 2 * simsize, interpol_choice)));
         int nd = 2;
-        int len = correlation_m[tempx][tempy].length;
+        int len = correlation_m[tempy][tempx].length;
         double[][] corr_mat = new double[len][nd];
         for (int i = 0; i < len; i++) {
             for (int j = 0; j < nd; j++) {
                 if (hdeviation > 0) {
-                    corr_mat[i][j] = correlation_m[tempx][tempy][i];
+                    corr_mat[i][j] = correlation_m[tempy][tempx][i];
                 } else {
-                    corr_mat[i][j] = correlation_m[tempx][tempy][len - 1 - i];
+                    corr_mat[i][j] = correlation_m[tempy][tempx][len - 1 - i];
                 }
             }
         }
@@ -604,10 +634,10 @@ public class LogsVisualizator extends JFrame {
 
         // ИСПРАВИТЬ УВЕЛИЧЕННЫЕ ПОДОБЛАСТИ!!!!
         CorrImageLabel.setIcon(new ImageIcon(improc.SizeChangerS(improc.MatrixToImage(corr_mat),2*simsize, simsize/5, interpol_choice)));
-        STD.setText("STD: " + (double)logs[tempx][tempy][8]/dtis +  " and " + (double)logs[tempx][tempy][9]/dtis);
-        Metrics.setText("Metrics: " + (double)logs[tempx][tempy][6]/dtis);
-        Deviation.setText("Deviation: " + String.format(Locale.US,"%.3f", Math.abs((double)logs[tempx][tempy][7]/dtis)));
-        CCounter.setText("Comparisons: " + logs[tempx][tempy][11]);
+        STD.setText("STD: " + (double)logs[tempy][tempx][8]/dtis +  " and " + (double)logs[tempy][tempx][9]/dtis);
+        Metrics.setText("Metrics: " + (double)logs[tempy][tempx][6]/dtis);
+        Deviation.setText("Deviation: " + String.format(Locale.US,"%.3f", Math.abs((double)logs[tempy][tempx][7]/dtis)));
+        CCounter.setText("Comparisons: " + logs[tempy][tempx][11]);
         Counter.setText("Window counter: " + counter);
         super.repaint();
 

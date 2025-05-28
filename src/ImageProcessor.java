@@ -79,8 +79,7 @@ public class ImageProcessor {
         TempImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
         for (int i = 0; i < Result.getWidth(); i++) {
             for (int j = 0; j < Result.getHeight(); j++) {
-                if (i >= 0 && i < Result.getWidth() && j >= 0 && j < Result.getHeight())
-                    TempImage.setRGB(i + size, j + size, new Color(Result.getRGB(i, j)).getRGB());
+                TempImage.setRGB(i + size, j + size, new Color(Result.getRGB(i, j)).getRGB());
             }
         }
     }
@@ -1401,43 +1400,45 @@ public class ImageProcessor {
     }
 
     public int[][][] ImageToMatrix(BufferedImage image){
-        int[][][] matrix = new int[image.getHeight()][image.getWidth()][3];
-        for(int i = 0; i< image.getHeight(); i++) {
+        int[][][] matrix = new int[3][image.getHeight()][image.getWidth()];
+        for(int i = 0; i < image.getHeight(); i++) {
             for (int j = 0; j < image.getWidth(); j++) {
                 Color color = new Color(image.getRGB(j,i));
-                matrix[i][j][0] = color.getRed();
-                matrix[i][j][1] = color.getGreen();
-                matrix[i][j][2] = color.getBlue();
+                matrix[0][i][j] = color.getRed();
+                matrix[1][i][j] = color.getGreen();
+                matrix[2][i][j] = color.getBlue();
             }
         }
         return matrix;
     }
 
     public byte[][][] ImageToBMatrix(BufferedImage image){
-        byte[][][] matrix = new byte[image.getHeight()][image.getWidth()][3];
+        byte[][][] matrix = new byte[3][image.getHeight()][image.getWidth()];
         for(int i = 0; i< image.getHeight(); i++) {
             for (int j = 0; j < image.getWidth(); j++) {
                 Color color = new Color(image.getRGB(j,i));
-                matrix[i][j][0] = (byte)(Math.abs(color.getRed()) - 128);
-                matrix[i][j][1] = (byte)(Math.abs(color.getGreen()) - 128);
-                matrix[i][j][2] = (byte)(Math.abs(color.getBlue()) - 128);
+                matrix[0][i][j] = (byte)(Math.abs(color.getRed()) - 128);
+                matrix[1][i][j] = (byte)(Math.abs(color.getGreen()) - 128);
+                matrix[2][i][j] = (byte)(Math.abs(color.getBlue()) - 128);
             }
         }
         return matrix;
     }
 
     public int[][][] ImageToMatrixT(BufferedImage image){
-        int[][][] matrix = new int[image.getWidth()][image.getHeight()][3];
+        int[][][] matrix = new int[3][image.getWidth()][image.getHeight()];
         for(int i = 0; i< image.getHeight(); i++) {
             for (int j = 0; j < image.getWidth(); j++) {
                 Color color = new Color(image.getRGB(j,i));
-                matrix[j][i][0] = color.getRed();
-                matrix[j][i][1] = color.getGreen();
-                matrix[j][i][2] = color.getBlue();
+                matrix[0][j][i] = color.getRed();
+                matrix[1][j][i] = color.getGreen();
+                matrix[2][j][i] = color.getBlue();
             }
         }
         return matrix;
     }
+
+
     public int[][] BWImageToMatrix(BufferedImage image){
         int[][] matrix = new int[image.getHeight()][image.getWidth()];
         for(int i = 0; i< image.getHeight(); i++) {
@@ -1590,24 +1591,24 @@ public class ImageProcessor {
     }
 
     // TODO: Different criterion
-    public BufferedImage AutoFiltration(){
-        String[] filters = new String[]{"min", "max", "median", "amedian"};
-        double best_std = this.Std(this.ImageToMatrix(Result));
-        String best_filter = "none";
-        BufferedImage BestResult = ImageCopy(Result);
-        for (String filter: filters){
-            BufferedImage temp = OrderStatFiltration(filter);
-            double std = this.Std(this.ImageToMatrix(temp));
-//            System.out.println(filter+" "+std);
-            if (std < best_std){
-                best_std = std;
-                best_filter = filter;
-                BestResult = ImageCopy(temp);
-            }
-        }
-        System.out.println("Filter "+best_filter+" was applied");
-        return BestResult;
-    }
+//    public BufferedImage AutoFiltration(){
+//        String[] filters = new String[]{"min", "max", "median", "amedian"};
+//        double best_std = this.Std(this.ImageToMatrix(Result));
+//        String best_filter = "none";
+//        BufferedImage BestResult = ImageCopy(Result);
+//        for (String filter: filters){
+//            BufferedImage temp = OrderStatFiltration(filter);
+//            double std = this.Std(this.ImageToMatrix(temp));
+////            System.out.println(filter+" "+std);
+//            if (std < best_std){
+//                best_std = std;
+//                best_filter = filter;
+//                BestResult = ImageCopy(temp);
+//            }
+//        }
+//        System.out.println("Filter "+best_filter+" was applied");
+//        return BestResult;
+//    }
     public BufferedImage OrderStatFiltration(String type) {
         ImageExtension();
         syncMatrix();

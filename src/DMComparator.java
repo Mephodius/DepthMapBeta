@@ -178,7 +178,14 @@ public class DMComparator extends JFrame {
                     java.util.List<File> droppedFiles = (List<File>)
                             evt.getTransferable().getTransferData(DataFlavor.javaFileListFlavor);
                     if (!droppedFiles.isEmpty()) {
-                        LoadDM(droppedFiles.get(0));
+                        boolean is_image = false;
+                        File file = droppedFiles.get(0);
+                        String[] temp = file.toString().split(mainframe.sep);
+                        String name = temp[temp.length - 1].toLowerCase();
+                        for (String format : mainframe.image_formats)
+                            is_image = (is_image || name.contains(format));
+                        if (is_image)
+                            LoadDM(droppedFiles.get(0));
                     }
 
                     evt.dropComplete(true);
