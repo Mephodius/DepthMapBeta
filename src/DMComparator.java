@@ -233,9 +233,9 @@ public class DMComparator extends JFrame {
         // matrix2 is our map and is smaller
         std1 = improc.Std(matrix1);
         std2 = improc.Std(matrix2);
-        int width = matrix2[0].length;
+        int width = matrix2[0][0].length;
 
-        int height = matrix2.length;
+        int height = matrix2[0].length;
         double best_metric = 0;
         double best_correlation = 0;
         int opt_deviation = width / 4;
@@ -250,15 +250,15 @@ public class DMComparator extends JFrame {
         //int stripe = Math.max((int)area/75, 1);
         int drange = 1;
         System.out.println("Metrics calculation");
-        for (int deviation = Math.max(0,matrix1[0].length - matrix2[0].length - drange); deviation <= matrix1[0].length - matrix2[0].length; deviation += 1) {
-            temp_matrix1 = new int[height][width][3];
-            temp_matrix2 = new int[height][width][3];
-            for (int i = 0; i < Math.min(width, width-deviation); i++) {
-                for (int j = 0; j < height; j++) {
-                    for (int k = 0; k < 3; k++) {
+        for (int deviation = Math.max(0,matrix1[0][0].length - matrix2[0][0].length - drange); deviation <= matrix1[0][0].length - matrix2[0][0].length; deviation += 1) {
+            temp_matrix1 = new int[mainframe.C][height][width];
+            temp_matrix2 = new int[mainframe.C][height][width];
+            for (int k = 0; k < mainframe.C; k++) {
+                for (int i = 0; i < Math.min(width, width-deviation); i++) {
+                    for (int j = 0; j < height; j++) {
                         //System.out.println(j + " " + (i + deviation) + " "+ matrix1.length + " " + matrix1[0].length);
-                        temp_matrix1[j][i][k] = matrix1[j][i + deviation][k];
-                        temp_matrix2[j][i][k] = matrix2[j][i][k];
+                        temp_matrix1[k][j][i] = matrix1[k][j][i + deviation];
+                        temp_matrix2[k][j][i] = matrix2[k][j][i];
                     }
                 }
             }
@@ -268,15 +268,16 @@ public class DMComparator extends JFrame {
             if (use_approx) {
                 Random rand = new Random();
                 for (int i = 0; i < n_rnd; i++) {
-                    int[][][] rbatch1 = new int[size][size][3];
-                    int[][][] rbatch2 = new int[size][size][3];
+                    int[][][] rbatch1 = new int[mainframe.C][size][size];
+                    int[][][] rbatch2 = new int[mainframe.C][size][size];
                     int y_r = rand.nextInt(width - size + 1);
                     int x_r = rand.nextInt(height - size + 1);
-                    for (int n = 0; n < size; n++) {
-                        for (int m = 0; m < size; m++) {
-                            for (int k = 0; k < 3; k++) {
-                                rbatch1[n][m][k] = temp_matrix1[x_r + n][y_r + m][k];
-                                rbatch2[n][m][k] = temp_matrix2[x_r + n][y_r + m][k];
+                    for (int k = 0; k < 3; k++) {
+                        for (int n = 0; n < size; n++) {
+                            for (int m = 0; m < size; m++) {
+
+                                rbatch1[k][n][m] = temp_matrix1[k][y_r + n][x_r + m];
+                                rbatch2[k][n][m] = temp_matrix2[k][y_r + n][x_r + m];
                             }
                         }
                     }

@@ -320,10 +320,11 @@ class SAD extends CompareMethod {
 
         int N = width*height;
         double[] total = {0, 0, 0};
-        for (int i = 0; i < width; i++) {
-            for (int j = 0; j < height; j++) {
-                for (int k = 0; k < 3; k++) {
-                    total[k] += Math.abs(scanim1[i][j][k] - scanim2[i][j][k]);
+        for (int k = 0; k < depth; k++) {
+            for (int i = 0; i < height; i++) {
+                for (int j = 0; j < width; j++) {
+
+                    total[k] += Math.abs(scanim1[k][i][j] - scanim2[k][i][j]);
                 }
             }
         }
