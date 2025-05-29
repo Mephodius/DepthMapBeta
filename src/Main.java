@@ -1852,7 +1852,7 @@ class MainFrame extends JFrame {
                     System.out.println();
                 }
 
-                System.out.println("Adaptive Areas: " + locale_w + " " + locale_h);
+                System.out.println("Adaptive Areas: " + locale_h + " " + locale_w);
             }
 
 
@@ -1898,8 +1898,13 @@ class MainFrame extends JFrame {
                         //System.out.println("STD " + improc.Std(tempmatrix1));
                         // && tempsizeadd < 2*sc_width
                         double start_std = std1;
-                        if(eP[0] >= -max_deviation && (width - eP[3] - eP[1]) > 0 && eP[0] >= 0 && (height - eP[2] - eP[0]) > 0) { // ????
-                            while (std1 <= Math.min(std_thresh, AC*start_std) && eP[0] >= -max_deviation && (width - eP[2] - eP[0]) > 0 && eP[1] >= 0 && (height - eP[3] - eP[2]) > 0) {
+                        // row col height width
+
+//                        if(eP[0] >= -max_deviation && (width - eP[3] - eP[1]) > 0 && eP[0] >= 0 && (height - eP[2] - eP[0]) > 0) { // ????
+//                            while (std1 <= Math.min(std_thresh, AC*start_std) && eP[0] >= -max_deviation && (width - eP[2] - eP[0]) > 0 && eP[1] >= 0 && (height - eP[3] - eP[2]) > 0) {
+
+                        if(eP[1] >= -max_deviation && (width - eP[3] - eP[1]) > 0 && eP[0] >= 0 && (height - eP[2] - eP[0]) > 0) { // ????
+                            while (std1 <= Math.min(std_thresh, AC*start_std) && eP[1] >= -max_deviation && (width - eP[3] - eP[1]) > 0 && eP[0] >= 0 && (height - eP[2] - eP[0]) > 0) {
                                 asmatrix = getPart(matrix1, row_image1, col_image1, sc_height, sc_width, tempsizeadd);
                                 //System.out.println("&&&&&&&&&&&&&&&&& " + tempsizeadd + " " + col_image1 + " " + row_image1);
                                 std1 = Std(asmatrix);
