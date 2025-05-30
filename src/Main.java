@@ -58,28 +58,6 @@ abstract class CompareMethod {
     }
 
 
-    public static int[] arrayRankTransform(int[] arr) {
-        int N = arr.length;
-        //create result array and re-use it to store sorted elements of original array
-        int[] sorted = Arrays.copyOf(arr, N);
-        int[] ranks = new int[N];
-        Arrays.sort(sorted);
-        //fill map of ranks based on sorted sequence of elements
-        int counter, temp;
-        for (int i = 0; i < N; i++){
-            counter = 0;
-            temp = 0;
-            for (int j = 0; j < N; j++){
-                if (arr[i] == sorted[j]){
-                    counter++;
-                    temp += j;
-                }
-            }
-            ranks[i] = temp/counter;
-        }
-        //fill result array with ranks, sequence of elements must be preserved from original array
-        return ranks;
-    }
     public double get_similarity(byte[][][] scanim1, byte[][][] scanim2){ return 0;}
     public double get_similarity(int[][][] scanim1, int[][][] scanim2){ return 0;}
 
@@ -130,8 +108,6 @@ class NCC extends CompareMethod {
 
     public double get_similarity(byte[][][] scanim1, byte[][][] scanim2, int y1, int x1, int y2, int x2, int winh, int winw){
         int depth = scanim1.length;
-        int height = scanim1[0].length;
-        int width = scanim1[0][0].length;
 
         double[] averageim1 = {0, 0, 0};
         double[] averageim2 = {0, 0, 0};
@@ -239,8 +215,6 @@ class SCC extends CompareMethod {
     public double get_similarity(byte[][][] scanim1, byte[][][] scanim2, int y1, int x1, int y2, int x2, int winh, int winw){
 
         int depth = scanim1.length;
-        int height = scanim1[0].length;
-        int width = scanim1[0][0].length;
 
         int N = ((winh+1)/this.stride)*((winw+1)/this.stride);
         byte[] array1 = new byte[N];
@@ -266,34 +240,6 @@ class SCC extends CompareMethod {
         return (total[0] + total[1] + total[2])/3;
     }
 
-    public double get_similarity(int[][][] scanim1, int[][][] scanim2) {
-        int depth = scanim1.length;
-        int height = scanim1[0].length;
-        int width = scanim1[0][0].length;
-
-        int N = width * height;
-        int[] array1 = new int[N];
-        int[] array2 = new int[N];
-        int[] ranks1;
-        int[] ranks2;
-        long[] d = {0, 0, 0};
-        double[] total = {0, 0, 0};
-        for (int k = 0; k < depth; k++) {
-            for (int i = 0; i < height; i++) {
-                for (int j = 0; j < width; j++) {
-                    array1[width*i+j] = scanim1[k][i][j];
-                    array2[width*i+j] = scanim2[k][i][j];
-                }
-            }
-            ranks1 = arrayRankTransform(array1);
-            ranks2 = arrayRankTransform(array2);
-            for (int i = 0; i < N; i++) {
-                d[k] += (long) Math.pow(ranks1[i] - ranks2[i], 2);
-            }
-            total[k] = (1 - (((double) d[k] / N) * 6) / (Math.pow(N, 2) - 1));
-        }
-        return (total[0] + total[1] + total[2]) / 3;
-    }
 }
 
 
@@ -334,8 +280,6 @@ class KCC extends CompareMethod {
     public double get_similarity(byte[][][] scanim1, byte[][][] scanim2, int y1, int x1, int y2, int x2, int winh, int winw){
 
         int depth = scanim1.length;
-        int height = scanim1[0].length;
-        int width = scanim1[0][0].length;
 
         int N = ((winh+1)/this.stride)*((winw+1)/this.stride);
         byte[] array1 = new byte[N];
@@ -349,38 +293,6 @@ class KCC extends CompareMethod {
                 for (int j = 0; j < winw; j+=this.stride) {
                     array1[winw*i+j] = scanim1[k][y1+i][x1+j];
                     array2[winw*i+j] = scanim2[k][y2+i][x2+j];
-                }
-            }
-            ranks1 = arrayRankTransform(array1);
-            ranks2 = arrayRankTransform(array2);
-            for (int i = 0; i < N; i++) {
-                for(int j = i+1; j < N; j++){
-                    t[k] += Integer.signum(ranks1[i] - ranks1[j])*Integer.signum(ranks2[i] - ranks2[j]);
-                }
-            }
-            total[k] = ((double)2*t[k]/N)/(N - 1);
-            //System.out.println("CB: "+ c[k] +" "+ b[k]+" "+total[k]);
-        }
-        return (total[0] + total[1] + total[2])/3;
-    }
-
-    public double get_similarity(int[][][] scanim1, int[][][] scanim2) {
-        int depth = scanim1.length;
-        int height = scanim1[0].length;
-        int width = scanim1[0][0].length;
-
-        int N = width*height;
-        int[] array1 = new int[N];
-        int[] array2 = new int[N];
-        int[] ranks1;
-        int[] ranks2;
-        double[] t = {0,0,0};
-        double[] total = {0, 0, 0};
-        for (int k = 0; k < depth; k++) {
-            for (int i = 0; i < height; i+=this.stride) {
-                for (int j = 0; j < width; j+=this.stride) {
-                    array1[width*i+j] = scanim1[k][i][j];
-                    array2[width*i+j] = scanim2[k][i][j];
                 }
             }
             ranks1 = arrayRankTransform(array1);
@@ -420,8 +332,6 @@ class SAD extends CompareMethod {
 
     public double get_similarity(byte[][][] scanim1, byte[][][] scanim2, int y1, int x1, int y2, int x2, int winh, int winw) {
         int depth = scanim1.length;
-        int height = scanim1[0].length;
-        int width = scanim1[0][0].length;
 
         int N = ((winw+1)/this.stride)*((winh+1)/this.stride);
         double[] total = {0, 0, 0};
@@ -514,8 +424,6 @@ class SSD extends CompareMethod {
 
     public double get_similarity(byte[][][] scanim1, byte[][][] scanim2, int y1, int x1, int y2, int x2, int winh, int winw) {
         int depth = scanim1.length;
-        int height = scanim1[0].length;
-        int width = scanim1[0][0].length;
 
         int N = ((winw+1)/this.stride)*((winh+1)/this.stride);
         double[] total = {0, 0, 0};
@@ -597,10 +505,9 @@ class MainFrame extends JFrame {
     JLabel Kcc = new JLabel("KCC");
     JLabel Sad = new JLabel("SAD");
     JLabel Ssd = new JLabel("SSD");
-    JLabel BW = new JLabel("BW");
-    JLabel SOBEL = new JLabel("SOBEL");
-    JLabel PREVITT = new JLabel("PREVITT");
-    JLabel NONE = new JLabel("NONE");
+//    JLabel BW = new JLabel("BW");
+//    JLabel SOBEL = new JLabel("SOBEL");
+//    JLabel PREVITT = new JLabel("PREVITT");
     JLabel WindowSizeLabel = new JLabel("Window size");
     JLabel VdevLabel = new JLabel("MVDev");
     JLabel TimeLabel = new JLabel("Time, ms");
@@ -711,7 +618,7 @@ class MainFrame extends JFrame {
 
     int start, finish;
 
-    int interpol_choice = 2;
+    int interpol_choice = 1;
 
     // Declare all actions used
     private Action selectLAction;
@@ -1961,7 +1868,6 @@ class MainFrame extends JFrame {
 
             int tempsizeadd;
             itercounter = 0;
-            progress = 0;
 
             int sc_height, sc_width;
             double std1, std2 = 0;
@@ -2059,7 +1965,7 @@ class MainFrame extends JFrame {
                                     eP = extendPart(row_image1, col_image1, sc_height, sc_width, tempsizeadd);
 //                                    System.out.println(row_image1+" "+col_image1+" "+" "+tempsizeadd+" "+std1);
                                 }
-                                tempsizeadd -= 1;
+                                tempsizeadd = Math.max(tempsizeadd-2, 0);
                             }
                         }
                     }
@@ -2152,7 +2058,7 @@ class MainFrame extends JFrame {
                         }
                     }
                     itercounter++;
-                    progress = 0.5+(double)itercounter/(iterations_total*2);
+                    progress = Math.min(0.5+(double)itercounter/(iterations_total*2), 0.99);
                     int tend = (int) System.currentTimeMillis();
 //                    System.out.println((double)comp_time/(tend-tst));
                     publish();
@@ -2215,49 +2121,19 @@ class MainFrame extends JFrame {
 
             int iterations_total = (int)((double)(rs-ls)/stripe);
 
-
-            int copyt = 0;
             for (int deviation = ls; deviation < rs; deviation += stripe) {
                 if (this.isCancelled())
                     return null;
-                int cs = (int) System.currentTimeMillis();
                 int corrected_width = width - Math.abs(deviation);
-//                temp_matrix1 = new byte[C][height][corrected_width];
-//                temp_matrix2 = new byte[C][height][corrected_width];
-//                for (int k = 0; k < C; k++) {
-//                    for (int i = 0; i < height; i++) {
-//                        for (int j = 0; j < width - Math.abs(deviation); j++) {
-//
-////                            if (deviation < 0) {
-//                            temp_matrix1[k][i][j] = matrix1[k][i][j-deviation];
-//                            temp_matrix2[k][i][j] = matrix2[k][i][j];
-////                            } else {
-////                                temp_matrix1[i][j][k] = matrix1[i][j][k];
-////                                temp_matrix2[i][j][k] = matrix2[i + deviation][j][k];
-////                            }
-//                        }
-//                    }
-//                }
-                int ce = (int) System.currentTimeMillis();
-                copyt += (ce-cs);
+
                 double correlation = 0;
                 double counter = 0;
                 if (use_approx){
                     for (int i = 0; i < n_rnd; i++){
-                        byte[][][] rbatch1 = new byte[C][size][size];
-                        byte[][][] rbatch2 = new byte[C][size][size];
 
                         int y_r = (int)(c_r[i][1] * (height - size + 1));
                         int x_r = (int)(c_r[i][0] * (width - Math.abs(deviation) - size + 1));
 
-//                        for (int k = 0; k < C; k++){
-//                            for (int n = 0; n < size; n++){
-//                                for (int m = 0; m < size; m++){
-//                                    rbatch1[k][n][m] = temp_matrix1[k][y_r + n][x_r + m];
-//                                    rbatch2[k][n][m] = temp_matrix2[k][y_r + n][x_r + m];
-//                                }
-//                            }
-//                        }
                         double temp = ncccm.get_similarity(matrix1, matrix2, y_r, x_r-deviation, y_r, x_r, size, size);
                         if(!Double.isNaN(temp)) {
                             correlation += temp;
@@ -2267,23 +2143,20 @@ class MainFrame extends JFrame {
                     correlation /= counter;
                 }
                 else {
-                    System.out.println(deviation +" "+ls+" "+rs+" "+stripe);
+//                    System.out.println(deviation +" "+ls+" "+rs+" "+stripe);
                     correlation = ncccm.get_similarity(matrix1, matrix2, 0, -deviation, 0, 0, height, corrected_width);
                 }
 
                 if (correlation > best_correlation) {
-//                    best_matrix1 = MCopy(temp_matrix1);
-//                    best_matrix2 = MCopy(temp_matrix2);
                     best_correlation = correlation;
                     opt_deviation = deviation;
                 }
                 plot_data[(deviation - ls)/stripe] = new double[]{deviation, 100*correlation};
                 itercounter++;
-                progress = (double)itercounter/(iterations_total*2);
-                int dend = (int) System.currentTimeMillis();
+                progress = Math.min((double)itercounter/(iterations_total*2), 0.5);
 //                System.out.println("Copy is "+((double)copyt/(dend-dstart)) + " of all time");
                 publish();
-                System.out.println(" " + correlation +" "+ deviation);
+                System.out.println("C:D" + correlation +" "+ deviation);
             }
 //        if (verbose){
 //            pf = new PlotFrame(MainFrame.this, MatrixToImage(best_matrix1), MatrixToImage(best_matrix2),
@@ -2360,7 +2233,7 @@ class MainFrame extends JFrame {
                     }
                 }
                 itercounter++;
-                progress = (double)itercounter/(iterations_total*2);
+                progress = Math.min((double)itercounter/(iterations_total*2), 0.5);
                 publish();
                 System.out.println(deviation + " " + correlation);
             }
@@ -2491,8 +2364,7 @@ class MainFrame extends JFrame {
         double min = ((double)1/((2*Math.PI*dispersion)*Math.exp(Math.hypot((-size),(-size))/(2*dispersion))));
         for (int i = 0; i < mask.length; i++) {
             for (int j = 0; j < mask.length; j++) {
-                mask[i][j] = (int)(((double)1/((2*Math.PI*dispersion)*Math.exp(Math.hypot((i-size),(j-size))/(2*dispersion))))/min);
-            }
+                mask[i][j] = (int)(((double)1/((2*Math.PI*dispersion)*Math.exp(Math.hypot((i-size),(j-size))/(2*dispersion))))/min);}
         }
         return mask;
     }
