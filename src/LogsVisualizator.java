@@ -336,8 +336,8 @@ public class LogsVisualizator extends JFrame {
         panel.add(fhBox);
         add(panel);
 
-        LeftImageLabel.setIcon(new ImageIcon(mainframe.MatrixToImage(matrix1sc)));
-        RightImageLabel.setIcon(new ImageIcon(mainframe.MatrixToImage(matrix2sc)));
+        LeftImageLabel.setIcon(new ImageIcon(improc.MatrixToImage(matrix1sc)));
+        RightImageLabel.setIcon(new ImageIcon(improc.MatrixToImage(matrix2sc)));
 
 
 
@@ -607,21 +607,21 @@ public class LogsVisualizator extends JFrame {
 
 //        LeftImageLabel.setIcon(new ImageIcon(improc.SizeChangerDistanceBased(improc.MatrixToImage(tempmatrix1), 4 * simsize, (int) (6 * simsize * heightsc))));
 //        RightImageLabel.setIcon(new ImageIcon(improc.SizeChangerDistanceBased(improc.MatrixToImage(tempmatrix2), 4 * simsize, (int) (6 * simsize * heightsc))));
-        LeftImageLabel.setIcon(new ImageIcon(mainframe.MatrixToImage(tempmatrix1)));
-        RightImageLabel.setIcon(new ImageIcon(mainframe.MatrixToImage(tempmatrix2)));
+        LeftImageLabel.setIcon(new ImageIcon(improc.MatrixToImage(tempmatrix1)));
+        RightImageLabel.setIcon(new ImageIcon(improc.MatrixToImage(tempmatrix2)));
 
-        CLeftImageLabel.setIcon(new ImageIcon(improc.SizeChangerS(mainframe.MatrixToImage(win1), simsize, simsize, interpol_choice)));
-        CRightImageLabel.setIcon(new ImageIcon(improc.SizeChangerS(mainframe.MatrixToImage(win2), simsize, simsize, interpol_choice)));
-        CenterImageLabel.setIcon(new ImageIcon(improc.SizeChangerS(mainframe.MatrixToImage(residualw), 2 * simsize, 2 * simsize, interpol_choice)));
+        CLeftImageLabel.setIcon(new ImageIcon(improc.SizeChangerS(improc.MatrixToImage(win1), simsize, simsize, interpol_choice)));
+        CRightImageLabel.setIcon(new ImageIcon(improc.SizeChangerS(improc.MatrixToImage(win2), simsize, simsize, interpol_choice)));
+        CenterImageLabel.setIcon(new ImageIcon(improc.SizeChangerS(improc.MatrixToImage(residualw), 2 * simsize, 2 * simsize, interpol_choice)));
         int nd = 2;
         int len = correlation_m[tempy][tempx].length;
-        double[][] corr_mat = new double[len][nd];
-        for (int i = 0; i < len; i++) {
-            for (int j = 0; j < nd; j++) {
+        double[][] corr_mat = new double[nd][len];
+        for (int i = 0; i < nd; i++) {
+            for (int j = 0; j < len; j++) {
                 if (hdeviation > 0) {
-                    corr_mat[i][j] = correlation_m[tempy][tempx][i];
+                    corr_mat[i][j] = correlation_m[tempy][tempx][j];
                 } else {
-                    corr_mat[i][j] = correlation_m[tempy][tempx][len - 1 - i];
+                    corr_mat[i][j] = correlation_m[tempy][tempx][len - 1 - j];
                 }
             }
         }
@@ -633,7 +633,7 @@ public class LogsVisualizator extends JFrame {
 //        }
 
         // ИСПРАВИТЬ УВЕЛИЧЕННЫЕ ПОДОБЛАСТИ!!!!
-        CorrImageLabel.setIcon(new ImageIcon(improc.SizeChangerS(improc.MatrixToImage(corr_mat),2*simsize, simsize/5, interpol_choice)));
+        CorrImageLabel.setIcon(new ImageIcon(improc.SizeChangerS(improc.MatrixToImage(corr_mat, true),2*simsize, simsize/5, interpol_choice)));
         STD.setText("STD: " + (double)logs[tempy][tempx][8]/dtis +  " and " + (double)logs[tempy][tempx][9]/dtis);
         Metrics.setText("Metrics: " + (double)logs[tempy][tempx][6]/dtis);
         Deviation.setText("Deviation: " + String.format(Locale.US,"%.3f", Math.abs((double)logs[tempy][tempx][7]/dtis)));

@@ -3,7 +3,7 @@
   <dontWrapJar>false</dontWrapJar>
   <headerType>gui</headerType>
   <jar>/home/mephodius/Programming/IdeaProjects/DepthMap/out/artifacts/DepthMap_jar/DepthMap.jar</jar>
-  <outfile>/home/mephodius/Programming/IdeaProjects/DepthMap/out/artifacts/DepthMap_jar/DepthMapGen.exe</outfile>
+  <outfile>/home/mephodius/Programming/IdeaProjects/DepthMap/out/artifacts/DepthMap_jar/DepthMapGenV2.exe</outfile>
   <errTitle></errTitle>
   <cmdLine></cmdLine>
   <chdir>.</chdir>

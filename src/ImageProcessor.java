@@ -741,8 +741,8 @@ public class ImageProcessor {
      * Method to increase contrast globally, based on histogram equalization
      * @return
      */
-    public BufferedImage ImageContrastIncrease() {
-        UpdateTemp(Result);
+    public BufferedImage ImageContrastIncrease(BufferedImage image) {
+        UpdateTemp(image);
         syncMatrix();
         Double[][] BrightnessDensity = new Double[3][L];
         for (int i = 0; i < 3; i++) {
@@ -1475,24 +1475,10 @@ public class ImageProcessor {
         return temp;
     }
 
-    public BufferedImage MatrixToImage(int[][][] matrix){
-        int width = matrix.length;
-        int height = matrix[0].length;
-        BufferedImage tempimg = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-        for (int i = 0; i < width; i++) {
-            for (int j = 0; j < height; j++)
-            {
-                //System.out.println(matrix[i][j][0] +" "+ matrix[i][j][1] + " "+  matrix[i][j][2]);
-                Color MyColor = new Color(matrix[i][j][0], matrix[i][j][1], matrix[i][j][2]);
-                tempimg.setRGB(i, j, MyColor.getRGB());
-            }
-        }
-        return tempimg;
-    }
 
     public double[][] MinMaxScaling(double[][] matrix){
-        double max = 0;
-        double min = (L-1);
+        double max = matrix[0][0];
+        double min = matrix[0][0];
         int width = matrix.length;
         int height = matrix[0].length;
         for (int i = 0; i < width; i++) {
@@ -1513,17 +1499,100 @@ public class ImageProcessor {
         }
         return matrix;
     }
-    public BufferedImage MatrixToImage(double[][] matrix){
-        matrix = MinMaxScaling(matrix);
-        int width = matrix.length;
-        int height = matrix[0].length;
-        BufferedImage tempimg = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+
+    public double[][] MinMaxScaling(int[][] matrix){
+        int max = matrix[0][0];
+        int min = matrix[0][0];
+        int height = matrix.length;
+        int width = matrix[0].length;
+        double[][] rmatrix = new double[height][width];
         for (int i = 0; i < width; i++) {
             for (int j = 0; j < height; j++)
             {
-                int tempc = (int)(Math.max(0, matrix[i][j])*(L-1));
+                if (matrix[i][j] > max) {
+                    max = matrix[i][j];
+                }
+                if (matrix[i][j] < min) {
+                    min = matrix[i][j];
+                }
+            }
+        }
+        for (int i = 0; i < width; i++) {
+            for (int j = 0; j < height; j++){
+                rmatrix[i][j] = ((double)matrix[i][j] - min)/(max-min);
+            }
+        }
+        return rmatrix;
+    }
+
+    public BufferedImage MatrixToImage(byte[][][] matrix){
+        int height = matrix[0].length;
+        int width = matrix[0][0].length;
+        BufferedImage tempimg = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+        for (int i = 0; i < height; i++) {
+            for (int j = 0; j < width; j++)
+            {
+                Color MyColor = new Color(matrix[0][i][j] + 128, matrix[1][i][j] + 128, matrix[2][i][j] + 128);
+                tempimg.setRGB(j, i, MyColor.getRGB());
+            }
+        }
+        return tempimg;
+    }
+
+    public BufferedImage MatrixToImage(int[][][] matrix){
+        int height = matrix[0].length;
+        int width = matrix[0][0].length;
+        BufferedImage tempimg = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+        for (int i = 0; i < height; i++) {
+            for (int j = 0; j < width; j++)
+            {
+                Color MyColor = new Color(matrix[0][i][j], matrix[1][i][j], matrix[2][i][j]);
+                tempimg.setRGB(j, i, MyColor.getRGB());
+            }
+        }
+        return tempimg;
+    }
+
+    public BufferedImage MatrixToImage(int[][] matrix, boolean apply_scale){
+        int height = matrix.length;
+        int width = matrix[0].length;
+        double[][] rmatrix = new double[height][width];
+        if (apply_scale)
+            rmatrix = MinMaxScaling(matrix);
+
+        BufferedImage tempimg = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+        int tempc;
+        for (int i = 0; i < height; i++) {
+            for (int j = 0; j < width; j++)
+            {
+                if (apply_scale)
+                    tempc = (int)(Math.max(0, rmatrix[i][j])*(L-1));
+                else
+                    tempc = matrix[i][j];
                 Color MyColor = new Color(tempc, tempc, tempc);
-                tempimg.setRGB(i, j, MyColor.getRGB());
+                tempimg.setRGB(j, i, MyColor.getRGB());
+            }
+        }
+        return tempimg;
+    }
+
+    public BufferedImage MatrixToImage(double[][] matrix, boolean apply_scale){
+        if (apply_scale)
+            matrix = MinMaxScaling(matrix);
+        int height = matrix.length;
+        int width = matrix[0].length;
+        BufferedImage tempimg = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+        int tempc;
+        for (int i = 0; i < height; i++) {
+            for (int j = 0; j < width; j++)
+            {
+                if (apply_scale)
+                    tempc = (int)(Math.max(0, matrix[i][j])*(L-1));
+                else
+                    tempc = (int)matrix[i][j];
+//                System.out.println(tempc);
+                Color MyColor = new Color(tempc, tempc, tempc);
+                tempimg.setRGB(j, i, MyColor.getRGB());
             }
         }
         return tempimg;
@@ -1667,7 +1736,7 @@ public class ImageProcessor {
                         temprgb[k] = (sorted[0] + sorted[sorted.length - 1]) / 2;
                     }
                     if (type.equals("median")) {
-                        temprgb[k] = sorted[sorted.length / 2];
+                        temprgb[k] = sorted[sorted.length/2];
                     }
 
 

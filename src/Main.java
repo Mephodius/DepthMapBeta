@@ -632,6 +632,7 @@ class MainFrame extends JFrame {
     private Action getMetricsAction;
     private Action copyAction;
     private Action pasteAction;
+    private Action abortAction;
     private Action closeAction;
     private Action helpAction;
 
@@ -644,17 +645,17 @@ class MainFrame extends JFrame {
     private DMGenerator DMGen;
 
     final String[] image_formats = new String[]{"jpg", "png", "gif", "bmp", "tiff", "jpeg"};
-    final String sep = ""+File.separatorChar;
 
-    private final String DataPath = "Data"+sep;
-    private final String MapsPath = DataPath+"Maps"+sep;
-    private final String ThresholdsPath = DataPath+"Thresholds"+sep;
-    private final String ShiftedIPath = DataPath+"Shifted_Images"+sep;
-    private final String DeviationsPath = DataPath+"Deviations"+sep;
+    public String sep;
+
+    private String DataPath;
+    private String MapsPath;
+    private String ThresholdsPath;
+    private String ShiftedIPath;
+    private String DeviationsPath;
 
     private final Pattern floatPattern = Pattern.compile("(0|([1-9][0-9]*))(\\.[0-9]+)?");// \d+\.?\d+ //[^0-9]*
     private final Pattern intPattern = Pattern.compile("[1-9][0-9]*");
-
     // yep, a hardcoded icon so there is no need for external files
     public final int[][] ico_matrix = new int[][]{
             {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
@@ -723,6 +724,18 @@ class MainFrame extends JFrame {
             {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
     };
 
+    private void SetAllPaths(){
+        sep = File.separator;
+        if (Objects.equals(sep, "\\")) // for windows users
+            sep = sep+sep;
+        System.out.println(sep);
+
+        DataPath = "Data"+sep;
+        MapsPath = DataPath+"Maps"+sep;
+        ThresholdsPath = DataPath+"Thresholds"+sep;
+        ShiftedIPath = DataPath+"Shifted_Images"+sep;
+        DeviationsPath = DataPath+"Deviations"+sep;
+    }
     public int[][][] BtoIMatrix(byte[][][] matrix) {
         int width = matrix.length;
         int height = matrix[0].length;
@@ -902,8 +915,7 @@ class MainFrame extends JFrame {
                 break;
 
             case "equalize":
-                improc.loadFull(DepthMap);
-                DepthMap = improc.ImageContrastIncrease();
+                DepthMap = improc.ImageContrastIncrease(DepthMap);
                 break;
 
 //            case "wmedian":
@@ -915,8 +927,8 @@ class MainFrame extends JFrame {
             DepthMap = improc.ImageCopy(improc.ImageScaler(DepthMap));
         GenState new_state = new GenState(DepthMap, current_state.logs, current_state.correlation_m, current_state.window_size, current_state.vdev);
         LogsStack.push(new_state);
-        DepthMap_full = MatrixToImage(getFullMap(improc.BWImageToMatrix(DepthMap),
-                DepthMap_full.getHeight(), DepthMap_full.getWidth()));
+        DepthMap_full = improc.MatrixToImage(getFullMap(improc.BWImageToMatrix(DepthMap),
+                DepthMap_full.getHeight(), DepthMap_full.getWidth()), false);
         BottomImageLabel.setIcon(new ImageIcon(improc.SizeChangerS(DepthMap_full,
                 guiImageWidth, guiImageHeight, interpol_choice)));
         UndoOperation.setEnabled(true);
@@ -967,8 +979,8 @@ class MainFrame extends JFrame {
             correlation_m = current_state.getCorrelation_m();
             window_size = current_state.getWindow_size();
             vdev = current_state.getVdev();
-            DepthMap_full = MatrixToImage(getFullMap(improc.BWImageToMatrix(DepthMap), DepthMap_full.getHeight(),
-                    DepthMap_full.getWidth()));
+            DepthMap_full = improc.MatrixToImage(getFullMap(improc.BWImageToMatrix(DepthMap), DepthMap_full.getHeight(),
+                    DepthMap_full.getWidth()), false);
             BottomImageLabel.setIcon(new ImageIcon(improc.SizeChangerS(DepthMap_full,
                     guiImageWidth, guiImageHeight, interpol_choice)));
 
@@ -1110,7 +1122,7 @@ class MainFrame extends JFrame {
                     try {
                         ShowLogs.setEnabled(false);
                         DepthMap_full = (BufferedImage) clipboard.getData(flavor);
-                        DepthMap = MatrixToImage(getCompressedMap(improc.BWImageToMatrix(DepthMap_full))); // MatrixToImage(Transpose(getCompressedMap(improc.BWImageToMatrix(DepthMap_full))));
+                        DepthMap = improc.MatrixToImage(getCompressedMap(improc.BWImageToMatrix(DepthMap_full)), false); // MatrixToImage(Transpose(getCompressedMap(improc.BWImageToMatrix(DepthMap_full))));
                         WindowSizeTF.setText(Integer.toString(window_size));
                         BottomImageLabel.setIcon(new ImageIcon(improc.SizeChangerS(DepthMap_full,
                                 guiImageWidth, guiImageHeight, interpol_choice)));
@@ -1188,6 +1200,16 @@ class MainFrame extends JFrame {
                         "Ctrl+5 - use KCC (Kendall correlation)\n");
             }
         };
+        abortAction = new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                DMGen.cancel(true);
+                progress = 0;
+                GoMakeSomeMagic.setEnabled(true);
+                repaint();
+//                MainFrame.this.dispatchEvent(new WindowEvent(MainFrame.this, WindowEvent.WINDOW_CLOSING));
+            }
+        };
         closeAction = new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
@@ -1263,6 +1285,9 @@ class MainFrame extends JFrame {
         actionMap.put("Help", helpAction);
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_H, InputEvent.CTRL_DOWN_MASK), "Help");
 
+        actionMap.put("Abort", abortAction);
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_W, InputEvent.CTRL_DOWN_MASK), "Abort");
+
         actionMap.put("Close", closeAction);
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_Q, InputEvent.CTRL_DOWN_MASK), "Close");
     }
@@ -1319,6 +1344,7 @@ class MainFrame extends JFrame {
     public MainFrame() throws IOException {
         String path = System.getProperty("user.dir");
 
+        SetAllPaths();
         CreateDirectories();
 
         try {
@@ -1771,7 +1797,8 @@ class MainFrame extends JFrame {
                 frame.setVisible(true);
                 frame.setEnabled(true);
             } catch (Exception e) {
-                e.printStackTrace();
+//                e.printStackTrace();
+                JOptionPane.showMessageDialog(MainFrame.this, "Depth estimation was interrupted");
             }
         }
 
@@ -1938,8 +1965,7 @@ class MainFrame extends JFrame {
                     //System.out.println("NEW STD THRESH: " + std_thresh);
 
 
-                    tempsizeadd = 0;
-                    std1 = Std(matrix1, row_image1, col_image1, sc_height, sc_width);
+                    tempsizeadd = 0;std1 = Std(matrix1, row_image1, col_image1, sc_height, sc_width);
                     if(adaptive_mode) {
                         max_deviation = (int) (deviations[Math.min((row_image1 / locale_h), n_segments - 1)][(Math.min(col_image1 / locale_w, n_segments - 1))]);
                         std_thresh = thresh_matrix[Math.min((row_image1/locale_h), n_segments-1)][(Math.min(col_image1/locale_w, n_segments-1))];
@@ -2079,10 +2105,11 @@ class MainFrame extends JFrame {
 //            }
 
             // Low value (near 0) - distant object, high value (up to 255) - close one
-            DepthMap = MatrixToImage(matrix3);
-            BufferedImage DepthMap_full = MatrixToImage(m3_upd);
-            THImage = MatrixToImage(tm_upd);
-            DevsImage = MatrixToImage(devs_upd);
+            boolean apply_scale = true;
+            DepthMap = improc.MatrixToImage(matrix3, apply_scale);
+            BufferedImage DepthMap_full = improc.MatrixToImage(m3_upd, apply_scale);
+            THImage = improc.MatrixToImage(tm_upd, apply_scale);
+            DevsImage = improc.MatrixToImage(devs_upd, apply_scale);
             ShiftedImage = getShiftedImage(matrix1, Math.abs(opt_deviation));
             return DepthMap_full;
         }
@@ -2465,37 +2492,12 @@ class MainFrame extends JFrame {
         return Arrays.stream(matrix).map(byte[][]::clone).toArray(byte[][][]::new);
     }
 
-    public BufferedImage MatrixToImage(byte[][][] matrix){
-        int height = matrix[0].length;
-        int width = matrix[0][0].length;
-        BufferedImage tempimg = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-        for (int i = 0; i < height; i++) {
-            for (int j = 0; j < width; j++)
-            {
-                Color MyColor = new Color(matrix[0][i][j] + 128, matrix[1][i][j] + 128, matrix[2][i][j] + 128);
-                tempimg.setRGB(j, i, MyColor.getRGB());
-            }
-        }
-        return tempimg;
-    }
 
-    public BufferedImage MatrixToImage(int[][][] matrix){
-        int height = matrix[0].length;
-        int width = matrix[0][0].length;
-        BufferedImage tempimg = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-        for (int i = 0; i < height; i++) {
-            for (int j = 0; j < width; j++)
-            {
-                Color MyColor = new Color(matrix[0][i][j], matrix[1][i][j], matrix[2][i][j]);
-                tempimg.setRGB(j, i, MyColor.getRGB());
-            }
-        }
-        return tempimg;
-    }
 
     public int getInterpChoice(){
         return this.interpol_choice;
     }
+
     public BufferedImage getShiftedImage(byte[][][] matrix, int shift){
         int height = matrix[0].length;
         int width = matrix[0][0].length;
@@ -2509,7 +2511,7 @@ class MainFrame extends JFrame {
                 }
             }
         }
-        return MatrixToImage(cutted_matrix);
+        return improc.MatrixToImage(cutted_matrix);
     }
 
 
@@ -2727,51 +2729,29 @@ class MainFrame extends JFrame {
         }
         return Result;
     }
-    public BufferedImage MatrixToImage(double[][] matrix){
-        int height = matrix.length;
-        int width = matrix[0].length;
-        double max = 0;
-        for (int i = 0; i < height; i++)
-            for (int j = 0; j < width; j++) {
-                if (Math.abs(matrix[i][j]) > Math.abs(max)) {
-                    max = matrix[i][j];
-                }
 
-            }
-        BufferedImage Result = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-        for (int i = 0; i < height; i++) {
-            for (int j = 0; j < width; j++)
-            {
-                int v = Math.max(0, (int)((matrix[i][j] / max) * 255));
-                Color MyColor = new Color(v, v, v);
-                Result.setRGB(j, i, MyColor.getRGB());
-            }
-        }
-        return Result;
-    }
-
-    public BufferedImage MatrixToImage(int[][] matrix){
-        int height = matrix.length;
-        int width = matrix[0].length;
-        double max = 0;
-        for (int i = 0; i < height; i++)
-            for (int j = 0; j < width; j++) {
-                if (Math.abs(matrix[i][j]) > Math.abs(max)) {
-                    max = matrix[i][j];
-                }
-
-            }
-        BufferedImage Result = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-        for (int i = 0; i < height; i++) {
-            for (int j = 0; j < width; j++)
-            {
-                int v = Math.max(0, (int)((matrix[i][j] / max) * 255));
-                Color MyColor = new Color(v, v, v);
-                Result.setRGB(j, i, MyColor.getRGB());
-            }
-        }
-        return Result;
-    }
+//    public BufferedImage MatrixToImage(int[][] matrix){
+//        int height = matrix.length;
+//        int width = matrix[0].length;
+//        double max = 0;
+//        for (int i = 0; i < height; i++)
+//            for (int j = 0; j < width; j++) {
+//                if (Math.abs(matrix[i][j]) > Math.abs(max)) {
+//                    max = matrix[i][j];
+//                }
+//
+//            }
+//        BufferedImage Result = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+//        for (int i = 0; i < height; i++) {
+//            for (int j = 0; j < width; j++)
+//            {
+//                int v = Math.max(0, (int)((matrix[i][j] / max) * 255));
+//                Color MyColor = new Color(v, v, v);
+//                Result.setRGB(j, i, MyColor.getRGB());
+//            }
+//        }
+//        return Result;
+//    }
 
     public static void main(String[] args) throws IOException {
         MainFrame fr = new MainFrame();
