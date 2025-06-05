@@ -1,6 +1,7 @@
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.dnd.DnDConstants;
 import java.awt.dnd.DropTarget;
@@ -770,6 +771,11 @@ class MainFrame extends JFrame {
         iheight = image1.getHeight();
         frame.getContentPane();
         LeftImageLabel.setIcon(new ImageIcon(improc.SizeChangerS(image1, guiImageWidth, guiImageHeight, interpol_choice)));
+        if (image1 != null && image2 != null){
+            WS = (int)((double)Math.min(iwidth, iheight)/100);
+            WindowSizeTF.setText(Integer.toString(WS));
+            GoMakeSomeMagic.setEnabled(true);
+        }
     }
     private void LRImage(File file) throws IOException {
         image2 = ImageIO.read(file);
@@ -777,13 +783,43 @@ class MainFrame extends JFrame {
         iheight = image2.getHeight();
         frame.getContentPane();
         RightImageLabel.setIcon(new ImageIcon(improc.SizeChangerS(image2, guiImageWidth, guiImageHeight, interpol_choice)));
+        if (image1 != null && image2 != null){
+            WS = (int)((double)Math.min(iwidth, iheight)/100);
+            WindowSizeTF.setText(Integer.toString(WS));
+            GoMakeSomeMagic.setEnabled(true);
+        }
     }
 
-    private void LDM(File file) throws IOException{
+    private void LGTDM(File file) throws IOException{
         buff = ImageIO.read(file); //improc.SizeChangerS(ImageIO.read(file), iwidth, iheight, apprx_choice);
         if (DepthMap != null)
             GetMetrics.setEnabled(true);
     }
+
+    private void LDM(File file) throws IOException{
+
+        ShowLogs.setEnabled(false);
+        DepthMap_full = ImageIO.read(file);
+        int[][] tempmat = improc.BWImageToMatrix(DepthMap_full);
+        int temp_ws = getWSFromMap(tempmat);
+        DepthMap = improc.MatrixToImage(getCompressedMap(tempmat, temp_ws), false); // MatrixToImage(Transpose(getCompressedMap(improc.BWImageToMatrix(DepthMap_full))));
+
+        WindowSizeTF.setText(Integer.toString(temp_ws));
+        BottomImageLabel.setIcon(new ImageIcon(improc.SizeChangerS(DepthMap_full,
+                guiImageWidth, guiImageHeight, interpol_choice)));
+
+        current_state = new GenState(DepthMap, null, null, temp_ws, 0, DepthMap_full.getHeight(), DepthMap_full.getWidth());
+        current_state.window_size = temp_ws;
+        LogsStack.push(current_state);
+//        System.out.println("HOLY ADDED "+LogsStack.size()+" "+current_state.window_size+" "+current_state.dm_height+" "+current_state.dm_width);
+
+//        DepthMap = ImageIO.read(file); //improc.SizeChangerS(ImageIO.read(file), iwidth, iheight, apprx_choice);
+        Save.setEnabled(true);
+        ApplyOperation.setEnabled(true);
+        if (buff != null)
+            GetMetrics.setEnabled(true);
+    }
+
     private void LoadImage(String which){
         try {
             File file = null;
@@ -800,12 +836,6 @@ class MainFrame extends JFrame {
                 LRImage(file);
             }
             System.out.println("Relation: " + iheight + " " + iwidth + " " + guiImageWidth * 2 + " " + guiImageHeight * 2 * iheight / iwidth);
-
-            if (image1 != null && image2 != null){
-                WS = (int)((double)Math.min(iwidth, iheight)/100);
-                WindowSizeTF.setText(Integer.toString(WS));
-                GoMakeSomeMagic.setEnabled(true);
-            }
 
             UndoOperation.setEnabled(false);
             LogsStack = new ArrayDeque<>();
@@ -826,14 +856,12 @@ class MainFrame extends JFrame {
             s = m.group();
             value = Integer.parseInt(s);
             if (value >= 1){
-                tf.setText(Integer.toString(value));
                 repaint();
                 return value;
             }
             else
                 throw new Exception();
         }catch (Exception e){
-            tf.setText(Integer.toString(basev));
 //            JOptionPane.showMessageDialog(MainFrame.this, "Incorrect input format in the field");
             return basev;
         }
@@ -925,12 +953,17 @@ class MainFrame extends JFrame {
         }
         if (AutoScaleCB.isSelected())
             DepthMap = improc.ImageCopy(improc.ImageScaler(DepthMap));
-        GenState new_state = new GenState(DepthMap, current_state.logs, current_state.correlation_m, current_state.window_size, current_state.vdev);
-        LogsStack.push(new_state);
-        DepthMap_full = improc.MatrixToImage(getFullMap(improc.BWImageToMatrix(DepthMap),
+
+        DepthMap_full = improc.MatrixToImage(getFullMap(improc.BWImageToMatrix(DepthMap), current_state.window_size,
                 DepthMap_full.getHeight(), DepthMap_full.getWidth()), false);
         BottomImageLabel.setIcon(new ImageIcon(improc.SizeChangerS(DepthMap_full,
                 guiImageWidth, guiImageHeight, interpol_choice)));
+//        GenState new_state = new GenState(DepthMap, current_state.logs, current_state.correlation_m, current_state.window_size,
+//                                          current_state.vdev, DepthMap_full.getHeight(), DepthMap_full.getWidth());
+        current_state = new GenState(DepthMap, current_state.logs, current_state.correlation_m, current_state.window_size,
+                                          current_state.vdev, DepthMap_full.getHeight(), DepthMap_full.getWidth());
+        LogsStack.push(current_state);
+//        System.out.println("HOLY ADDED "+LogsStack.size()+" "+current_state.window_size+" "+current_state.dm_height+" "+current_state.dm_width);
         UndoOperation.setEnabled(true);
     }
 
@@ -940,12 +973,26 @@ class MainFrame extends JFrame {
         private double[][][] correlation_m;
         private int window_size;
         private int vdev;
-        public GenState(BufferedImage DM, int[][][] logs, double[][][] correlation_m, int window_size, int vdev){
+        private int dm_height;
+        private int dm_width;
+        public GenState(BufferedImage DM, int[][][] logs, double[][][] correlation_m, int window_size, int vdev, int height, int width){
             this.DM = improc.ImageCopy(DM);
             this.logs = logs;
             this.correlation_m = correlation_m;
             this.window_size = window_size;
             this.vdev = vdev;
+            this.dm_height = height;
+            this.dm_width = width;
+        }
+
+        public GenState(GenState genState){
+            this.DM = improc.ImageCopy(genState.DM);
+            this.logs = genState.logs;
+            this.correlation_m = genState.correlation_m;
+            this.window_size = genState.window_size;
+            this.vdev = genState.vdev;
+            this.dm_height = genState.dm_height;
+            this.dm_width = genState.dm_width;
         }
         public BufferedImage getDM(){
             return DM;
@@ -970,22 +1017,27 @@ class MainFrame extends JFrame {
 
     private void UndoChanges(){
         if (LogsStack.size() > 1) {
+
+//            for (GenState gs: LogsStack){
+//                System.out.println("Current "+LogsStack.size()+" "+gs.window_size+" "+gs.dm_height+" "+gs.dm_width);
+//
+//            }
             LogsStack.pop();
             current_state = LogsStack.peek();
             DepthMap = current_state.getDM();
             logs = current_state.getLogs();
             if (logs != null)
                 ShowLogs.setEnabled(false);
-            correlation_m = current_state.getCorrelation_m();
-            window_size = current_state.getWindow_size();
-            vdev = current_state.getVdev();
-            DepthMap_full = improc.MatrixToImage(getFullMap(improc.BWImageToMatrix(DepthMap), DepthMap_full.getHeight(),
-                    DepthMap_full.getWidth()), false);
+
+//            System.out.println("HOLY REMOVED "+LogsStack.size()+" "+current_state.window_size+" "+current_state.dm_height+" "+current_state.dm_width);
+            DepthMap_full = improc.MatrixToImage(getFullMap(improc.BWImageToMatrix(DepthMap), current_state.window_size, current_state.dm_height,
+                    current_state.dm_width), false);
             BottomImageLabel.setIcon(new ImageIcon(improc.SizeChangerS(DepthMap_full,
                     guiImageWidth, guiImageHeight, interpol_choice)));
 
         }
         if (LogsStack.size() <= 1){
+            current_state = LogsStack.peek();
             UndoOperation.setEnabled(false);
             JOptionPane.showMessageDialog(MainFrame.this,
                     "You've reached the first element");
@@ -995,7 +1047,7 @@ class MainFrame extends JFrame {
     /**
      * This class allows to work with images in the clipboard
      */
-    public static class ImageTransferable implements java.awt.datatransfer.Transferable {
+    public static class ImageTransferable implements Transferable {
         private final Image img;
 
         public ImageTransferable(Image image) {
@@ -1061,7 +1113,7 @@ class MainFrame extends JFrame {
                     if (dmret == JFileChooser.APPROVE_OPTION) {
                         temp = loadimage.getSelectedFile();
                     }
-                    LDM(temp);
+                    LGTDM(temp);
                 } catch (Exception ignored) {
                     JOptionPane.showMessageDialog(MainFrame.this, "Something went wrong while reading, try again");
                 }
@@ -1121,17 +1173,22 @@ class MainFrame extends JFrame {
                 if (clipboard.isDataFlavorAvailable(flavor)) {
                     try {
                         ShowLogs.setEnabled(false);
+
                         DepthMap_full = (BufferedImage) clipboard.getData(flavor);
-                        DepthMap = improc.MatrixToImage(getCompressedMap(improc.BWImageToMatrix(DepthMap_full)), false); // MatrixToImage(Transpose(getCompressedMap(improc.BWImageToMatrix(DepthMap_full))));
-                        WindowSizeTF.setText(Integer.toString(window_size));
+                        int[][] tempmat = improc.BWImageToMatrix(DepthMap_full);
+                        int temp_ws = getWSFromMap(tempmat);
+                        DepthMap = improc.MatrixToImage(getCompressedMap(tempmat, temp_ws), false); // MatrixToImage(Transpose(getCompressedMap(improc.BWImageToMatrix(DepthMap_full))));
+                        WindowSizeTF.setText(Integer.toString(temp_ws));
                         BottomImageLabel.setIcon(new ImageIcon(improc.SizeChangerS(DepthMap_full,
                                 guiImageWidth, guiImageHeight, interpol_choice)));
-
-                        current_state = new GenState(DepthMap, null, null, window_size, 0);
+                        current_state = new GenState(DepthMap, null, null, temp_ws, 0, DepthMap_full.getHeight(), DepthMap_full.getWidth());
                         LogsStack.push(current_state);
+//                        System.out.println("HOLY ADDED "+LogsStack.size()+" "+current_state.window_size+" "+current_state.dm_height+" "+current_state.dm_width);
 
-                    } catch (UnsupportedFlavorException | IOException unsupportedFlavorException) {
-                        unsupportedFlavorException.printStackTrace();
+
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        JOptionPane.showMessageDialog(MainFrame.this, "This type of clipboard data is not supported");
                     }
                 }
             }
@@ -1204,9 +1261,6 @@ class MainFrame extends JFrame {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
                 DMGen.cancel(true);
-                progress = 0;
-                GoMakeSomeMagic.setEnabled(true);
-                repaint();
 //                MainFrame.this.dispatchEvent(new WindowEvent(MainFrame.this, WindowEvent.WINDOW_CLOSING));
             }
         };
@@ -1310,9 +1364,9 @@ class MainFrame extends JFrame {
         sadb.setToolTipText("Sum of absolute deviations");
         ssdb.setToolTipText("Sum of squared deviations");
         nccb.setToolTipText("Normalized correlation coefficient");
-        sccb.setToolTipText("Spearman correlation coefficient");
-        kccb.setToolTipText("Kendall correlation coefficient");
-        Operation.setToolTipText("Smoothest - amedian, strongest - wmedian");
+        sccb.setToolTipText("(Slow) Spearman correlation coefficient");
+        kccb.setToolTipText("(Slow) Kendall correlation coefficient");
+        Operation.setToolTipText("Smoothest - amedian, most impactful - median");
 
     }
 
@@ -1389,25 +1443,22 @@ class MainFrame extends JFrame {
                             continue;
                         boolean ll = name.contains("left") || name.contains("0."); // check if there is a left image
                         boolean lr = name.contains("right") || name.contains("1."); // check if there is a right image
-                        boolean ldm = name.contains("gt") || name.contains("ground") ||
+                        boolean ltm = name.contains("gt") || name.contains("ground") ||
                                 name.contains("true") || name.contains("truth") || name.contains("target");  // check if there is a depth map
-                        if (ll || lr){
+                        boolean ldm = name.contains("depth")||name.contains("map");
+                        if (ldm)
+                            LDM(file);
+                        else if (ltm)
+                            LGTDM(file);
+                        else if (ll || lr){
                             if (ll)
                                 LLImage(file);
-
-                            if (lr)
+                            else
                                 LRImage(file);
                             UndoOperation.setEnabled(false);
                             LogsStack = new ArrayDeque<>();
                             frame.setVisible(true);
-                            if (image1 != null && image2 != null){
-                                WS = (int)((double)Math.min(iwidth, iheight)/100);
-                                WindowSizeTF.setText(Integer.toString(WS));
-                                GoMakeSomeMagic.setEnabled(true);
-                            }
                         }
-                        if (ldm)
-                            LDM(file);
                     }
 
 
@@ -1415,6 +1466,7 @@ class MainFrame extends JFrame {
 
                     evt.dropComplete(true);
                 } catch (Exception ignored) {
+                    ignored.printStackTrace();
                     JOptionPane.showMessageDialog(MainFrame.this, "Something went wrong while reading, try again");
                 }
             }
@@ -1692,22 +1744,32 @@ class MainFrame extends JFrame {
     }
     // to make them stationary
     public void SecureAllParameters(){
+        int min_size = Math.min(iwidth, iheight);
         adaptive_mode = AdaptiveSizeCB.isSelected();
         autosave_mode = AutoSaveCB.isSelected();
         approximate_mode = ApprxAlgsCB.isSelected();
         localized_mode = AdaptiveSizeCB.isSelected();
 
         window_size = parseInt(WindowSizeTF, WS);
-        if (localized_mode)
+        window_size = Math.min((int)((double)min_size/5), Math.max(window_size, 1));
+
+        if (localized_mode) {
             n_segments = parseInt(NSegmentsTF, NSEG);
-        else
+            n_segments = Math.min((int)((double)min_size/30), Math.max(n_segments, 1));
+        } else
             n_segments = 1;
         stride = parseInt(StrideTF, STRIDE);
+        stride = Math.min((int)((double)min_size/10), Math.max(stride, 1));
+
         ext_coef = parseDouble(ECoefTF, EC);
         vdev = parseInt(VdevTF, VDEV);
+        vdev = Math.min((int)((double)iheight/50), Math.max(vdev, 0));
 
         SetCompareMethod();
         method.setStride(stride);
+        UpdateTextFields();
+
+
 
 //        gen_params.put("AdaptiveMode", AdaptiveSizeCB.isSelected());
 //        gen_params.put("AutoSaveMode", AutoSaveCB.isSelected());
@@ -1726,6 +1788,13 @@ class MainFrame extends JFrame {
 //        }
 //    }
 
+    public void UpdateTextFields(){
+        WindowSizeTF.setText(Integer.toString(window_size));
+        NSegmentsTF.setText(Integer.toString(n_segments));
+        StrideTF.setText(Integer.toString(stride));
+        ECoefTF.setText(Double.toString(ext_coef));
+        VdevTF.setText(Integer.toString(vdev));
+    }
     public void ResetProgress(){
         progress = 0;
     }
@@ -1775,8 +1844,9 @@ class MainFrame extends JFrame {
                 progress = 1;
                 UpdateProgress();
                 BottomImageLabel.setIcon(new ImageIcon(improc.SizeChangerS(DepthMap_full, guiImageWidth, guiImageHeight, interpol_choice)));
-                current_state = new GenState(DepthMap, logs, correlation_m, window_size, vdev);
+                current_state = new GenState(DepthMap, logs, correlation_m, window_size, vdev, DepthMap_full.getHeight(), DepthMap_full.getWidth());
                 LogsStack.push(current_state);
+//                System.out.println("HOLY ADDED "+LogsStack.size()+" "+current_state.window_size+" "+current_state.dm_height+" "+current_state.dm_width);
                 //BottomImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(improc.SizeChanger(DepthMap, Math.round(((double)window_size*guiImageWidth/width))), guiImageWidth, guiImageHeight)));
 //            BottomImageLabel.setIcon(new ImageIcon(improc.SizeChangerDistanceBased(improc.SizeChanger(DepthMap, Math.round(((double)window_size*guiImageWidth/ iwidth))), guiImageWidth, guiImageHeight)));
 
@@ -1798,7 +1868,11 @@ class MainFrame extends JFrame {
                 frame.setEnabled(true);
             } catch (Exception e) {
 //                e.printStackTrace();
+                ResetProgress();
+                GoMakeSomeMagic.setEnabled(true);
+                UpdateProgress();
                 JOptionPane.showMessageDialog(MainFrame.this, "Depth estimation was interrupted");
+
             }
         }
 
@@ -2183,7 +2257,7 @@ class MainFrame extends JFrame {
                 progress = Math.min((double)itercounter/(iterations_total*2), 0.5);
 //                System.out.println("Copy is "+((double)copyt/(dend-dstart)) + " of all time");
                 publish();
-                System.out.println("C:D" + correlation +" "+ deviation);
+                System.out.println("C:D " + correlation +" "+ deviation);
             }
 //        if (verbose){
 //            pf = new PlotFrame(MainFrame.this, MatrixToImage(best_matrix1), MatrixToImage(best_matrix2),
@@ -2339,12 +2413,15 @@ class MainFrame extends JFrame {
         }catch (Exception e){e.printStackTrace();}
 
         try {
-            if (DepthMap == null) {
+            if (DepthMap_full == null) {
                 throw new IOException();
             }
             File outputfile;
             outputfile = new File(MapsPath+"DepthMap"+counter4saving+".png");
             ImageIO.write(DepthMap_full, "png", outputfile);
+
+//            outputfile = new File(MapsPath+"DepthMap_sm"+counter4saving+".png");
+//            ImageIO.write(DepthMap, "png", outputfile);
             //JOptionPane.showMessageDialog(MainFrame.this, "Saved");
         } catch (IOException ex) {
             JOptionPane.showMessageDialog(MainFrame.this, "Something went wrong, try again");
@@ -2395,7 +2472,7 @@ class MainFrame extends JFrame {
         }
         return mask;
     }
-    // NOT WORKING, CHANGE TYPE OF RESULT FROM BYTE TO INT
+    // TODO: NOT WORKING, CHANGE TYPE OF RESULT FROM BYTE TO INT
     public byte[][][] Convolve(byte[][][] matrix, int[][] kernel){
         int width = matrix.length;
         int height = matrix[0].length;
@@ -2643,7 +2720,8 @@ class MainFrame extends JFrame {
 //        }
 //        return new double[]{opt_deviation, best_metrics};
 //    }
-    public int[][] getCompressedMap(int[][] map){
+
+    public int getWSFromMap(int[][] map){
         int height = map.length;
         int width = map[0].length;
 
@@ -2662,23 +2740,27 @@ class MainFrame extends JFrame {
             else
                 ws += 1;
         }
-        current_state.window_size = ws;
-        int cwidth = (int) Math.ceil((double)width/current_state.window_size);
-        int cheight = (int) Math.ceil((double)height/current_state.window_size);
+        return ws;
+    }
+    public int[][] getCompressedMap(int[][] map, int ws){
+        int height = map.length;
+        int width = map[0].length;
+        int cwidth = (int) Math.ceil((double)width/ws);
+        int cheight = (int) Math.ceil((double)height/ws);
         int[][] tempmap = new int[cheight][cwidth];
         for(int i=0; i < cheight; i++){
             for(int j=0; j < cwidth; j++){
-                tempmap[i][j] = map[i*current_state.window_size][j*current_state.window_size];
+                tempmap[i][j] = map[i*ws][j*ws];
             }
         }
         return tempmap;
     }
-    public double[][] getFullMap(int[][] map, int height, int width){
+    public double[][] getFullMap(int[][] map, int winsize, int height, int width){
         double[][] tempmap = new double[height][width];
         for(int i=0; i < height; i++){
             for(int j=0; j < width; j++){
                 //System.out.println("********** " + ((int)Math.ceil((double)(i+1)/window_size) - 1) + " " + ((int)Math.ceil((double)(j+1)/window_size) - 1) + " " + i + " " + j);
-                tempmap[i][j] = map[(int)Math.ceil((double)(i+1)/current_state.window_size) - 1][(int)Math.ceil((double)(j+1)/current_state.window_size) - 1];
+                tempmap[i][j] = map[(int)Math.ceil((double)(i+1)/winsize) - 1][(int)Math.ceil((double)(j+1)/winsize) - 1];
             }
         }
         return tempmap;
