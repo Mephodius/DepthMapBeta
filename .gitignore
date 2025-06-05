@@ -1,9 +1,0 @@
-# Images and text files #
-######################
-*.txt
-
-# Folders #
-######################
-Data/
-.idea/
-out/
