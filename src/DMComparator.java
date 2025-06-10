@@ -50,6 +50,11 @@ public class DMComparator extends JFrame {
         setEnabled(false);
         //image1 = improc.SizeChangerLinear(ImageIO.read(LI), guiImageWidth*2, guiImageHeight*2);
         mymap = ImageIO.read(DM);
+        double scale;
+        if (mymap.getHeight() != truemap.getHeight()){
+            scale = (double)truemap.getHeight()/mymap.getHeight();
+            mymap = improc.SizeChangerS(mymap, (int)scale*mymap.getWidth(), truemap.getHeight(), interpol_choice);
+        }
         metrics = getMapMetrics(improc.ImageToMatrix(truemap), improc.ImageToMatrix(mymap), use_approx);
         repaint();
         setEnabled(true);
@@ -163,6 +168,12 @@ public class DMComparator extends JFrame {
         this.truemap = truemap;
         this.use_approx = use_approx;
 
+        double scale;
+        if (this.mymap.getHeight() != this.truemap.getHeight()){
+            scale = (double)this.truemap.getHeight()/this.mymap.getHeight();
+            this.mymap = improc.SizeChangerS(this.mymap, (int)scale*this.mymap.getWidth(), this.truemap.getHeight(), interpol_choice);
+        }
+
         this.metrics = getMapMetrics(improc.ImageToMatrix(this.truemap), improc.ImageToMatrix(this.mymap), this.use_approx);
 
         Metrics.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -229,13 +240,26 @@ public class DMComparator extends JFrame {
         ConfigureAllActions();
         ConfigureKeyBindings();
     }
+
+    public void showTop(int[][][] matrix1, int ntop, int shift){
+        for (int i=0; i<Math.min(matrix1[0].length,ntop); i++){
+            for (int j=0; j<Math.min(matrix1[0][0].length,ntop); j++){
+                System.out.print(matrix1[0][i][j+shift] + " ");
+            }
+            System.out.println();
+        }
+        System.out.println();
+    }
     public double[] getMapMetrics(int[][][] matrix1, int[][][] matrix2, boolean use_approx) {
         // matrix2 is our map and is smaller
+//        showTop(matrix1, 15, 160);
+//        showTop(matrix2, 15, 0);
         std1 = improc.Std(matrix1);
         std2 = improc.Std(matrix2);
-        int width = matrix2[0][0].length;
+        int height = matrix1[0].length;
+        int width = matrix1[0][0].length;
 
-        int height = matrix2[0].length;
+
         double best_metric = 0;
         double best_correlation = 0;
         int opt_deviation = width / 4;
@@ -244,67 +268,50 @@ public class DMComparator extends JFrame {
         int n_rnd = width / 15;
         int size = width / 15;
 
-        CompareMethod comp_method = new SAD();
-        CompareMethod corr_method = new NCC();
+//        CompareMethod comp_method = new SAD();
+        NCC corr_method = new NCC();
+        corr_method.setStride(1);
         //double area = width/3.5;
         //int stripe = Math.max((int)area/75, 1);
-        int drange = 1;
         System.out.println("Metrics calculation");
-        for (int deviation = Math.max(0,matrix1[0][0].length - matrix2[0][0].length - drange); deviation <= matrix1[0][0].length - matrix2[0][0].length; deviation += 1) {
-            temp_matrix1 = new int[mainframe.C][height][width];
-            temp_matrix2 = new int[mainframe.C][height][width];
-            for (int k = 0; k < mainframe.C; k++) {
-                for (int i = 0; i < Math.min(width, width-deviation); i++) {
-                    for (int j = 0; j < height; j++) {
-                        //System.out.println(j + " " + (i + deviation) + " "+ matrix1.length + " " + matrix1[0].length);
-                        temp_matrix1[k][j][i] = matrix1[k][j][i + deviation];
-                        temp_matrix2[k][j][i] = matrix2[k][j][i];
-                    }
+
+        int deviation = Math.abs(matrix1[0][0].length - matrix2[0][0].length);
+//        for (int deviation = Math.max(0,matrix1[0][0].length - matrix2[0][0].length - drange); deviation <= matrix1[0][0].length - matrix2[0][0].length; deviation += 1) {
+
+        int corrected_width = width - Math.abs(deviation);
+        double correlation = 0;
+        double metric = 0;
+        double counter = 0;
+        if (use_approx) {
+            Random rand = new Random();
+            for (int i = 0; i < n_rnd; i++) {
+
+                int y_r = rand.nextInt(width - size + 1);
+                int x_r = rand.nextInt(height - size + 1);
+//
+                double temp1 = corr_method.get_similarity(matrix1, matrix2, y_r, x_r+deviation, y_r, x_r, size, size);
+
+                //double temp = improc.PSNR(rbatch1, rbatch2);
+                if (!Double.isNaN(temp1)) {
+//                        metric += temp;
+                    correlation += temp1;
+                    counter++;
                 }
             }
-            double correlation = 0;
-            double metric = 0;
-            double counter = 0;
-            if (use_approx) {
-                Random rand = new Random();
-                for (int i = 0; i < n_rnd; i++) {
-                    int[][][] rbatch1 = new int[mainframe.C][size][size];
-                    int[][][] rbatch2 = new int[mainframe.C][size][size];
-                    int y_r = rand.nextInt(width - size + 1);
-                    int x_r = rand.nextInt(height - size + 1);
-                    for (int k = 0; k < 3; k++) {
-                        for (int n = 0; n < size; n++) {
-                            for (int m = 0; m < size; m++) {
-
-                                rbatch1[k][n][m] = temp_matrix1[k][y_r + n][x_r + m];
-                                rbatch2[k][n][m] = temp_matrix2[k][y_r + n][x_r + m];
-                            }
-                        }
-                    }
-                    double temp = comp_method.get_similarity(rbatch1, rbatch2);
-                    double temp1 = corr_method.get_similarity(rbatch1, rbatch2);
-                    //double temp = improc.PSNR(rbatch1, rbatch2);
-                    if (!Double.isNaN(temp)) {
-                        metric += temp;
-                        correlation += temp1;
-                        counter++;
-                    }
-                }
-                metric /= counter;
-                correlation /= counter;
-            } else {
-                metric = comp_method.get_similarity(temp_matrix1, temp_matrix2);
-                correlation = corr_method.get_similarity(temp_matrix1, temp_matrix2);
-                //correlation = improc.PSNR(temp_matrix1, temp_matrix2);
-            }
-            if (metric > best_metric) {
-                best_metric = metric;
-                best_correlation = correlation;
-                opt_deviation = deviation;
-            }
-
-            System.out.println(metric + " " + correlation + " " + deviation);
+            metric /= counter;
+            correlation /= counter;
+        } else {
+//                metric = comp_method.get_similarity(temp_matrix1, temp_matrix2);
+            correlation = corr_method.get_similarity(matrix1, matrix2, 0, deviation, 0, 0, height, corrected_width);
         }
+        if (correlation > best_correlation) {
+            best_metric = metric;
+            best_correlation = correlation;
+            opt_deviation = deviation;
+        }
+
+        System.out.println(correlation + " " + deviation);
+//        }
         return new double[]{opt_deviation, best_metric, best_correlation};
     }
     public BufferedImage ImageCopy(BufferedImage img) {

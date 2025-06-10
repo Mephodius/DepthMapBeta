@@ -30,7 +30,7 @@ import static java.awt.datatransfer.DataFlavor.javaFileListFlavor;
 
 
 abstract class CompareMethod {
-    protected int stride = 3;
+    protected int stride = 1;
 
     public void setStride(int stride){
         this.stride = stride;
@@ -100,15 +100,15 @@ class NCC extends CompareMethod {
                     temp += Math.pow((scanim2[k][i][j] - averageim2[k]), 2);
                 }
             }
-            denominator = Math.sqrt(denominator) * Math.sqrt(temp);
+            denominator = Math.sqrt(denominator*temp);
 
             total[k] = numerator / denominator;
         }
         return (total[0] + total[1] + total[2])/3;
     }
 
-    public double get_similarity(byte[][][] scanim1, byte[][][] scanim2, int y1, int x1, int y2, int x2, int winh, int winw){
-        int depth = scanim1.length;
+    public double get_similarity(byte[][][] m1, byte[][][] m2, int y1, int x1, int y2, int x2, int winh, int winw){
+        int depth = m1.length;
 
         double[] averageim1 = {0, 0, 0};
         double[] averageim2 = {0, 0, 0};
@@ -116,12 +116,14 @@ class NCC extends CompareMethod {
         double denominator;
         double temp;
         double[] total = {0, 0, 0};
-        int N = ((winw+1)/this.stride)*((winh+1)/this.stride);
+        int N;
         for (int k = 0; k < depth; k++) {
+            N=0;
             for (int i = 0; i < winh; i+=this.stride) {
                 for (int j = 0; j < winw; j+=this.stride) {
-                    averageim1[k] += scanim1[k][y1+i][x1+j];
-                    averageim2[k] += scanim2[k][y2+i][x2+j];
+                    averageim1[k] += m1[k][y1+i][x1+j];
+                    averageim2[k] += m2[k][y2+i][x2+j];
+                    N++;
                 }
             }
             averageim1[k] /= N;
@@ -131,17 +133,59 @@ class NCC extends CompareMethod {
             temp = 0;
             for (int i = 0; i < winh; i+=this.stride) {
                 for (int j = 0; j < winw; j+=this.stride) {
-                    numerator += (scanim1[k][y1+i][x1+j] - averageim1[k]) * (scanim2[k][y2+i][x2+j] - averageim2[k]);
-                    denominator += Math.pow((scanim1[k][y1+i][x1+j] - averageim1[k]), 2);
-                    temp += Math.pow((scanim2[k][y2+i][x2+j] - averageim2[k]), 2);
+                    numerator += (m1[k][y1+i][x1+j] - averageim1[k]) * (m2[k][y2+i][x2+j] - averageim2[k]);
+                    denominator += Math.pow((m1[k][y1+i][x1+j] - averageim1[k]), 2);
+                    temp += Math.pow((m2[k][y2+i][x2+j] - averageim2[k]), 2);
                 }
             }
-            denominator = Math.sqrt(denominator) * Math.sqrt(temp);
+            denominator = Math.sqrt(denominator*temp);
 
             total[k] = numerator / denominator;
         }
         return (total[0] + total[1] + total[2])/3;
     }
+
+    public double get_similarity(int[][][] m1, int[][][] m2, int y1, int x1, int y2, int x2, int winh, int winw){
+        int depth = m1.length;
+
+        double[] averageim1 = {0, 0, 0};
+        double[] averageim2 = {0, 0, 0};
+        double numerator;
+        double denominator;
+        double temp;
+        double[] total = {0, 0, 0};
+        double N; //((winw+1)/this.stride)*((winh+1)/this.stride);
+        for (int k = 0; k < depth; k++) {
+            N = 0;
+            for (int i = 0; i < winh; i+=this.stride) {
+                for (int j = 0; j < winw; j+=this.stride) {
+                    averageim1[k] += m1[k][y1+i][x1+j];
+                    averageim2[k] += m2[k][y2+i][x2+j];
+                    N++;
+                }
+            }
+//            System.out.println("MAX: "+(winh-1+y1)+" "+(winw-1+x1) + " " + (winh-1+y2)+" "+(winw-1+x2)+" "+N);
+//            System.out.println("SIZE: "+winh+" "+winw+" "+stride);
+            averageim1[k] /= N;
+            averageim2[k] /= N;
+//            System.out.println("AVERAGES: "+" "+averageim1[0]+" "+averageim2[0]);
+            numerator = 0;
+            denominator = 0;
+            temp = 0;
+            for (int i = 0; i < winh; i+=this.stride) {
+                for (int j = 0; j < winw; j+=this.stride) {
+                    numerator += (m1[k][y1+i][x1+j] - averageim1[k]) * (m2[k][y2+i][x2+j] - averageim2[k]);
+                    denominator += Math.pow((m1[k][y1+i][x1+j] - averageim1[k]), 2);
+                    temp += Math.pow((m2[k][y2+i][x2+j] - averageim2[k]), 2);
+                }
+            }
+            denominator = Math.sqrt(denominator*temp);
+
+            total[k] = numerator / denominator;
+        }
+        return (total[0] + total[1] + total[2])/3;
+    }
+
 
     public double get_similarity(int[][][] scanim1, int[][][] scanim2){
         int depth = scanim1.length;
@@ -173,7 +217,7 @@ class NCC extends CompareMethod {
                     temp += Math.pow((scanim2[k][i][j] - averageim2[k]), 2);
                 }
             }
-            denominator = Math.sqrt(denominator) * Math.sqrt(temp);
+            denominator = Math.sqrt(denominator*temp);
 
             total[k] = numerator / denominator;
         }
@@ -786,12 +830,14 @@ class MainFrame extends JFrame {
         if (image1 != null && image2 != null){
             WS = (int)((double)Math.min(iwidth, iheight)/100);
             WindowSizeTF.setText(Integer.toString(WS));
-            GoMakeSomeMagic.setEnabled(true);
+            GoMakeSomeMagic.setEnabled(true );
         }
     }
 
     private void LGTDM(File file) throws IOException{
-        buff = ImageIO.read(file); //improc.SizeChangerS(ImageIO.read(file), iwidth, iheight, apprx_choice);
+        buff = ImageIO.read(file);//improc.SizeChangerS(ImageIO.read(file), iwidth, iheight, apprx_choice);
+//        BottomImageLabel.setIcon(new ImageIcon(improc.SizeChangerS(buff,
+//                guiImageWidth, guiImageHeight, interpol_choice)));
         if (DepthMap != null)
             GetMetrics.setEnabled(true);
     }
@@ -1108,7 +1154,7 @@ class MainFrame extends JFrame {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
                 try {
-                    int dmret = loadimage.showDialog(null, "Load ground-true map");
+                    int dmret = loadimage.showDialog(null, "Load ground-truth map");
                     File temp = null;
                     if (dmret == JFileChooser.APPROVE_OPTION) {
                         temp = loadimage.getSelectedFile();
@@ -1244,6 +1290,7 @@ class MainFrame extends JFrame {
 
                         "\nFunctional hotkeys:\n" +
                         "Ctrl+R - run the DM estimator with the current parameters\n" +
+                        "Ctrl+W - stop estimation process (to change params, etc)\n" +
                         "Ctrl+D - load the ground-truth DM for metrics calculation\n" +
                         "Ctrl+F - calculate the DM metrics\n" +
                         "Ctrl+H - show the help window\n" +
@@ -1356,7 +1403,7 @@ class MainFrame extends JFrame {
         UndoOperation.setToolTipText("Undo your last DM action");
         AdaptiveSizeCB.setToolTipText("Better results, slower generation");
         NSegmentsTF.setToolTipText("Number of segments for adaptive alg");
-        StrideTF.setToolTipText("Pooling size");
+        StrideTF.setToolTipText("Use every Xth pixel on comparison");
         VdevTF.setToolTipText("Max vertical deviation, slows generation");
         ECoefTF.setToolTipText("Extension coefficient, scales search area");
         ApprxAlgsCB.setToolTipText("Worse results, quicker generation");
@@ -1445,7 +1492,7 @@ class MainFrame extends JFrame {
                         boolean lr = name.contains("right") || name.contains("1."); // check if there is a right image
                         boolean ltm = name.contains("gt") || name.contains("ground") ||
                                 name.contains("true") || name.contains("truth") || name.contains("target");  // check if there is a depth map
-                        boolean ldm = name.contains("depth")||name.contains("map");
+                        boolean ldm = name.contains("depth")||name.contains("map")||name.contains("dm");
                         if (ldm)
                             LDM(file);
                         else if (ltm)
@@ -1753,11 +1800,10 @@ class MainFrame extends JFrame {
         window_size = parseInt(WindowSizeTF, WS);
         window_size = Math.min((int)((double)min_size/5), Math.max(window_size, 1));
 
-        if (localized_mode) {
-            n_segments = parseInt(NSegmentsTF, NSEG);
-            n_segments = Math.min((int)((double)min_size/30), Math.max(n_segments, 1));
-        } else
-            n_segments = 1;
+
+        n_segments = parseInt(NSegmentsTF, NSEG);
+        n_segments = Math.min((int)((double)min_size/30), Math.max(n_segments, 1));
+
         stride = parseInt(StrideTF, STRIDE);
         stride = Math.min((int)((double)min_size/10), Math.max(stride, 1));
 
@@ -1841,16 +1887,11 @@ class MainFrame extends JFrame {
                 // Сохранение
                 if (AutoSaveCB.isSelected())
                     SaveResults();
-                progress = 1;
-                UpdateProgress();
+
                 BottomImageLabel.setIcon(new ImageIcon(improc.SizeChangerS(DepthMap_full, guiImageWidth, guiImageHeight, interpol_choice)));
                 current_state = new GenState(DepthMap, logs, correlation_m, window_size, vdev, DepthMap_full.getHeight(), DepthMap_full.getWidth());
                 LogsStack.push(current_state);
-//                System.out.println("HOLY ADDED "+LogsStack.size()+" "+current_state.window_size+" "+current_state.dm_height+" "+current_state.dm_width);
-                //BottomImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(improc.SizeChanger(DepthMap, Math.round(((double)window_size*guiImageWidth/width))), guiImageWidth, guiImageHeight)));
-//            BottomImageLabel.setIcon(new ImageIcon(improc.SizeChangerDistanceBased(improc.SizeChanger(DepthMap, Math.round(((double)window_size*guiImageWidth/ iwidth))), guiImageWidth, guiImageHeight)));
 
-                //GradientOfColors.setIcon(new ImageIcon(improc.SizeChangerLinear(gradientstripe, guiImageWidth, guiImageHeight)));
                 if (LogsStack.size() > 1) {
                     UndoOperation.setEnabled(true);
                 }
@@ -1866,8 +1907,18 @@ class MainFrame extends JFrame {
                 GoMakeSomeMagic.setEnabled(true);
                 frame.setVisible(true);
                 frame.setEnabled(true);
+
+                progress = 1;
+                UpdateProgress();
+
+//                System.out.println("HOLY ADDED "+LogsStack.size()+" "+current_state.window_size+" "+current_state.dm_height+" "+current_state.dm_width);
+                //BottomImageLabel.setIcon(new ImageIcon(improc.SizeChangerLinear(improc.SizeChanger(DepthMap, Math.round(((double)window_size*guiImageWidth/width))), guiImageWidth, guiImageHeight)));
+//            BottomImageLabel.setIcon(new ImageIcon(improc.SizeChangerDistanceBased(improc.SizeChanger(DepthMap, Math.round(((double)window_size*guiImageWidth/ iwidth))), guiImageWidth, guiImageHeight)));
+
+                //GradientOfColors.setIcon(new ImageIcon(improc.SizeChangerLinear(gradientstripe, guiImageWidth, guiImageHeight)));
+
             } catch (Exception e) {
-//                e.printStackTrace();
+                e.printStackTrace();
                 ResetProgress();
                 GoMakeSomeMagic.setEnabled(true);
                 UpdateProgress();
@@ -2045,22 +2096,16 @@ class MainFrame extends JFrame {
                         std_thresh = thresh_matrix[Math.min((row_image1/locale_h), n_segments-1)][(Math.min(col_image1/locale_w, n_segments-1))];
                         if (std1 < std_thresh) {
                             int[] eP = extendPart(row_image1, col_image1, sc_height, sc_width, tempsizeadd);
-                            byte[][][] asmatrix;
+
                             //System.out.println("STD " + improc.Std(tempmatrix1));
                             // && tempsizeadd < 2*sc_width
                             double start_std = std1;
                             // row col height width
 
-//                        if(eP[0] >= -max_deviation && (width - eP[3] - eP[1]) > 0 && eP[0] >= 0 && (height - eP[2] - eP[0]) > 0) { // ????
-//                            while (std1 <= Math.min(std_thresh, AC*start_std) && eP[0] >= -max_deviation && (width - eP[2] - eP[0]) > 0 && eP[1] >= 0 && (height - eP[3] - eP[2]) > 0) {
-
                             if (eP[1] >= -max_deviation && (width - eP[3] - eP[1]) > 0 && eP[0] >= 0 && (height - eP[2] - eP[0]) > 0) {
                                 while (std1 < Math.min(std_thresh, AC * start_std) && eP[1] >= -max_deviation && (width - eP[3] - eP[1]) > 0 && eP[0] >= 0 && (height - eP[2] - eP[0]) > 0) {
-//                                asmatrix = getPart(matrix1, row_image1, col_image1, sc_height, sc_width, tempsizeadd);
-                                    //System.out.println("&&&&&&&&&&&&&&&&& " + tempsizeadd + " " + col_image1 + " " + row_image1);
-                                    std1 = Std(matrix1, row_image1, col_image1 - tempsizeadd, sc_height, sc_width + tempsizeadd);
-//                                if (std1 < Math.min(std_thresh, AC*start_std))
-//                                    tempmatrix1 = asmatrix;
+                                    std1 = Std(matrix1, row_image1, col_image1 - tempsizeadd, sc_height, sc_width + tempsizeadd); // Math.min(5, sc_width)
+//
                                     tempsizeadd += 1;
                                     eP = extendPart(row_image1, col_image1, sc_height, sc_width, tempsizeadd);
 //                                    System.out.println(row_image1+" "+col_image1+" "+" "+tempsizeadd+" "+std1);
@@ -2209,6 +2254,7 @@ class MainFrame extends JFrame {
             double[][] plot_data = new double[(rs-ls)/stripe+1][2];
 
             CompareMethod ncccm = new NCC();
+            ncccm.setStride(stride);
 
             int n_rnd = width / 18;
             double[][] c_r = new double[n_rnd][];
@@ -2298,6 +2344,8 @@ class MainFrame extends JFrame {
             rs = 0; // (int) (area / 2)
 
             CompareMethod ncccm = new NCC();
+            ncccm.setStride(stride);
+
             double[][] d_matrix = new double[n_segments][n_segments];
             double[][] c_matrix = new double[n_segments][n_segments];
             for (int i = 0; i < n_segments; i++) {

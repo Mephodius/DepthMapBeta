@@ -20,6 +20,7 @@ public class LogsVisualizator extends JFrame {
     JLabel CLeftImageLabel = new JLabel("");
     JLabel CRightImageLabel = new JLabel("");
     JLabel CenterImageLabel = new JLabel("");
+    JLabel CorrImageTitle = new JLabel("Similarities in the search region");
     JLabel CorrImageLabel = new JLabel("");
     JLabel Counter = new JLabel();
     JLabel CCounter = new JLabel();
@@ -257,6 +258,7 @@ public class LogsVisualizator extends JFrame {
         this.dtis = dtis;
 
         CenterImageLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        CorrImageTitle.setAlignmentX(Component.CENTER_ALIGNMENT);
         CorrImageLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         Counter.setAlignmentX(Component.CENTER_ALIGNMENT);
         STD.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -301,7 +303,9 @@ public class LogsVisualizator extends JFrame {
         cvBox.add(Box.createVerticalStrut(10));
         cvBox.add(CenterImageLabel);
         cvBox.add(Box.createVerticalGlue());
-        cvBox.add(Box.createVerticalStrut(10));
+        cvBox.add(Box.createVerticalStrut(5));
+        cvBox.add(CorrImageTitle);
+        cvBox.add(Box.createVerticalGlue());
         cvBox.add(CorrImageLabel);
         cvBox.add(Box.createVerticalGlue());
         cvBox.add(STD);
@@ -321,7 +325,7 @@ public class LogsVisualizator extends JFrame {
 
 
         fhBox.add(Box.createHorizontalGlue());
-        fhBox.add(Box.createHorizontalStrut(25));
+        fhBox.add(Box.createHorizontalStrut(10));
         fhBox.add(LeftImageLabel);
         fhBox.add(Box.createHorizontalGlue());
         fhBox.add(Box.createHorizontalStrut(5));
@@ -329,7 +333,7 @@ public class LogsVisualizator extends JFrame {
         fhBox.add(Box.createHorizontalGlue());
         fhBox.add(Box.createHorizontalStrut(5));
         fhBox.add(RightImageLabel);
-        fhBox.add(Box.createHorizontalStrut(25));
+        fhBox.add(Box.createHorizontalStrut(10));
         fhBox.add(Box.createHorizontalGlue());
 
 

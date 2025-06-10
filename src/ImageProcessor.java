@@ -245,13 +245,14 @@ public class ImageProcessor {
      */
     public double[] AverageK(int[][][] matrix) {
         double[] average_c = {0,0,0};
+        int N = (matrix[0].length*matrix[0][0].length);
         for (int k = 0; k < 3; k++) {
-            for (int i = 0; i < matrix.length; i++) {
-                for (int j = 0; j < matrix[0].length; j++) {
-                    average_c[k] += matrix[i][j][k];
+            for (int i = 0; i < matrix[0].length; i++) {
+                for (int j = 0; j < matrix[0][0].length; j++) {
+                    average_c[k] += matrix[k][i][j];
                 }
             }
-            average_c[k] = average_c[k] / (matrix.length*matrix[0].length);
+            average_c[k] = average_c[k] / N;
         }
         return average_c;
     }
@@ -273,13 +274,15 @@ public class ImageProcessor {
     public double Std(int[][][] matrix) {
         double[] std = {0,0,0};
         double[] avg = AverageK(matrix);
+//        System.out.println("DAFUQ? "+avg[0]+" "+matrix[0][0][0]+" "+matrix[0][0][1]);
+        int N = (matrix[0].length*matrix[0][0].length-1);
         for (int k = 0; k < 3; k++) {
-            for (int i = 0; i < matrix.length; i++) {
-                for (int j = 0; j < matrix[0].length; j++) {
-                    std[k] += Math.pow((matrix[i][j][k]-avg[k]),2);
+            for (int i = 0; i < matrix[0].length; i++) {
+                for (int j = 0; j < matrix[0][0].length; j++) {
+                    std[k] += Math.pow((matrix[k][i][j]-avg[k]),2);
                 }
             }
-            std[k] = Math.pow(std[k] / (matrix.length*matrix[0].length-1), 0.5);
+            std[k] = Math.pow(std[k] / N, 0.5);
         }
         return (std[0]+std[1]+std[2])/3;
     }
