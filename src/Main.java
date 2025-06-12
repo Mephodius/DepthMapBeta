@@ -687,6 +687,14 @@ class MainFrame extends JFrame {
     private Action SCC_Action;
     private Action KCC_Action;
 
+    private Action adaptAction;
+
+    private Action decWAction;
+    private Action incWAction;
+
+    private Action decVAction;
+    private Action incVAction;
+
     private DMGenerator DMGen;
 
     final String[] image_formats = new String[]{"jpg", "png", "gif", "bmp", "tiff", "jpeg"};
@@ -1271,6 +1279,62 @@ class MainFrame extends JFrame {
             }
         };
 
+        adaptAction = new AbstractAction(){
+            @Override
+            public void actionPerformed(ActionEvent actionEvent){
+                AdaptiveSizeCB.doClick();
+            }
+        };
+
+        decWAction = new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                int min_size = Math.min(iwidth, iheight);
+                int min_w = 1;
+                window_size = parseInt(WindowSizeTF, WS);
+                window_size--;
+                if (ncc.isSelected() || scc.isSelected() || kcc.isSelected())
+                    min_w = 2;
+                window_size = Math.min((int)((double)min_size/5), Math.max(window_size, min_w));
+                WindowSizeTF.setText(Integer.toString(window_size));
+            }
+        };
+
+        incWAction = new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                int min_size = Math.min(iwidth, iheight);
+                int min_w = 1;
+                window_size = parseInt(WindowSizeTF, WS);
+                window_size++;
+                if (ncc.isSelected() || scc.isSelected() || kcc.isSelected())
+                    min_w = 2;
+                window_size = Math.min((int)((double)min_size/5), Math.max(window_size, min_w));
+                WindowSizeTF.setText(Integer.toString(window_size));
+            }
+        };
+
+
+        decVAction = new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                vdev = parseInt(VdevTF, VDEV);
+                vdev--;
+                vdev = Math.min((int)((double)iheight/50), Math.max(vdev, 0));
+                VdevTF.setText(Integer.toString(vdev));
+            }
+        };
+
+        incVAction = new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                vdev = parseInt(VdevTF, VDEV);
+                vdev++;
+                vdev = Math.min((int)((double)iheight/50), Math.max(vdev, 0));
+                VdevTF.setText(Integer.toString(vdev));
+            }
+        };
+
         helpAction = new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
@@ -1290,11 +1354,13 @@ class MainFrame extends JFrame {
 
                         "\nFunctional hotkeys:\n" +
                         "Ctrl+R - run the DM estimator with the current parameters\n" +
-                        "Ctrl+W - stop estimation process (to change params, etc)\n" +
+                        "Ctrl+X - stop estimation process (to change params, etc)\n" +
                         "Ctrl+D - load the ground-truth DM for metrics calculation\n" +
                         "Ctrl+F - calculate the DM metrics\n" +
+                        "Alt+L  - show results analyser module\n" +
                         "Ctrl+H - show the help window\n" +
                         "Ctrl+Q - quit the program (or its current window)\n" +
+                        "Ctrl+W - toggle adaptive mode\n" +
 
                         "\nSimilarities:\n" +
                         "Ctrl+1 - use SAD (Sum of absolute deviations)\n" +
@@ -1302,6 +1368,7 @@ class MainFrame extends JFrame {
                         "Ctrl+3 - use NCC (Pearson correlation)\n" +
                         "Ctrl+4 - use SCC (Spearman correlation)\n" +
                         "Ctrl+5 - use KCC (Kendall correlation)\n");
+
             }
         };
         abortAction = new AbstractAction() {
@@ -1343,10 +1410,11 @@ class MainFrame extends JFrame {
 
         actionMap.put("Run", GenClickAction(GoMakeSomeMagic));
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_R, InputEvent.CTRL_DOWN_MASK), "Run");
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_DOWN_MASK), "Run");
 
 //        actionMap.put("Logs", showLogsAction);
         actionMap.put("Logs", GenClickAction(ShowLogs));
-        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_L, InputEvent.CTRL_DOWN_MASK), "Logs");
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_L, InputEvent.ALT_DOWN_MASK), "Logs");
 
 //        actionMap.put("Apply", applyAction);
         actionMap.put("Apply", GenClickAction(ApplyOperation));
@@ -1376,6 +1444,23 @@ class MainFrame extends JFrame {
         actionMap.put("KCC", KCC_Action);
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_5, InputEvent.CTRL_DOWN_MASK), "KCC");
 
+        actionMap.put("Adapt", adaptAction);
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_W, InputEvent.CTRL_DOWN_MASK), "Adapt");
+
+
+        actionMap.put("DecreaseSize", decWAction);
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, InputEvent.CTRL_DOWN_MASK), "DecreaseSize");
+
+        actionMap.put("IncreaseSize", incWAction);
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, InputEvent.CTRL_DOWN_MASK), "IncreaseSize");
+
+
+        actionMap.put("DecreaseVDev", decVAction);
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, InputEvent.CTRL_DOWN_MASK), "DecreaseVDev");
+
+        actionMap.put("IncreaseVDev", incVAction);
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_UP, InputEvent.CTRL_DOWN_MASK), "IncreaseVDev");
+
 
         actionMap.put("Copy", copyAction);
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.CTRL_DOWN_MASK), "Copy");
@@ -1387,7 +1472,7 @@ class MainFrame extends JFrame {
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_H, InputEvent.CTRL_DOWN_MASK), "Help");
 
         actionMap.put("Abort", abortAction);
-        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_W, InputEvent.CTRL_DOWN_MASK), "Abort");
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_X, InputEvent.CTRL_DOWN_MASK), "Abort");
 
         actionMap.put("Close", closeAction);
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_Q, InputEvent.CTRL_DOWN_MASK), "Close");
@@ -1399,11 +1484,11 @@ class MainFrame extends JFrame {
         LoadDM.setToolTipText("Load ground-truth depth map");
         GetMetrics.setToolTipText("Get metrics");
         ShowLogs.setToolTipText("Show the process of generation");
-        Save.setToolTipText("Save the depth map to the ./Maps folder");
+        Save.setToolTipText("Save the depth map to the ./Data/Maps/ directory");
         UndoOperation.setToolTipText("Undo your last DM action");
         AdaptiveSizeCB.setToolTipText("Better results, slower generation");
         NSegmentsTF.setToolTipText("Number of segments for adaptive alg");
-        StrideTF.setToolTipText("Use every Xth pixel on comparison");
+        StrideTF.setToolTipText("Comparison subsampling step. Increases gen speed");
         VdevTF.setToolTipText("Max vertical deviation, slows generation");
         ECoefTF.setToolTipText("Extension coefficient, scales search area");
         ApprxAlgsCB.setToolTipText("Worse results, quicker generation");
@@ -1792,20 +1877,24 @@ class MainFrame extends JFrame {
     // to make them stationary
     public void SecureAllParameters(){
         int min_size = Math.min(iwidth, iheight);
+        int min_w = 1;
+
         adaptive_mode = AdaptiveSizeCB.isSelected();
         autosave_mode = AutoSaveCB.isSelected();
         approximate_mode = ApprxAlgsCB.isSelected();
         localized_mode = AdaptiveSizeCB.isSelected();
 
+        if (ncc.isSelected() || scc.isSelected() || kcc.isSelected())
+            min_w = 2;
         window_size = parseInt(WindowSizeTF, WS);
-        window_size = Math.min((int)((double)min_size/5), Math.max(window_size, 1));
+        window_size = Math.min((int)((double)min_size/5), Math.max(window_size, min_w));
 
 
         n_segments = parseInt(NSegmentsTF, NSEG);
         n_segments = Math.min((int)((double)min_size/30), Math.max(n_segments, 1));
 
         stride = parseInt(StrideTF, STRIDE);
-        stride = Math.min((int)((double)min_size/10), Math.max(stride, 1));
+        stride = Math.min(window_size, Math.max(stride, 1));
 
         ext_coef = parseDouble(ECoefTF, EC);
         vdev = parseInt(VdevTF, VDEV);
