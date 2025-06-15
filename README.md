@@ -1,1 +1,1 @@
-![GUI_14_5_25](https://github.com/user-attachments/assets/39534dea-c8d1-41b8-b37e-d40195c84df2)
+![GUI_MEGAFINAL](https://github.com/user-attachments/assets/329b8eb5-e6b1-40ea-93b4-80b521322a08)
