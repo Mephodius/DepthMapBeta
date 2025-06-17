@@ -80,7 +80,7 @@ class NCC extends CompareMethod {
         double denominator;
         double temp;
         double[] total = {0, 0, 0};
-        int N = ((width+1)/this.stride)*((height+1)/this.stride);
+        int N = (int)((1+Math.floor((double)(width-1)/this.stride))*(1+Math.floor((double)(height-1)/this.stride)));;
         for (int k = 0; k < depth; k++) {
             for (int i = 0; i < height; i+=this.stride) {
                 for (int j = 0; j < width; j+=this.stride) {
@@ -109,21 +109,19 @@ class NCC extends CompareMethod {
 
     public double get_similarity(byte[][][] m1, byte[][][] m2, int y1, int x1, int y2, int x2, int winh, int winw){
         int depth = m1.length;
-
         double[] averageim1 = {0, 0, 0};
         double[] averageim2 = {0, 0, 0};
         double numerator;
         double denominator;
         double temp;
         double[] total = {0, 0, 0};
-        int N;
+        int N = (int)((1+Math.floor((double)(winh-1)/this.stride))*(1+Math.floor((double)(winw-1)/this.stride)));
+
         for (int k = 0; k < depth; k++) {
-            N=0;
             for (int i = 0; i < winh; i+=this.stride) {
                 for (int j = 0; j < winw; j+=this.stride) {
                     averageim1[k] += m1[k][y1+i][x1+j];
                     averageim2[k] += m2[k][y2+i][x2+j];
-                    N++;
                 }
             }
             averageim1[k] /= N;
@@ -147,21 +145,18 @@ class NCC extends CompareMethod {
 
     public double get_similarity(int[][][] m1, int[][][] m2, int y1, int x1, int y2, int x2, int winh, int winw){
         int depth = m1.length;
-
         double[] averageim1 = {0, 0, 0};
         double[] averageim2 = {0, 0, 0};
         double numerator;
         double denominator;
         double temp;
         double[] total = {0, 0, 0};
-        double N; //((winw+1)/this.stride)*((winh+1)/this.stride);
+        int N = (int)((1+Math.floor((double)(winh-1)/this.stride))*(1+Math.floor((double)(winw-1)/this.stride)));
         for (int k = 0; k < depth; k++) {
-            N = 0;
             for (int i = 0; i < winh; i+=this.stride) {
                 for (int j = 0; j < winw; j+=this.stride) {
                     averageim1[k] += m1[k][y1+i][x1+j];
                     averageim2[k] += m2[k][y2+i][x2+j];
-                    N++;
                 }
             }
 //            System.out.println("MAX: "+(winh-1+y1)+" "+(winw-1+x1) + " " + (winh-1+y2)+" "+(winw-1+x2)+" "+N);
@@ -180,7 +175,6 @@ class NCC extends CompareMethod {
                 }
             }
             denominator = Math.sqrt(denominator*temp);
-
             total[k] = numerator / denominator;
         }
         return (total[0] + total[1] + total[2])/3;
@@ -233,7 +227,7 @@ class SCC extends CompareMethod {
         int height = scanim1[0].length;
         int width = scanim1[0][0].length;
 
-        int N = ((width+1)/this.stride)*((height+1)/this.stride);
+        int N = (int)((1+Math.floor((double)(width-1)/this.stride))*(1+Math.floor((double)(height-1)/this.stride)));
         byte[] array1 = new byte[N];
         byte[] array2 = new byte[N];
         int[] ranks1;
@@ -257,11 +251,11 @@ class SCC extends CompareMethod {
         return (total[0] + total[1] + total[2])/3;
     }
 
-    public double get_similarity(byte[][][] scanim1, byte[][][] scanim2, int y1, int x1, int y2, int x2, int winh, int winw){
+    public double get_similarity(byte[][][] m1, byte[][][] m2, int y1, int x1, int y2, int x2, int winh, int winw){
 
-        int depth = scanim1.length;
+        int depth = m1.length;
 
-        int N = ((winh+1)/this.stride)*((winw+1)/this.stride);
+        int N = (int)((1+Math.floor((double)(winh-1)/this.stride))*(1+Math.floor((double)(winw-1)/this.stride)));
         byte[] array1 = new byte[N];
         byte[] array2 = new byte[N];
         int[] ranks1;
@@ -271,8 +265,8 @@ class SCC extends CompareMethod {
         for (int k = 0; k < depth; k++) {
             for (int i = 0; i < winh; i+=this.stride) {
                 for (int j = 0; j < winw; j+=this.stride) {
-                    array1[winw*i+j] = scanim1[k][y1+i][x1+j];
-                    array2[winw*i+j] = scanim2[k][y2+i][x2+j];
+                    array1[winw*i+j] = m1[k][y1+i][x1+j];
+                    array2[winw*i+j] = m2[k][y2+i][x2+j];
                 }
             }
             ranks1 = arrayRankTransform(array1);
@@ -295,7 +289,7 @@ class KCC extends CompareMethod {
         int height = scanim1[0].length;
         int width = scanim1[0][0].length;
 
-        int N = ((width+1)/this.stride)*((height+1)/this.stride);
+        int N = (int)((1+Math.floor((double)(width-1)/this.stride))*(1+Math.floor((double)(height-1)/this.stride)));;
         byte[] array1 = new byte[N];
         byte[] array2 = new byte[N];
         int[] ranks1;
@@ -322,11 +316,11 @@ class KCC extends CompareMethod {
         return (total[0] + total[1] + total[2])/3;
     }
 
-    public double get_similarity(byte[][][] scanim1, byte[][][] scanim2, int y1, int x1, int y2, int x2, int winh, int winw){
+    public double get_similarity(byte[][][] m1, byte[][][] m2, int y1, int x1, int y2, int x2, int winh, int winw){
 
-        int depth = scanim1.length;
+        int depth = m1.length;
 
-        int N = ((winh+1)/this.stride)*((winw+1)/this.stride);
+        int N = (int)((1+Math.floor((double)(winh-1)/this.stride))*(1+Math.floor((double)(winw-1)/this.stride)));
         byte[] array1 = new byte[N];
         byte[] array2 = new byte[N];
         int[] ranks1;
@@ -336,8 +330,8 @@ class KCC extends CompareMethod {
         for (int k = 0; k < depth; k++) {
             for (int i = 0; i < winh; i+=this.stride) {
                 for (int j = 0; j < winw; j+=this.stride) {
-                    array1[winw*i+j] = scanim1[k][y1+i][x1+j];
-                    array2[winw*i+j] = scanim2[k][y2+i][x2+j];
+                    array1[winw*i+j] = m1[k][y1+i][x1+j];
+                    array2[winw*i+j] = m2[k][y2+i][x2+j];
                 }
             }
             ranks1 = arrayRankTransform(array1);
@@ -362,7 +356,7 @@ class SAD extends CompareMethod {
         int height = scanim1[0].length;
         int width = scanim1[0][0].length;
 
-        int N = ((width+1)/this.stride)*((height+1)/this.stride);
+        int N = (int)((1+Math.floor((double)(width-1)/this.stride))*(1+Math.floor((double)(height-1)/this.stride)));
         double[] total = {0, 0, 0};
         for (int k = 0; k < depth; k++) {
             for (int i = 0; i < height; i+=this.stride) {
@@ -375,15 +369,15 @@ class SAD extends CompareMethod {
         return 1 - (total[0] + total[1] + total[2])/(3*255*N);
     }
 
-    public double get_similarity(byte[][][] scanim1, byte[][][] scanim2, int y1, int x1, int y2, int x2, int winh, int winw) {
-        int depth = scanim1.length;
+    public double get_similarity(byte[][][] m1, byte[][][] m2, int y1, int x1, int y2, int x2, int winh, int winw) {
+        int depth = m1.length;
 
-        int N = ((winw+1)/this.stride)*((winh+1)/this.stride);
+        int N = (int)((1+Math.floor((double)(winh-1)/this.stride))*(1+Math.floor((double)(winw-1)/this.stride)));
         double[] total = {0, 0, 0};
         for (int k = 0; k < depth; k++) {
             for (int i = 0; i < winh; i+=this.stride) {
                 for (int j = 0; j < winw; j+=this.stride) {
-                    total[k] += Math.abs(scanim1[k][y1+i][x1+j] - scanim2[k][y2+i][x2+j]);
+                    total[k] += Math.abs(m1[k][y1+i][x1+j] - m2[k][y2+i][x2+j]);
                 }
             }
         }
@@ -454,12 +448,11 @@ class SSD extends CompareMethod {
         int height = scanim1[0].length;
         int width = scanim1[0][0].length;
 
-        int N = ((width+1)/this.stride)*((height+1)/this.stride);
+        int N = (int)((1+Math.floor((double)(width-1)/this.stride))*(1+Math.floor((double)(height-1)/this.stride)));
         double[] total = {0, 0, 0};
         for (int k = 0; k < depth; k++) {
             for (int i = 0; i < height; i+=this.stride) {
                 for (int j = 0; j < width; j+=this.stride) {
-
                     total[k] += Math.pow(scanim1[k][i][j] - scanim2[k][i][j], 2);
                 }
             }
@@ -470,7 +463,7 @@ class SSD extends CompareMethod {
     public double get_similarity(byte[][][] scanim1, byte[][][] scanim2, int y1, int x1, int y2, int x2, int winh, int winw) {
         int depth = scanim1.length;
 
-        int N = ((winw+1)/this.stride)*((winh+1)/this.stride);
+        int N = (int)((1+Math.floor((double)(winh-1)/this.stride))*(1+Math.floor((double)(winw-1)/this.stride)));;
         double[] total = {0, 0, 0};
         for (int k = 0; k < depth; k++) {
             for (int i = 0; i < winh; i+=this.stride) {
@@ -2007,7 +2000,7 @@ class MainFrame extends JFrame {
                 //GradientOfColors.setIcon(new ImageIcon(improc.SizeChangerLinear(gradientstripe, guiImageWidth, guiImageHeight)));
 
             } catch (Exception e) {
-                e.printStackTrace();
+                //e.printStackTrace();
                 ResetProgress();
                 GoMakeSomeMagic.setEnabled(true);
                 UpdateProgress();
@@ -2042,7 +2035,7 @@ class MainFrame extends JFrame {
                     matrix2[2][i][j] = (byte)(Math.abs(new Color(image2.getRGB(j, i)).getBlue()) - 128);
                 }
             }
-            //Пожалуй, самая трудоемкая функция в данной программе, сложность - порядка O(n^3), но т.к. число n - далеко не маленькое, зачастую приходится подождать
+            //The most consuming function in the program, it's complexity is around (n^3)
             DepthMap_full = CalculateDepthMap();
         }
 
@@ -2053,15 +2046,11 @@ class MainFrame extends JFrame {
             int height = matrix1[0].length; // 400
             int width = matrix1[0][0].length; // 500
 
-
             int locale_w = width / n_segments;
             int locale_h = height / n_segments;
             double[][] thresh_matrix = new double[n_segments][n_segments];
             double[][] deviations = null;
-            double[][] correlations = null;
-
-//        double EC = Double.parseDouble(ECoefTF.getText());
-
+            double[][] correlations;
 
             if (!adaptive_mode) {
                 double[] devInfo = getDeviation(matrix1, matrix2, approximate_mode);
@@ -2090,9 +2079,7 @@ class MainFrame extends JFrame {
                 max_deviation = (int) (opt_deviation * light_coef);
             }
 
-
             corrected_width = (width - Math.abs(opt_deviation));
-
 
             System.out.println("\nOPTIMAL DEVIATION: " + opt_deviation + " pixels");
             System.out.println("\nMAX DEVIATION: " + max_deviation + " pixels");
@@ -2111,8 +2098,7 @@ class MainFrame extends JFrame {
             itercounter = 0;
 
             int sc_height, sc_width;
-            double std1, std2 = 0;
-            byte[][][] tempmatrix1, tempmatrix2;
+            double std1, std2;
             int comp_counter;
             double std_thresh=0; // Std(matrix1)/6
             //double AC = Double.parseDouble(ACoefTF.getText());
@@ -2154,32 +2140,14 @@ class MainFrame extends JFrame {
             for (int row_image1 = 0; row_image1 < height; row_image1 += window_size) {
                 for (int col_image1 = -Math.min(opt_deviation, 0); col_image1 < width - Math.max(opt_deviation, 0) - 1; col_image1 += window_size) {
 
-                    int tst = (int) System.currentTimeMillis();
-
                     sc_width = window_size - Math.max((col_image1 + window_size) - (width - Math.max(opt_deviation, 0)) + 1, 0);
-//                    System.out.println("###1#### " + col_image1 + ' '+ width +' '+sc_width);
-
 
                     sc_height = window_size - Math.max((row_image1 + window_size) - height + 1, 0);
-                    //System.out.println("###2#### " + row_image1 + ' '+ height +' '+sc_height);
 
-                    //System.out.println("!!!!!!!!!!!!!!!!!!!" + col_image1 + " "+ row_image1 + " "+width+"");
                     best_correlation  = 0;
-//                    tempmatrix1 = getPart(matrix1, row_image1, col_image1, sc_height, sc_width, tempsizeadd);
 
-//                if ((col_image1 % locale_w < sc_width) && (row_image1 % locale_h < sc_height)) {
-//                    System.out.println("IS THE START OF AREA: " + col_image1 + " " + row_image1);
-//                    std_thresh = improc.Std(getPart(matrix1, col_image1, row_image1, locale_w - sc_width, locale_h - sc_height, 0)) / 6;
-//                    System.out.println("NEW THRESH: " + std_thresh);
-//                }
-                    //System.out.println(col_image1 + " " + row_image1 + " " +  col_image1/locale_w + " " + row_image1/locale_h);
-
-
-                    //std_thresh = (std_thresh + std1/10)/1.1;
-                    //System.out.println("NEW STD THRESH: " + std_thresh);
-
-
-                    tempsizeadd = 0;std1 = Std(matrix1, row_image1, col_image1, sc_height, sc_width);
+                    tempsizeadd = 0;
+                    std1 = Std(matrix1, row_image1, col_image1, sc_height, sc_width);
                     if(adaptive_mode) {
                         max_deviation = (int) (deviations[Math.min((row_image1 / locale_h), n_segments - 1)][(Math.min(col_image1 / locale_w, n_segments - 1))]);
                         std_thresh = thresh_matrix[Math.min((row_image1/locale_h), n_segments-1)][(Math.min(col_image1/locale_w, n_segments-1))];
@@ -2231,8 +2199,6 @@ class MainFrame extends JFrame {
                                 return null;
 
                             int col_image2 = (opt_deviation <= 0)? (col_image1-deviation):(col_image1+deviation);
-//                            tempmatrix2 = getPart(matrix2, row_image2, col_image2, sc_height, sc_width, tempsizeadd);
-
 
                             double correlation = Compare(method, matrix1, matrix2, row_image1, col_image1-tempsizeadd,
                                     row_image2, col_image2-tempsizeadd, sc_height, sc_width+tempsizeadd, false);// ConvApprxCB.isSelected()
@@ -2242,12 +2208,11 @@ class MainFrame extends JFrame {
                             int comp_end = (int) System.currentTimeMillis();
                             comp_time += (comp_end-comp_st);
 
-                            if (correlation > best_correlation) {
+                            if (correlation >= best_correlation) { // > is better???
                                 best_correlation = correlation;
                                 coincidentx = col_image2;
                                 coincidenty = row_image2;
 
-                                //System.out.print("New Best: " + method.bestTotal + " ");
                                 if (peak_b >= 1)
                                     peak_f = 0;
                                 peak_f++;
@@ -2324,23 +2289,19 @@ class MainFrame extends JFrame {
 
 
         public double[] getDeviation(byte[][][] matrix1, byte[][][] matrix2, boolean use_approx) {
-            int dstart = (int) System.currentTimeMillis();
             int height = matrix1[0].length;
             int width = matrix1[0][0].length;
             double best_correlation = 0;
             int opt_deviation = width/5;
             double area = (double) width/4;
-            int stripe = Math.max((int)area/75, 1);
-            byte[][][] temp_matrix1, temp_matrix2, best_matrix1 = null, best_matrix2 = null;
-
-
+            int step = Math.max((int)area/75, 1);
             int size = width / 16;
 
             int ls, rs;
             ls = (int) (-area / 2);
             rs = 0; // (int) (area / 2)
 
-            double[][] plot_data = new double[(rs-ls)/stripe+1][2];
+            double[][] plot_data = new double[(rs-ls)/step+1][2];
 
             CompareMethod ncccm = new NCC();
             ncccm.setStride(stride);
@@ -2355,9 +2316,9 @@ class MainFrame extends JFrame {
                 }
             }
 
-            int iterations_total = (int)((double)(rs-ls)/stripe);
-
-            for (int deviation = ls; deviation < rs; deviation += stripe) {
+            int iterations_total = (int)((double)(rs-ls)/step);
+            itercounter = 0;
+            for (int deviation = ls; deviation < rs; deviation += step) {
                 if (this.isCancelled())
                     return null;
                 int corrected_width = width - Math.abs(deviation);
@@ -2387,12 +2348,11 @@ class MainFrame extends JFrame {
                     best_correlation = correlation;
                     opt_deviation = deviation;
                 }
-                plot_data[(deviation - ls)/stripe] = new double[]{deviation, 100*correlation};
+                plot_data[(deviation - ls)/step] = new double[]{deviation, 100*correlation};
                 itercounter++;
                 progress = Math.min((double)itercounter/(iterations_total*2), 0.5);
-//                System.out.println("Copy is "+((double)copyt/(dend-dstart)) + " of all time");
                 publish();
-                System.out.println("C:D " + correlation +" "+ deviation);
+//                System.out.println("C:D " + correlation +" "+ deviation);
             }
 //        if (verbose){
 //            pf = new PlotFrame(MainFrame.this, MatrixToImage(best_matrix1), MatrixToImage(best_matrix2),
@@ -2422,11 +2382,8 @@ class MainFrame extends JFrame {
         public double[][][] getDeviations(byte[][][] matrix1, byte[][][] matrix2, int n_segments) {
             int height = matrix1[0].length;
             int width = matrix1[0][0].length;
-            double best_correlation = 0;
-            int opt_deviation = width/5;
             double area = (double) width /4;
-            int stripe = Math.max((int)area/75, 1);
-            byte[][][] temp_matrix1, temp_matrix2;
+            int step = Math.max((int)area/75, 1);
 
             int ls, rs;
             ls = (int) (-area / 2);
@@ -2444,9 +2401,9 @@ class MainFrame extends JFrame {
             }
             double correlation = 0;
             int seg_w, seg_h;
-            int iterations_total = (int)((double)(rs-ls)/stripe);
+            int iterations_total = (int)((double)(rs-ls)/step);
             itercounter = 0;
-            for (int deviation = ls; deviation < rs; deviation += stripe) {
+            for (int deviation = ls; deviation < rs; deviation += step) {
                 if (this.isCancelled())
                     return null;
                 seg_w = (width-Math.abs(deviation))/n_segments;
@@ -2455,14 +2412,6 @@ class MainFrame extends JFrame {
                     for (int j = 0; j < n_segments; j++) {
                         int temph = Math.min(height - seg_h * j, seg_h);
                         int tempw = Math.min(width - Math.abs(deviation) - seg_w * i, seg_w);
-                        //System.out.println(i + " "+ j +" " + deviation + " "+ tempw + " "+ temph);
-//                        if (deviation < 0) {
-//                        temp_matrix1 = getPart(matrix1, seg_h * i, seg_w * j - deviation, temph, tempw, 0);
-//                        temp_matrix2 = getPart(matrix2, seg_h * i, seg_w * j, temph, tempw, 0);
-//                        } else {
-//                            temp_matrix1 = getPart(matrix1, seg_h * j, seg_w * i, temph, tempw,0);
-//                            temp_matrix2 = getPart(matrix2, seg_h * j, seg_w * i + deviation, temph, tempw, 0);
-//                        }
                         correlation = ncccm.get_similarity(matrix1, matrix2, seg_h*i, seg_w*j-deviation, seg_h*i, seg_w*j, temph, tempw);
                         if (correlation > c_matrix[i][j]) {
                             c_matrix[i][j] = correlation;
