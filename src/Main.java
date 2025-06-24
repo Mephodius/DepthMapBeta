@@ -80,7 +80,7 @@ class NCC extends CompareMethod {
         double denominator;
         double temp;
         double[] total = {0, 0, 0};
-        int N = (int)((1+Math.floor((double)(width-1)/this.stride))*(1+Math.floor((double)(height-1)/this.stride)));;
+        int N = (int)((1+Math.floor((double)(width-1)/this.stride))*(1+Math.floor((double)(height-1)/this.stride)));
         for (int k = 0; k < depth; k++) {
             for (int i = 0; i < height; i+=this.stride) {
                 for (int j = 0; j < width; j+=this.stride) {
@@ -289,7 +289,7 @@ class KCC extends CompareMethod {
         int height = scanim1[0].length;
         int width = scanim1[0][0].length;
 
-        int N = (int)((1+Math.floor((double)(width-1)/this.stride))*(1+Math.floor((double)(height-1)/this.stride)));;
+        int N = (int)((1+Math.floor((double)(width-1)/this.stride))*(1+Math.floor((double)(height-1)/this.stride)));
         byte[] array1 = new byte[N];
         byte[] array2 = new byte[N];
         int[] ranks1;
@@ -463,7 +463,7 @@ class SSD extends CompareMethod {
     public double get_similarity(byte[][][] scanim1, byte[][][] scanim2, int y1, int x1, int y2, int x2, int winh, int winw) {
         int depth = scanim1.length;
 
-        int N = (int)((1+Math.floor((double)(winh-1)/this.stride))*(1+Math.floor((double)(winw-1)/this.stride)));;
+        int N = (int)((1+Math.floor((double)(winh-1)/this.stride))*(1+Math.floor((double)(winw-1)/this.stride)));
         double[] total = {0, 0, 0};
         for (int k = 0; k < depth; k++) {
             for (int i = 0; i < winh; i+=this.stride) {
@@ -496,8 +496,8 @@ class SSD extends CompareMethod {
 
 
 class MainFrame extends JFrame {
-    int guiImageWidth = 345; //360, 540, 280
-    int guiImageHeight = 260; //280, 360, 240
+    int guiImageWidth = 345; // 345, 360, 540, 280
+    int guiImageHeight = 260; // 260, 280, 360, 240
 
     //new File("D:\\Images\\left.jpg");
     File RI = null;
@@ -650,6 +650,9 @@ class MainFrame extends JFrame {
     private int itercounter;
     private double progress;
     public static int dtis = 10000; // scale for converting double to int and then backwards
+
+    public boolean new_logs = true;
+    public boolean new_metrics = true;
 
     public BufferedImage THImage;
     public BufferedImage DevsImage;
@@ -961,7 +964,7 @@ class MainFrame extends JFrame {
                     similarity = cm.get_similarity(improc.ImageToBMatrix(DepthMap), improc.ImageToBMatrix(last));
                     counter++;
                     System.out.println("Amedian " + counter + " was applied " + similarity);
-                }while(similarity < 0.998 && counter < 10);
+                }while(similarity < 0.998 && counter < 9);
                 break;
 
             case "median":
@@ -1002,7 +1005,7 @@ class MainFrame extends JFrame {
             DepthMap = improc.ImageCopy(improc.ImageScaler(DepthMap));
 
         DepthMap_full = improc.MatrixToImage(getFullMap(improc.BWImageToMatrix(DepthMap), current_state.window_size,
-                DepthMap_full.getHeight(), DepthMap_full.getWidth()), false);
+                                            DepthMap_full.getHeight(), DepthMap_full.getWidth()), false);
         BottomImageLabel.setIcon(new ImageIcon(improc.SizeChangerS(DepthMap_full,
                 guiImageWidth, guiImageHeight, interpol_choice)));
 //        GenState new_state = new GenState(DepthMap, current_state.logs, current_state.correlation_m, current_state.window_size,
@@ -1073,8 +1076,10 @@ class MainFrame extends JFrame {
             current_state = LogsStack.peek();
             DepthMap = current_state.getDM();
             logs = current_state.getLogs();
-            if (logs != null)
+            if (logs == null)
                 ShowLogs.setEnabled(false);
+            else
+                ShowLogs.setEnabled(true);
 
 //            System.out.println("HOLY REMOVED "+LogsStack.size()+" "+current_state.window_size+" "+current_state.dm_height+" "+current_state.dm_width);
             DepthMap_full = improc.MatrixToImage(getFullMap(improc.BWImageToMatrix(DepthMap), current_state.window_size, current_state.dm_height,
@@ -1139,6 +1144,7 @@ class MainFrame extends JFrame {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
                 ApplyFilter();
+                new_metrics = true;
             }
         };
         ApplyOperation.addActionListener(applyAction);
@@ -1147,6 +1153,8 @@ class MainFrame extends JFrame {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
                 UndoChanges();
+                new_logs = true;
+                new_metrics = true;
             }
         };
         UndoOperation.addActionListener(undoAction);
@@ -1171,9 +1179,16 @@ class MainFrame extends JFrame {
         getMetricsAction = new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
-                if ((buff != null) && (buff.getWidth() >= DepthMap_full.getWidth()) && (buff.getHeight() == DepthMap_full.getHeight()))
-                    dmc = new DMComparator(MainFrame.this, buff, DepthMap_full, false);
-                else
+
+//                System.out.println("Hey? "+(((double)buff.getWidth()/DepthMap_full.getWidth()) +" "+ ((double)buff.getHeight()/DepthMap_full.getHeight())));
+                if (buff != null && (((double)buff.getWidth()/DepthMap_full.getWidth()) >= ((double)buff.getHeight()/DepthMap_full.getHeight()))) {
+                    if (new_metrics) {
+//                    lv.dispose();
+                        dmc = new DMComparator(MainFrame.this, buff, DepthMap_full, false);
+                        new_metrics = false;
+                    } else
+                        dmc.setVisible(true);
+                } else
                     GetMetrics.setEnabled(false);
             }
         };
@@ -1182,7 +1197,16 @@ class MainFrame extends JFrame {
         showLogsAction = new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
-                lv = new LogsVisualizator(MainFrame.this, image1, image2, logs, correlation_m, vdev, opt_deviation, dtis);
+                if (logs != null) {
+                    if (new_logs) {
+//                    lv.dispose();
+                        lv = new LogsVisualizator(MainFrame.this, image1, image2, logs, correlation_m, vdev, opt_deviation, dtis);
+                        new_logs = false;
+                    } else
+                        lv.setVisible(true);
+                } else
+                    ShowLogs.setEnabled(false);
+
             }
         };
         ShowLogs.addActionListener(showLogsAction);
@@ -1337,20 +1361,22 @@ class MainFrame extends JFrame {
                         "\nLoad Images:\n" +
                         "Alt+1 - load a left image\n" +
                         "Alt+2 - load a right image\n" +
+                        "Drap-and-drop image load interaction\n" +
 
                         "\nDepth map (DM) interaction hotkeys:\n" +
                         "Ctrl+A - apply the chosen filter to the DM\n" +
-                        "Ctrl+Z - undoes your last DM action\n" +
-                        "Ctrl+S - saves DM to the ./Data/Maps/ folder\n" +
-                        "Ctrl+C - copies DM to the clipboard.\n" +
-                        "Ctrl+V - pastes clipboard DM into the program\n" +
+                        "Ctrl+Z - undo your last DM action\n" +
+                        "Ctrl+S - save DM to the ./Data/Maps/ folder\n" +
+                        "Ctrl+C - copy DM to the clipboard.\n" +
+                        "Ctrl+V - paste clipboard DM into the program\n" +
+                        "Ctrl+Arrows - increase or decrease a parameter value\n" +
 
                         "\nFunctional hotkeys:\n" +
                         "Ctrl+R - run the DM estimator with the current parameters\n" +
                         "Ctrl+X - stop estimation process (to change params, etc)\n" +
                         "Ctrl+D - load the ground-truth DM for metrics calculation\n" +
-                        "Ctrl+F - calculate the DM metrics\n" +
-                        "Alt+L  - show results analyser module\n" +
+                        "Ctrl+F - show/hide the DM metrics module\n" +
+                        "Alt+L  - show/hide the results analyser module\n" +
                         "Ctrl+H - show the help window\n" +
                         "Ctrl+Q - quit the program (or its current window)\n" +
                         "Ctrl+W - toggle adaptive mode\n" +
@@ -1360,7 +1386,8 @@ class MainFrame extends JFrame {
                         "Ctrl+2 - use SSD (Sum of squared deviations)\n" +
                         "Ctrl+3 - use NCC (Pearson correlation)\n" +
                         "Ctrl+4 - use SCC (Spearman correlation)\n" +
-                        "Ctrl+5 - use KCC (Kendall correlation)\n");
+                        "Ctrl+5 - use KCC (Kendall correlation)\n"
+                );
 
             }
         };
@@ -1472,17 +1499,18 @@ class MainFrame extends JFrame {
     }
 
     public void ConfigureAllTips(){
-        GoMakeSomeMagic.setToolTipText("Click to start the generation process");
-        ApplyOperation.setToolTipText("Apply the chosen filter to the depth map");
+        GoMakeSomeMagic.setToolTipText("Click to start the generation process (Shift+Enter)");
+        ApplyOperation.setToolTipText("Apply the chosen filter to the depth map (Ctrl+A)");
         LoadDM.setToolTipText("Load ground-truth depth map");
-        GetMetrics.setToolTipText("Get metrics");
-        ShowLogs.setToolTipText("Show the process of generation");
-        Save.setToolTipText("Save the depth map to the ./Data/Maps/ directory");
-        UndoOperation.setToolTipText("Undo your last DM action");
-        AdaptiveSizeCB.setToolTipText("Better results, slower generation");
+        GetMetrics.setToolTipText("Get metrics (Ctrl+F)");
+        ShowLogs.setToolTipText("Show the process of generation (Alt+L)");
+        Save.setToolTipText("Save the depth map to the ./Data/Maps/ directory (Ctrl+S)");
+        UndoOperation.setToolTipText("Undo your last DM action (Ctrl+Z)");
+        AdaptiveSizeCB.setToolTipText("Better results, slower generation (Ctrl+W)");
         NSegmentsTF.setToolTipText("Number of segments for adaptive alg");
         StrideTF.setToolTipText("Comparison subsampling step. Increases gen speed");
-        VdevTF.setToolTipText("Max vertical deviation, slows generation");
+        VdevTF.setToolTipText("Max vertical deviation, slows generation (Ctrl+Up/Down)");
+        WindowSizeTF.setToolTipText("Larger size - lower resolution, more reliable matchings (Ctrl+Left/Right)");
         ECoefTF.setToolTipText("Extension coefficient, scales search area");
         ApprxAlgsCB.setToolTipText("Worse results, quicker generation");
 
@@ -2037,6 +2065,9 @@ class MainFrame extends JFrame {
             }
             //The most consuming function in the program, it's complexity is around (n^3)
             DepthMap_full = CalculateDepthMap();
+            new_logs = true;
+            new_metrics = true;
+
         }
 
         public BufferedImage CalculateDepthMap() {
@@ -2106,17 +2137,13 @@ class MainFrame extends JFrame {
 
 
 
-            int w = (int) (2.6*Math.sqrt(Math.abs(max_deviation)));
-            System.out.println("W: " + w);
-            double c_thresh = 0.85;
-
             if (adaptive_mode) {
                 for (int i = 0; i < n_segments; i++) {
                     for (int j = 0; j < n_segments; j++) {
                         double temp = Std(matrix1, locale_h*i, locale_w*j,
                                 Math.min(height-locale_h*i, locale_h),
                                 Math.min(width-locale_w*j, locale_w));
-                        thresh_matrix[i][j] = AC * Math.pow(temp, 0.5);
+                        thresh_matrix[i][j] = AC * Math.pow(temp, 0.5); // AC * Math.pow(temp, 0.5)
                     }
                 }
                 for (int i = 0; i < n_segments; i++) {
@@ -2137,6 +2164,11 @@ class MainFrame extends JFrame {
 
             int iterations_total = ((int) Math.ceil((double) corrected_width / window_size) * (int) Math.ceil((double) height / window_size));
             //System.out.println("START STD THRESH: " + std_thresh);
+
+            int w = (int) (2.6*Math.sqrt(Math.abs(max_deviation)));
+//                    System.out.println("W: " + w);
+            double c_thresh = 0.85;
+
             for (int row_image1 = 0; row_image1 < height; row_image1 += window_size) {
                 for (int col_image1 = -Math.min(opt_deviation, 0); col_image1 < width - Math.max(opt_deviation, 0) - 1; col_image1 += window_size) {
 
@@ -2161,7 +2193,7 @@ class MainFrame extends JFrame {
 
                             if (eP[1] >= -max_deviation && (width - eP[3] - eP[1]) > 0 && eP[0] >= 0 && (height - eP[2] - eP[0]) > 0) {
                                 while (std1 < Math.min(std_thresh, AC * start_std) && eP[1] >= -max_deviation && (width - eP[3] - eP[1]) > 0 && eP[0] >= 0 && (height - eP[2] - eP[0]) > 0) {
-                                    std1 = Std(matrix1, row_image1, col_image1 - tempsizeadd, sc_height, sc_width + tempsizeadd); // Math.min(5, sc_width)
+                                    std1 = Std(matrix1, row_image1, col_image1 - tempsizeadd, sc_height, sc_width + tempsizeadd); // sc_width + tempsizeadd, Math.min(5, sc_width)
 //
                                     tempsizeadd += 1;
                                     eP = extendPart(row_image1, col_image1, sc_height, sc_width, tempsizeadd);
@@ -2189,6 +2221,9 @@ class MainFrame extends JFrame {
                     comp_counter = 0;
                     correlation_m[(int)Math.ceil((double)row_image1 / window_size)][(int)Math.ceil((double)(col_image1 + Math.min(opt_deviation, 0))/ window_size)] = new double[Math.min(col_image1 - tempsizeadd, Math.abs(max_deviation))+1];
                     int comp_time = 0;
+
+
+
                     for(int row_image2 = Math.max(0,row_image1-vdev); row_image2 < Math.min(height-sc_height+1,row_image1 + vdev + 1); row_image2++) {
                         for (int deviation = Math.min(col_image1 - tempsizeadd, Math.abs(max_deviation)); deviation >= 0; deviation--){
 //                        for (int deviation = 0;  deviation <= Math.min(col_image1 - tempsizeadd, Math.abs(max_deviation)); deviation++){

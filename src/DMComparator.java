@@ -86,7 +86,7 @@ public class DMComparator extends JFrame {
 //                mf.setEnabled(false);
                 mainframe.setVisible(true);
                 mainframe.toFront();
-                DMComparator.this.dispose();
+//                DMComparator.this.dispose();
 //                MainFrame.this.dispatchEvent(new WindowEvent(MainFrame.this, WindowEvent.WINDOW_CLOSING));
             }
         };
@@ -112,6 +112,8 @@ public class DMComparator extends JFrame {
 
         actionMap.put("Close", closeAction);
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_Q, InputEvent.CTRL_DOWN_MASK), "Close");
+        actionMap.put("Close", closeAction);
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.CTRL_DOWN_MASK), "Close");
 
 
     }
@@ -235,6 +237,7 @@ public class DMComparator extends JFrame {
 
 //        int guiImageWidth = mymap.getWidth();
 //        int guiImageHeight = mymap.getHeight();
+        setResizable(false);
         repaint();
         setVisible(true);
         ConfigureAllActions();

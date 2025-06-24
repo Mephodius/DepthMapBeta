@@ -68,7 +68,7 @@ public class LogsVisualizator extends JFrame {
                 LogsVisualizator.this.setVisible(false);
                 mainframe.setVisible(true);
                 mainframe.toFront();
-                LogsVisualizator.this.dispose();
+                // LogsVisualizator.this.dispose();
             }
         };
 
@@ -163,6 +163,9 @@ public class LogsVisualizator extends JFrame {
 
         actionMap.put("Close", closeAction);
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_Q, InputEvent.CTRL_DOWN_MASK), "Close");
+
+        actionMap.put("Close", closeAction);
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_L, InputEvent.ALT_DOWN_MASK), "Close");
 
         actionMap.put("Previous", GenClickAction(Previous));
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0), "Previous");
@@ -273,6 +276,7 @@ public class LogsVisualizator extends JFrame {
         //FilterTo.setHorizontalAlignment(JTextField.CENTER);
 
         InvertFilter.setSelected(false);
+        FiltrateBy.setSelectedIndex(1);
 
         chBox.add(Box.createHorizontalGlue());
         chBox.add(FilterLab);
@@ -343,13 +347,14 @@ public class LogsVisualizator extends JFrame {
         LeftImageLabel.setIcon(new ImageIcon(improc.MatrixToImage(matrix1sc)));
         RightImageLabel.setIcon(new ImageIcon(improc.MatrixToImage(matrix2sc)));
 
-
-
         Previous.setEnabled(false);
         //setSize(LeftImageLabel.getHeight() * 3, (int)(LeftImageLabel.getHeight() * 1.2));
 //        setSize(guiImageWidth*2 + 236, 606);
         pack();
+
+//        setLocationRelativeTo(null);
         setLocation((kit.getScreenSize().width - this.getWidth()) / 2, (kit.getScreenSize().height - this.getHeight()) / 2);
+        setResizable(false);
         repaint();
         setVisible(true);
 
@@ -364,9 +369,6 @@ public class LogsVisualizator extends JFrame {
         int[][][] temp = new int[matrix.length][matrix[0].length][matrix[0][0].length];
         for (int i = 0; i < matrix.length; i++) {
             for (int j = 0; j < matrix[0].length; j++) {
-
-//                for (int k = 0; k < matrix[0][0].length; k++)
-//                    temp[i][j][k] = matrix[i][j][k];
                 System.arraycopy(matrix[i][j], 0, temp[i][j], 0, matrix[0][0].length);
             }
         }
